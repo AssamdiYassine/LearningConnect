@@ -7,7 +7,8 @@ import {
   Notification, InsertNotification,
   Setting, InsertSetting,
   CourseWithDetails,
-  SessionWithDetails
+  SessionWithDetails,
+  UserOnboarding
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -605,6 +606,90 @@ export class MemStorage implements IStorage {
 
   async deleteNotification(id: number): Promise<void> {
     this.notifications.delete(id);
+  }
+  
+  // Onboarding operations
+  async getUserOnboarding(userId: number): Promise<UserOnboarding | undefined> {
+    return Array.from(this.userOnboardings.values()).find(
+      (onboarding) => onboarding.userId === userId
+    );
+  }
+
+  async createUserOnboarding(userId: number): Promise<UserOnboarding> {
+    const existingOnboarding = await this.getUserOnboarding(userId);
+    if (existingOnboarding) {
+      return existingOnboarding;
+    }
+    
+    const id = this.onboardingIdCounter++;
+    const newOnboarding: UserOnboarding = {
+      id,
+      userId,
+      currentStep: 'profile_completion',
+      completedSteps: [],
+      isCompleted: false,
+      startedAt: new Date(),
+      completedAt: null,
+      lastUpdatedAt: new Date()
+    };
+    
+    this.userOnboardings.set(id, newOnboarding);
+    return newOnboarding;
+  }
+
+  async updateUserOnboardingStep(userId: number, currentStep: string): Promise<UserOnboarding> {
+    const onboarding = await this.getUserOnboarding(userId);
+    if (!onboarding) {
+      throw new Error("Onboarding not found for user");
+    }
+    
+    const updatedOnboarding: UserOnboarding = {
+      ...onboarding,
+      currentStep: currentStep as any, // Type casting to satisfy TS
+      lastUpdatedAt: new Date()
+    };
+    
+    this.userOnboardings.set(onboarding.id, updatedOnboarding);
+    return updatedOnboarding;
+  }
+
+  async completeUserOnboardingStep(userId: number, step: string): Promise<UserOnboarding> {
+    const onboarding = await this.getUserOnboarding(userId);
+    if (!onboarding) {
+      throw new Error("Onboarding not found for user");
+    }
+    
+    // Add the step to completed steps if not already included
+    const completedSteps = [...onboarding.completedSteps];
+    if (!completedSteps.includes(step)) {
+      completedSteps.push(step);
+    }
+    
+    const updatedOnboarding: UserOnboarding = {
+      ...onboarding,
+      completedSteps,
+      lastUpdatedAt: new Date()
+    };
+    
+    this.userOnboardings.set(onboarding.id, updatedOnboarding);
+    return updatedOnboarding;
+  }
+
+  async completeUserOnboarding(userId: number): Promise<UserOnboarding> {
+    const onboarding = await this.getUserOnboarding(userId);
+    if (!onboarding) {
+      throw new Error("Onboarding not found for user");
+    }
+    
+    const updatedOnboarding: UserOnboarding = {
+      ...onboarding,
+      isCompleted: true,
+      completedAt: new Date(),
+      lastUpdatedAt: new Date()
+    };
+    
+    this.userOnboardings.set(onboarding.id, updatedOnboarding);
+    return updatedOnboarding;
   }
 }
 
