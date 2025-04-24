@@ -10,7 +10,19 @@ import bcryptjs from "bcryptjs";
 
 declare global {
   namespace Express {
-    interface User extends User {}
+    // Define the User type for the session
+    interface User {
+      id: number;
+      username: string; 
+      email: string;
+      displayName: string;
+      role: string;
+      isSubscribed: boolean | null;
+      subscriptionType: string | null;
+      subscriptionEndDate: Date | null;
+      stripeCustomerId: string | null;
+      stripeSubscriptionId: string | null;
+    }
   }
 }
 
