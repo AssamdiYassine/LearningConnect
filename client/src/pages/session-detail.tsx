@@ -31,7 +31,7 @@ export default function SessionDetail({ id }: SessionDetailProps) {
   const [showZoomDialog, setShowZoomDialog] = useState(false);
   
   // Fetch session details
-  const { data: session, isLoading: isSessionLoading } = useQuery<SessionWithDetails>({
+  const { data: session, isLoading: isSessionLoading } = useQuery<SessionWithEnrollment>({
     queryKey: [`/api/sessions/${id}`],
   });
 
@@ -65,7 +65,7 @@ export default function SessionDetail({ id }: SessionDetailProps) {
         <Button 
           variant="ghost" 
           className="pl-0 text-gray-600" 
-          onClick={() => setLocation(`/courses/${session.course.id}`)}
+          onClick={() => setLocation(`/course/${session.course.id}`)}
         >
           <ArrowLeft className="mr-2 h-4 w-4" /> Retour à la formation
         </Button>
@@ -169,7 +169,7 @@ export default function SessionDetail({ id }: SessionDetailProps) {
                     </p>
                     <Button 
                       className="w-full sm:w-auto"
-                      onClick={() => setLocation(`/courses/${session.course.id}`)}
+                      onClick={() => setLocation(`/course/${session.course.id}`)}
                     >
                       S'inscrire à cette session
                     </Button>
@@ -237,7 +237,7 @@ export default function SessionDetail({ id }: SessionDetailProps) {
               ) : (
                 <Button 
                   className="w-full"
-                  onClick={() => setLocation(`/courses/${session.course.id}`)}
+                  onClick={() => setLocation(`/course/${session.course.id}`)}
                 >
                   S'inscrire maintenant
                 </Button>

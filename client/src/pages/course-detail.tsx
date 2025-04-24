@@ -1,5 +1,10 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { CourseWithDetails, SessionWithDetails } from "@shared/schema";
+
+// Extended interface to include the isEnrolled property
+interface SessionWithEnrollment extends SessionWithDetails {
+  isEnrolled?: boolean;
+}
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Loader2, Calendar, Users, Clock, BarChart2, ArrowLeft } from "lucide-react";
@@ -31,7 +36,7 @@ export default function CourseDetail({ id }: CourseDetailProps) {
   });
 
   // Fetch upcoming sessions for this course
-  const { data: allSessions, isLoading: isSessionsLoading } = useQuery<SessionWithDetails[]>({
+  const { data: allSessions, isLoading: isSessionsLoading } = useQuery<SessionWithEnrollment[]>({
     queryKey: ["/api/sessions/upcoming"],
   });
 
