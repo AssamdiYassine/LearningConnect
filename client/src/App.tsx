@@ -11,6 +11,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import Catalog from "@/pages/catalog";
 import Schedule from "@/pages/schedule";
 import Subscription from "@/pages/subscription";
+import Checkout from "@/pages/checkout";
 import CourseDetail from "@/pages/course-detail";
 import LandingPage from "@/pages/landing-page";
 import AboutPage from "@/pages/about-page";
@@ -45,6 +46,10 @@ function Router() {
       
       <Route path="/subscription">
         <ProtectedRoute component={Subscription} allowedRoles={["student", "trainer", "admin"]} />
+      </Route>
+      
+      <Route path="/checkout">
+        <ProtectedRoute component={Checkout} allowedRoles={["student", "trainer", "admin"]} />
       </Route>
       
       <Route path="/course/:id">

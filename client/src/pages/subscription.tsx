@@ -3,16 +3,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useLocation } from "wouter";
 
 export default function Subscription() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual">("monthly");
+  const [, setLocation] = useLocation();
 
   // Format the subscription end date if it exists
   const formatEndDate = (date: string | Date | null | undefined) => {
@@ -24,9 +26,7 @@ export default function Subscription() {
     });
   };
 
-  // Redirect to checkout page for subscription
-  const [, setLocation] = useLocation();
-
+  // Handle subscription by redirecting to checkout
   const handleSubscribe = () => {
     setLocation(`/checkout?type=${selectedPlan}`);
   };
@@ -171,9 +171,8 @@ export default function Subscription() {
                 <Button 
                   className="w-full" 
                   onClick={handleSubscribe}
-                  disabled={subscribeMutation.isPending}
                 >
-                  {subscribeMutation.isPending ? "Processing..." : "Subscribe Now"}
+                  Subscribe Now
                 </Button>
               </CardFooter>
             </Card>
@@ -216,9 +215,8 @@ export default function Subscription() {
                 <Button 
                   className="w-full" 
                   onClick={handleSubscribe}
-                  disabled={subscribeMutation.isPending}
                 >
-                  {subscribeMutation.isPending ? "Processing..." : "Subscribe Now"}
+                  Subscribe Now
                 </Button>
               </CardFooter>
             </Card>
