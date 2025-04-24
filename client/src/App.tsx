@@ -18,6 +18,7 @@ import LandingPage from "@/pages/landing-page";
 import AboutPage from "@/pages/about-page";
 import CreateCourse from "@/pages/create-course";
 import CreateSession from "@/pages/create-session";
+import Achievements from "@/pages/achievements";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { OnboardingProvider } from "./hooks/onboarding-provider";
@@ -71,6 +72,11 @@ function Router() {
         )}
       </Route>
       
+      {/* Achievements */}
+      <Route path="/achievements">
+        <ProtectedRoute component={Achievements} allowedRoles={["student", "trainer", "admin"]} />
+      </Route>
+
       {/* Trainer routes */}
       <Route path="/trainer">
         <ProtectedRoute component={TrainerDashboard} allowedRoles={["trainer", "admin"]} />

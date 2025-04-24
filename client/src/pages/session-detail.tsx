@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { SessionWithDetails } from "@shared/schema";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Loader2, Calendar, Users, Clock, VideoIcon, ArrowLeft, MapPin, ExternalLink } from "lucide-react";
+import { Loader2, Calendar, Users, Clock, VideoIcon, ArrowLeft, MapPin, ExternalLink, ShareIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -15,6 +15,8 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SocialShare } from "@/components/social-share";
+import { AchievementShare } from "@/components/achievement-share";
 
 // Extended interface to include the isEnrolled property
 interface SessionWithEnrollment extends SessionWithDetails {
@@ -245,6 +247,36 @@ export default function SessionDetail({ id }: SessionDetailProps) {
             </CardFooter>
           </Card>
         </div>
+      </div>
+      
+      {/* Sharing Section */}
+      {session.isEnrolled && (
+        <div className="mt-6">
+          <AchievementShare 
+            courseTitle={session.course.title}
+            courseCategory={session.course.category.name}
+            courseLevel={session.course.level}
+            variant="inline"
+          />
+        </div>
+      )}
+      
+      {/* Simple Share Section */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6 mt-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium">Partager cette session</h3>
+          <ShareIcon className="h-5 w-5 text-gray-500" />
+        </div>
+        
+        <p className="text-gray-600 mb-4">
+          Vous trouvez cette formation intéressante ? Partagez-la avec vos amis et collègues.
+        </p>
+        
+        <SocialShare 
+          title={session.course.title}
+          description={`Session de formation en ${session.course.category.name} le ${formatDate(session.date)} à ${formatTime(session.date)}. ${session.course.description.substring(0, 100)}...`}
+          variant="icons-only"
+        />
       </div>
       
       {/* Zoom Dialog */}

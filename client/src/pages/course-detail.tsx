@@ -7,7 +7,7 @@ interface SessionWithEnrollment extends SessionWithDetails {
 }
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Loader2, Calendar, Users, Clock, BarChart2, ArrowLeft } from "lucide-react";
+import { Loader2, Calendar, Users, Clock, BarChart2, ArrowLeft, ShareIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -20,6 +20,8 @@ import {
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { SocialShare } from "@/components/social-share";
+import { AchievementShare } from "@/components/achievement-share";
 
 interface CourseDetailProps {
   id: number;
@@ -381,16 +383,43 @@ export default function CourseDetail({ id }: CourseDetailProps) {
             </TabsContent>
           </Tabs>
           
+          {/* Social Sharing Section */}
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Share Standard */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium">Partager cette formation</h3>
+                <ShareIcon className="h-5 w-5 text-gray-500" />
+              </div>
+              
+              <p className="text-gray-600 mb-4">
+                Vous trouvez cette formation intéressante ? Partagez-la avec vos amis et collègues.
+              </p>
+              
+              <SocialShare 
+                title={course.title}
+                description={`Formation de ${formatDuration(course.duration)} en ${course.category.name}, niveau ${course.level}. ${course.description.substring(0, 100)}...`}
+                variant="default"
+              />
+            </div>
+            
+            {/* Share Achievement */}
+            {sessions.some(session => session.isEnrolled) && (
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <AchievementShare 
+                  courseTitle={course.title}
+                  courseCategory={course.category.name}
+                  courseLevel={course.level}
+                  variant="button"
+                  className="w-full"
+                />
+              </div>
+            )}
+          </div>
+
           {/* Course Actions */}
           <div className="mt-8 pt-6 border-t border-gray-200">
             <div className="flex flex-wrap gap-4 justify-end">
-              <Button 
-                variant="outline" 
-                onClick={() => window.open(`mailto:?subject=Découvrez cette formation: ${course.title}&body=J'ai trouvé cette formation intéressante sur TechFormPro: ${window.location.href}`, '_blank')}
-              >
-                Partager la formation
-              </Button>
-              
               {!user?.isSubscribed ? (
                 <Button 
                   onClick={() => setLocation("/subscription")}
