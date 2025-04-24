@@ -85,6 +85,13 @@ export interface IStorage {
     zoomApiKey?: string;
     zoomApiSecret?: string;
   }): Promise<void>;
+  
+  // Onboarding operations
+  getUserOnboarding(userId: number): Promise<UserOnboarding | undefined>;
+  createUserOnboarding(userId: number): Promise<UserOnboarding>;
+  updateUserOnboardingStep(userId: number, currentStep: string): Promise<UserOnboarding>;
+  completeUserOnboardingStep(userId: number, step: string): Promise<UserOnboarding>;
+  completeUserOnboarding(userId: number): Promise<UserOnboarding>;
 }
 
 // In-memory storage implementation
@@ -96,6 +103,7 @@ export class MemStorage implements IStorage {
   private enrollments: Map<number, Enrollment>;
   private notifications: Map<number, Notification>;
   private settings: Map<string, Setting>;
+  private userOnboardings: Map<number, UserOnboarding>;
   
   sessionStore: any;
   
@@ -105,6 +113,7 @@ export class MemStorage implements IStorage {
   private sessionIdCounter: number;
   private enrollmentIdCounter: number;
   private notificationIdCounter: number;
+  private onboardingIdCounter: number;
 
   constructor() {
     this.users = new Map();
@@ -114,6 +123,7 @@ export class MemStorage implements IStorage {
     this.enrollments = new Map();
     this.notifications = new Map();
     this.settings = new Map();
+    this.userOnboardings = new Map();
     
     this.userIdCounter = 1;
     this.categoryIdCounter = 1;
@@ -121,6 +131,7 @@ export class MemStorage implements IStorage {
     this.sessionIdCounter = 1;
     this.enrollmentIdCounter = 1;
     this.notificationIdCounter = 1;
+    this.onboardingIdCounter = 1;
     
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
