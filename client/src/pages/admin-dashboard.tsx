@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Users, BookOpen, CalendarDays, DollarSign, Settings, CreditCard, Video } from "lucide-react";
+import { Loader2, Users, BookOpen, CalendarDays, DollarSign, Settings, CreditCard, Video, BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
+import { DashboardCharts } from "@/components/dashboard-charts";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -257,6 +258,101 @@ export default function AdminDashboard() {
           <TabsTrigger value="sessions">Sessions</TabsTrigger>
           <TabsTrigger value="api-settings">API Settings</TabsTrigger>
         </TabsList>
+        
+        {/* Dashboard Tab Content */}
+        <TabsContent value="dashboard">
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <BarChart3 className="mr-2 h-5 w-5" />
+                Plateforme Analytics
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {(isUsersLoading || isCoursesLoading || isSessionsLoading) ? (
+                <div className="flex justify-center items-center py-20">
+                  <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                </div>
+              ) : (
+                <DashboardCharts 
+                  users={users || []} 
+                  courses={courses || []} 
+                  sessions={sessions || []} 
+                />
+              )}
+            </CardContent>
+          </Card>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Formations Populaires</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {courses?.slice(0, 5).map((course: any) => (
+                    <div key={course.id} className="flex items-start p-3 border rounded-lg">
+                      <div className="bg-blue-100 text-blue-700 p-3 rounded-md">
+                        <BookOpen className="h-5 w-5" />
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="font-medium">{course.title}</h3>
+                        <p className="text-sm text-gray-500">
+                          Niveau: {course.level === 'beginner' ? 'Débutant' : 
+                          course.level === 'intermediate' ? 'Intermédiaire' : 'Avancé'}
+                        </p>
+                        <div className="flex items-center mt-1">
+                          <Badge variant="outline" className="mr-2">
+                            {course.duration} min
+                          </Badge>
+                          <Badge variant="outline">
+                            {course.maxStudents} places
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Formateurs Actifs</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {trainers?.slice(0, 5).map((trainer: any) => {
+                    const trainerCourses = courses?.filter((c: any) => c.trainerId === trainer.id) || [];
+                    const sessionCount = sessions?.filter((s: any) => 
+                      trainerCourses.some((c: any) => c.id === s.courseId)
+                    ).length || 0;
+                    
+                    return (
+                      <div key={trainer.id} className="flex items-start p-3 border rounded-lg">
+                        <div className="bg-purple-100 text-purple-700 p-3 rounded-md">
+                          <Users className="h-5 w-5" />
+                        </div>
+                        <div className="ml-4">
+                          <h3 className="font-medium">{trainer.displayName}</h3>
+                          <p className="text-sm text-gray-500">{trainer.email}</p>
+                          <div className="flex items-center mt-1">
+                            <Badge variant="outline" className="mr-2">
+                              {trainerCourses.length} cours
+                            </Badge>
+                            <Badge variant="outline">
+                              {sessionCount} sessions
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
         
         {/* API Settings Tab Content */}
         <TabsContent value="api-settings">
