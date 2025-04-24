@@ -249,8 +249,9 @@ export default function AdminDashboard() {
       </div>
 
       {/* Main Tabs */}
-      <Tabs defaultValue="users" className="w-full" onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 mb-4">
+      <Tabs defaultValue="dashboard" className="w-full" onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-5 mb-4">
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="courses">Courses</TabsTrigger>
           <TabsTrigger value="sessions">Sessions</TabsTrigger>
