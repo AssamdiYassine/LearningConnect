@@ -14,6 +14,8 @@ import Subscription from "@/pages/subscription";
 import CourseDetail from "@/pages/course-detail";
 import LandingPage from "@/pages/landing-page";
 import AboutPage from "@/pages/about-page";
+import CreateCourse from "@/pages/create-course";
+import CreateSession from "@/pages/create-session";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { OnboardingProvider } from "./hooks/onboarding-provider";
@@ -57,6 +59,14 @@ function Router() {
       {/* Trainer routes */}
       <Route path="/trainer">
         <ProtectedRoute component={TrainerDashboard} allowedRoles={["trainer", "admin"]} />
+      </Route>
+      
+      <Route path="/create-course">
+        <ProtectedRoute component={CreateCourse} allowedRoles={["trainer", "admin"]} />
+      </Route>
+      
+      <Route path="/create-session">
+        <ProtectedRoute component={CreateSession} allowedRoles={["trainer", "admin"]} />
       </Route>
       
       {/* Admin routes */}
