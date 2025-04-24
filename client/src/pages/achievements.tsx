@@ -222,7 +222,7 @@ export default function Achievements() {
                 <Card key={cert.id} className="shadow-md border border-gray-200">
                   <CardHeader className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
                     <CardTitle className="flex items-center text-xl">
-                      <Certificate className="h-5 w-5 mr-2" />
+                      <GraduationCap className="h-5 w-5 mr-2" />
                       {cert.title}
                     </CardTitle>
                     <CardDescription className="text-indigo-100">
@@ -260,7 +260,7 @@ export default function Achievements() {
             </div>
           ) : (
             <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-100">
-              <Certificate className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <GraduationCap className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-medium text-gray-900">Aucun certificat</h3>
               <p className="mt-2 text-gray-600 max-w-md mx-auto">
                 Vous n'avez pas encore obtenu de certificat. Terminez des formations avancées pour obtenir des certificats.

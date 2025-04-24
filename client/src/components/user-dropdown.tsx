@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, Settings, LogOut } from "lucide-react";
+import { User, Settings, LogOut, Trophy } from "lucide-react";
 import { Link } from "wouter";
 
 export default function UserDropdown() {
@@ -51,6 +51,12 @@ export default function UserDropdown() {
           <DropdownMenuItem>
             <User className="mr-2 h-4 w-4" />
             <span>Profile</span>
+          </DropdownMenuItem>
+        </Link>
+        <Link href="/achievements">
+          <DropdownMenuItem>
+            <Trophy className="mr-2 h-4 w-4" />
+            <span>Mes accomplissements</span>
           </DropdownMenuItem>
         </Link>
         <Link href="/settings">

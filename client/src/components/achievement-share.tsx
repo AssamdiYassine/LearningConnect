@@ -1,7 +1,5 @@
-import React, { useState } from "react";
-import { SocialShare } from "@/components/social-share";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ShareIcon, Award, BadgeCheck } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,9 +9,27 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { formatDate } from "@/lib/utils";
+import { 
+  Share2, 
+  Linkedin, 
+  Facebook, 
+  Twitter, 
+  Mail, 
+  Copy, 
+  Check 
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { toast } from "@/hooks/use-toast";
 
 interface AchievementShareProps {
   courseTitle: string;
@@ -28,215 +44,274 @@ export function AchievementShare({
   courseTitle,
   courseCategory,
   courseLevel,
-  completionDate = new Date(),
+  completionDate,
   variant = "button",
-  className = "",
+  className
 }: AchievementShareProps) {
-  const [open, setOpen] = useState(false);
-  const [shareType, setShareType] = useState<"completion" | "participation" | "certification">("completion");
-  const [includeDetails, setIncludeDetails] = useState(true);
-  
+  const [socialPlatform, setSocialPlatform] = useState<string>("linkedin");
+  const [shareText, setShareText] = useState<string>("");
+  const [copied, setCopied] = useState(false);
+
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("fr-FR", {
       day: "numeric",
       month: "long",
-      year: "numeric",
+      year: "numeric"
     }).format(date);
   };
-  
-  // Generate appropriate message based on share type
-  const getShareTitle = () => {
-    switch (shareType) {
-      case "completion":
-        return `J'ai terminé la formation "${courseTitle}"`;
-      case "participation":
-        return `J'ai participé à la formation "${courseTitle}"`;
-      case "certification":
-        return `J'ai obtenu ma certification pour "${courseTitle}"`;
-    }
-  };
-  
-  const getShareDescription = () => {
-    if (!includeDetails) return "";
+
+  const generateShareText = (platform: string) => {
+    const dateText = completionDate ? ` le ${formatDate(completionDate)}` : "";
     
-    return `${getShareTitle()} sur TechFormPro le ${formatDate(completionDate)}. ${
-      shareType === "completion" || shareType === "certification" 
-        ? `Cette formation de niveau ${courseLevel} dans la catégorie ${courseCategory} m'a permis d'acquérir de nouvelles compétences.`
-        : `Cette formation de niveau ${courseLevel} dans la catégorie ${courseCategory} était très enrichissante.`
-    }`;
-  };
-  
-  // Get hashtags based on course category and level
-  const getHashtags = () => {
-    const tags = ["TechFormPro", "FormationIT", courseCategory.replace(/\s+/g, '')];
-    
-    switch (shareType) {
-      case "completion":
-        tags.push("Formation", "CompétencesNumériques");
+    let text = "";
+    switch (platform) {
+      case "linkedin":
+        text = `Heureux d'avoir terminé la formation "${courseTitle}" dans la catégorie ${courseCategory}${dateText}. #Formation #${courseCategory.replace(/\s+/g, "")} #DéveloppementProfessionnel`;
         break;
-      case "participation":
-        tags.push("Apprentissage", "DéveloppementProfessionnel");
+      case "twitter":
+        text = `Je viens de terminer la formation "${courseTitle}" (${courseLevel}) chez TechFormPro${dateText}! #Formation #${courseCategory.replace(/\s+/g, "")}`;
         break;
-      case "certification":
-        tags.push("Certification", "ReconnaissanceProfessionnelle");
+      case "facebook":
+        text = `Je viens de terminer avec succès la formation "${courseTitle}" chez TechFormPro${dateText}. Une étape importante dans mon parcours professionnel!`;
         break;
+      case "email":
+        text = `Bonjour,\n\nJe souhaitais partager avec vous que j'ai terminé la formation "${courseTitle}" dans la catégorie ${courseCategory} (niveau ${courseLevel})${dateText}.\n\nCette formation m'a permis d'acquérir de nouvelles compétences que je pourrai mettre à profit dans mes projets futurs.\n\nCordialement`;
+        break;
+      default:
+        text = `Formation "${courseTitle}" - ${courseCategory} (${courseLevel}) terminée${dateText}.`;
     }
     
-    return tags;
+    return text;
   };
-  
-  // Render inline version
-  if (variant === "inline") {
-    return (
-      <div className={`space-y-4 ${className}`}>
-        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-100">
-          <h3 className="text-lg font-medium flex items-center text-indigo-800 mb-3">
-            <Award className="h-5 w-5 mr-2 text-indigo-600" />
-            Félicitations pour votre accomplissement !
-          </h3>
-          <p className="text-gray-700 mb-4">
-            Partagez votre réussite avec votre réseau et valorisez vos nouvelles compétences.
-          </p>
-          
-          <SocialShare 
-            title={getShareTitle()}
-            description={getShareDescription()}
-            hashtags={getHashtags()}
-            achievementMode={true}
-            variant="default"
-          />
-        </div>
-      </div>
-    );
-  }
-  
-  // Render as dialog trigger button
+
+  const handlePlatformChange = (platform: string) => {
+    setSocialPlatform(platform);
+    setShareText(generateShareText(platform));
+  };
+
+  const handleShare = () => {
+    // Construction de l'URL avec les paramètres
+    const params = new URLSearchParams();
+    const baseUrl = window.location.origin;
+    const text = shareText || generateShareText(socialPlatform);
+    
+    let shareUrl = "";
+    
+    switch (socialPlatform) {
+      case "linkedin":
+        // LinkedIn partage est plus limité, utilise juste le texte et l'URL
+        params.append("url", `${baseUrl}/catalog`);
+        params.append("summary", text);
+        params.append("title", `Formation terminée : ${courseTitle}`);
+        params.append("source", "TechFormPro");
+        shareUrl = `https://www.linkedin.com/shareArticle?${params.toString()}`;
+        break;
+        
+      case "twitter":
+        params.append("text", text);
+        params.append("url", `${baseUrl}/catalog`);
+        shareUrl = `https://twitter.com/intent/tweet?${params.toString()}`;
+        break;
+        
+      case "facebook":
+        params.append("u", `${baseUrl}/catalog`);
+        params.append("quote", text);
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?${params.toString()}`;
+        break;
+        
+      case "email":
+        params.append("subject", `Formation terminée : ${courseTitle}`);
+        params.append("body", text);
+        shareUrl = `mailto:?${params.toString()}`;
+        break;
+        
+      case "copy":
+        navigator.clipboard.writeText(text).then(() => {
+          setCopied(true);
+          toast({
+            title: "Texte copié !",
+            description: "Le message a été copié dans le presse-papier.",
+          });
+          setTimeout(() => setCopied(false), 2000);
+        });
+        return;
+    }
+    
+    // Ouvre le lien de partage dans une nouvelle fenêtre
+    if (shareUrl && socialPlatform !== "copy") {
+      window.open(shareUrl, "_blank", "width=600,height=400");
+    }
+  };
+
+  const getShareIcon = () => {
+    switch (socialPlatform) {
+      case "linkedin":
+        return <Linkedin className="h-4 w-4 mr-2" />;
+      case "twitter":
+        return <Twitter className="h-4 w-4 mr-2" />;
+      case "facebook":
+        return <Facebook className="h-4 w-4 mr-2" />;
+      case "email":
+        return <Mail className="h-4 w-4 mr-2" />;
+      case "copy":
+        return copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />;
+      default:
+        return <Share2 className="h-4 w-4 mr-2" />;
+    }
+  };
+
+  const shareOptions = [
+    { value: "linkedin", label: "LinkedIn" },
+    { value: "twitter", label: "Twitter" },
+    { value: "facebook", label: "Facebook" },
+    { value: "email", label: "Email" },
+    { value: "copy", label: "Copier le texte" },
+  ];
+
+  // Pour le variant "button", on affiche juste un bouton qui ouvre le dialog
   if (variant === "button") {
     return (
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog>
         <DialogTrigger asChild>
           <Button 
             variant="outline" 
-            className={`flex items-center gap-2 ${className}`} 
-            onClick={() => setOpen(true)}
+            className={cn("text-sm", className)}
+            onClick={() => setShareText(generateShareText("linkedin"))}
           >
-            <ShareIcon className="h-4 w-4" />
-            Partager mon accomplissement
+            <Share2 className="h-4 w-4 mr-2" />
+            Partager cet accomplissement
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Partager votre accomplissement</DialogTitle>
-            <DialogDescription>
-              Valorisez votre parcours d'apprentissage en partageant cette formation avec votre réseau.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-6 py-4">
-            <div className="space-y-4">
-              <RadioGroup 
-                defaultValue="completion" 
-                value={shareType}
-                onValueChange={(val) => setShareType(val as "completion" | "participation" | "certification")}
-                className="grid grid-cols-1 gap-4"
-              >
-                <div className="flex items-center space-x-2 bg-white p-3 rounded-lg border border-gray-200 hover:border-indigo-300 transition-colors">
-                  <RadioGroupItem value="completion" id="completion" />
-                  <Label htmlFor="completion" className="flex items-center cursor-pointer">
-                    <BadgeCheck className="h-5 w-5 mr-2 text-green-600" />
-                    J'ai terminé cette formation
-                  </Label>
-                </div>
-                
-                <div className="flex items-center space-x-2 bg-white p-3 rounded-lg border border-gray-200 hover:border-indigo-300 transition-colors">
-                  <RadioGroupItem value="participation" id="participation" />
-                  <Label htmlFor="participation" className="flex items-center cursor-pointer">
-                    <ShareIcon className="h-5 w-5 mr-2 text-blue-600" />
-                    J'ai participé à cette formation
-                  </Label>
-                </div>
-                
-                <div className="flex items-center space-x-2 bg-white p-3 rounded-lg border border-gray-200 hover:border-indigo-300 transition-colors">
-                  <RadioGroupItem value="certification" id="certification" />
-                  <Label htmlFor="certification" className="flex items-center cursor-pointer">
-                    <Award className="h-5 w-5 mr-2 text-purple-600" />
-                    J'ai obtenu ma certification
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Switch 
-                id="include-details" 
-                checked={includeDetails}
-                onCheckedChange={setIncludeDetails}
-              />
-              <Label htmlFor="include-details">Inclure les détails de la formation</Label>
-            </div>
-            
-            <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-              <p className="text-sm text-gray-600 mb-2">Aperçu du message :</p>
-              <p className="text-sm font-medium text-gray-800">{getShareTitle()}</p>
-              {includeDetails && (
-                <p className="text-sm text-gray-600 mt-1">{getShareDescription()}</p>
-              )}
-            </div>
-            
-            <div>
-              <h4 className="text-sm font-medium mb-3">Partager via</h4>
-              <SocialShare 
-                title={getShareTitle()}
-                description={getShareDescription()}
-                hashtags={getHashtags()}
-                achievementMode={true}
-                variant="icons-only"
-              />
-            </div>
-          </div>
-          
-          <DialogFooter className="sm:justify-start">
-            <Button 
-              type="button" 
-              variant="secondary" 
-              onClick={() => setOpen(false)}
-            >
-              Fermer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
+        <ShareDialogContent 
+          courseTitle={courseTitle}
+          shareOptions={shareOptions}
+          socialPlatform={socialPlatform}
+          handlePlatformChange={handlePlatformChange}
+          shareText={shareText || generateShareText(socialPlatform)}
+          setShareText={setShareText}
+          handleShare={handleShare}
+          getShareIcon={getShareIcon}
+        />
       </Dialog>
     );
   }
-  
-  // Default dialog version
-  return (
-    <div className={className}>
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button variant="outline">
-            <ShareIcon className="h-4 w-4 mr-2" />
-            Partager mon accomplissement
+
+  // Pour le variant "inline", on affiche directement les boutons de partage
+  if (variant === "inline") {
+    return (
+      <div className={cn("flex flex-wrap gap-2", className)}>
+        {shareOptions.map((option) => (
+          <Button
+            key={option.value}
+            variant="outline"
+            size="sm"
+            className={cn(
+              "p-2 h-auto",
+              option.value === "linkedin" && "bg-[#0077B5]/10 hover:bg-[#0077B5]/20",
+              option.value === "twitter" && "bg-[#1DA1F2]/10 hover:bg-[#1DA1F2]/20",
+              option.value === "facebook" && "bg-[#4267B2]/10 hover:bg-[#4267B2]/20",
+              option.value === "email" && "bg-gray-100 hover:bg-gray-200",
+              option.value === "copy" && "bg-purple-100 hover:bg-purple-200",
+            )}
+            onClick={() => {
+              setSocialPlatform(option.value);
+              handleShare();
+            }}
+          >
+            {option.value === "linkedin" && <Linkedin className="h-4 w-4" />}
+            {option.value === "twitter" && <Twitter className="h-4 w-4" />}
+            {option.value === "facebook" && <Facebook className="h-4 w-4" />}
+            {option.value === "email" && <Mail className="h-4 w-4" />}
+            {option.value === "copy" && (copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />)}
           </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Partager votre accomplissement</DialogTitle>
-            <DialogDescription>
-              Valorisez votre parcours d'apprentissage en partageant cette formation avec votre réseau.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <SocialShare 
-              title={`J'ai terminé la formation "${courseTitle}"`}
-              description={`J'ai terminé la formation "${courseTitle}" sur TechFormPro le ${formatDate(completionDate)}. Cette formation de niveau ${courseLevel} dans la catégorie ${courseCategory} m'a permis d'acquérir de nouvelles compétences.`}
-              hashtags={["TechFormPro", "FormationIT", courseCategory.replace(/\s+/g, ''), "Formation"]}
-              achievementMode={true}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+        ))}
+      </div>
+    );
+  }
+
+  // Pour le variant "dialog", on affiche directement le dialog
+  return (
+    <Dialog defaultOpen>
+      <ShareDialogContent 
+        courseTitle={courseTitle}
+        shareOptions={shareOptions}
+        socialPlatform={socialPlatform}
+        handlePlatformChange={handlePlatformChange}
+        shareText={shareText || generateShareText(socialPlatform)}
+        setShareText={setShareText}
+        handleShare={handleShare}
+        getShareIcon={getShareIcon}
+      />
+    </Dialog>
+  );
+}
+
+// Composant pour le contenu du dialog de partage
+function ShareDialogContent({ 
+  courseTitle,
+  shareOptions,
+  socialPlatform,
+  handlePlatformChange,
+  shareText,
+  setShareText,
+  handleShare,
+  getShareIcon
+}: {
+  courseTitle: string;
+  shareOptions: { value: string; label: string }[];
+  socialPlatform: string;
+  handlePlatformChange: (platform: string) => void;
+  shareText: string;
+  setShareText: (text: string) => void;
+  handleShare: () => void;
+  getShareIcon: () => JSX.Element;
+}) {
+  return (
+    <DialogContent className="sm:max-w-lg">
+      <DialogHeader>
+        <DialogTitle>Partager votre accomplissement</DialogTitle>
+        <DialogDescription>
+          Partagez avec votre réseau que vous avez terminé la formation "{courseTitle}".
+        </DialogDescription>
+      </DialogHeader>
+      
+      <div className="grid gap-4 py-4">
+        <div className="grid gap-2">
+          <Label htmlFor="platform">Plateforme</Label>
+          <Select value={socialPlatform} onValueChange={handlePlatformChange}>
+            <SelectTrigger id="platform">
+              <SelectValue placeholder="Choisir une plateforme" />
+            </SelectTrigger>
+            <SelectContent>
+              {shareOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="grid gap-2">
+          <Label htmlFor="share-text">Message</Label>
+          <Textarea
+            id="share-text"
+            value={shareText}
+            onChange={(e) => setShareText(e.target.value)}
+            rows={5}
+            className="resize-none"
+          />
+        </div>
+      </div>
+      
+      <DialogFooter>
+        <Button onClick={handleShare} className="w-full sm:w-auto">
+          {getShareIcon()}
+          {socialPlatform === "copy" 
+            ? (copied ? "Copié !" : "Copier le texte") 
+            : `Partager sur ${shareOptions.find(o => o.value === socialPlatform)?.label}`}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
   );
 }
