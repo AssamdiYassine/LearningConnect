@@ -171,3 +171,35 @@ export type SessionWithDetails = Session & {
 export type SessionWithEnrollment = SessionWithDetails & {
   isEnrolled: boolean;
 };
+
+// Onboarding steps enum
+export const onboardingStepEnum = pgEnum("onboarding_step", [
+  "profile_completion",
+  "course_browsing",
+  "subscription_info",
+  "trainer_exploration",
+  "session_enrollment",
+  "completion"
+]);
+
+// User onboarding progress table
+export const userOnboarding = pgTable("user_onboarding", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  currentStep: onboardingStepEnum("current_step").notNull().default("profile_completion"),
+  completedSteps: text("completed_steps").array().notNull().default([]),
+  isCompleted: boolean("is_completed").notNull().default(false),
+  startedAt: timestamp("started_at").notNull().defaultNow(),
+  completedAt: timestamp("completed_at"),
+  lastUpdatedAt: timestamp("last_updated_at").notNull().defaultNow(),
+});
+
+// User onboarding type definitions
+export const insertUserOnboardingSchema = createInsertSchema(userOnboarding).omit({
+  id: true,
+  startedAt: true,
+  lastUpdatedAt: true,
+});
+
+export type UserOnboarding = typeof userOnboarding.$inferSelect;
+export type InsertUserOnboarding = z.infer<typeof insertUserOnboardingSchema>;
