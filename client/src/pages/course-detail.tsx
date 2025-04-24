@@ -99,7 +99,7 @@ export default function CourseDetail({ id }: CourseDetailProps) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Back Link */}
       <div>
         <Button 
@@ -107,13 +107,13 @@ export default function CourseDetail({ id }: CourseDetailProps) {
           className="pl-0 text-gray-600" 
           onClick={() => setLocation("/catalog")}
         >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Catalog
+          <ArrowLeft className="mr-2 h-4 w-4" /> Retour au catalogue
         </Button>
       </div>
       
-      {/* Course Header */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="relative h-64">
+      {/* Course Header - Modernized */}
+      <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+        <div className="relative h-56 sm:h-64 md:h-80">
           <img 
             className="absolute h-full w-full object-cover" 
             src={`https://images.unsplash.com/photo-${id % 5 === 0 
@@ -127,77 +127,157 @@ export default function CourseDetail({ id }: CourseDetailProps) {
                     : "1551434678-e076c223a692"}?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80`} 
             alt={course.title} 
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-60"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-80"></div>
           <div className="absolute bottom-0 left-0 p-6 text-white">
-            <Badge className={getCategoryBadgeColor(course.category.name)}>
+            <Badge className={`${getCategoryBadgeColor(course.category.name)} shadow-lg`}>
               {course.category.name}
             </Badge>
-            <h1 className="text-3xl font-bold mt-2 font-heading">{course.title}</h1>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mt-2 font-heading drop-shadow-md">{course.title}</h1>
           </div>
         </div>
-        <div className="p-6">
-          <div className="flex flex-wrap gap-6 mb-6">
-            <div className="flex items-center">
-              <Users className="h-5 w-5 text-gray-400 mr-2" />
-              <span className="text-gray-700">Trainer: {course.trainer.displayName}</span>
+        
+        {/* Course Meta - Improved layout */}
+        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 py-3 px-6">
+          <div className="flex flex-wrap gap-4 sm:gap-6 items-center justify-between">
+            <div className="flex items-center bg-white px-3 py-1.5 rounded-full shadow-sm">
+              <Users className="h-5 w-5 text-indigo-500 mr-2" />
+              <span className="text-gray-700 font-medium">Formateur: <span className="text-indigo-700">{course.trainer.displayName}</span></span>
             </div>
-            <div className="flex items-center">
-              <BarChart2 className="h-5 w-5 text-gray-400 mr-2" />
-              <span className="text-gray-700 capitalize">Level: {course.level}</span>
+            <div className="flex items-center bg-white px-3 py-1.5 rounded-full shadow-sm">
+              <BarChart2 className="h-5 w-5 text-indigo-500 mr-2" />
+              <span className="text-gray-700 font-medium capitalize">Niveau: <span className="text-indigo-700">{course.level}</span></span>
             </div>
-            <div className="flex items-center">
-              <Clock className="h-5 w-5 text-gray-400 mr-2" />
-              <span className="text-gray-700">Duration: {formatDuration(course.duration)}</span>
+            <div className="flex items-center bg-white px-3 py-1.5 rounded-full shadow-sm">
+              <Clock className="h-5 w-5 text-indigo-500 mr-2" />
+              <span className="text-gray-700 font-medium">Durée: <span className="text-indigo-700">{formatDuration(course.duration)}</span></span>
             </div>
           </div>
-          
+        </div>
+        
+        <div className="p-6">
           {/* Course Description */}
-          <Tabs defaultValue="description">
-            <TabsList className="mb-6">
-              <TabsTrigger value="description">Description</TabsTrigger>
-              <TabsTrigger value="sessions">
-                Upcoming Sessions ({sortedSessions.length})
+          <Tabs defaultValue="description" className="w-full">
+            <TabsList className="mb-6 w-full justify-start lg:w-auto">
+              <TabsTrigger value="description" className="text-base">Description</TabsTrigger>
+              <TabsTrigger value="sessions" className="text-base">
+                Sessions à venir ({sortedSessions.length})
               </TabsTrigger>
             </TabsList>
             
             <TabsContent value="description">
               <div className="prose max-w-none">
-                <h2 className="text-xl font-semibold mb-4">About this course</h2>
+                <h2 className="text-xl font-semibold mb-4 text-indigo-800">À propos de cette formation</h2>
                 <p className="text-gray-700 whitespace-pre-line">{course.description}</p>
                 
-                <div className="mt-8">
-                  <h3 className="text-lg font-semibold mb-3">What you'll learn</h3>
-                  <ul className="list-disc pl-5 space-y-2">
-                    {/* This would typically be a structured field in the database */}
-                    <li>In-depth understanding of {course.title} concepts</li>
-                    <li>Practical hands-on experience through live training</li>
-                    <li>Industry best practices and real-world applications</li>
-                    <li>Direct interaction with expert trainers</li>
+                <div className="mt-8 bg-indigo-50 p-6 rounded-lg border border-indigo-100">
+                  <h3 className="text-lg font-semibold mb-3 text-indigo-800">Ce que vous apprendrez</h3>
+                  <ul className="list-none space-y-3">
+                    <li className="flex items-start">
+                      <div className="bg-indigo-500 rounded-full p-1 mt-1 mr-3">
+                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span>Compréhension approfondie des concepts de {course.title}</span>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="bg-indigo-500 rounded-full p-1 mt-1 mr-3">
+                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span>Expérience pratique à travers des formations en direct</span>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="bg-indigo-500 rounded-full p-1 mt-1 mr-3">
+                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span>Meilleures pratiques et applications du monde réel</span>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="bg-indigo-500 rounded-full p-1 mt-1 mr-3">
+                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span>Interaction directe avec des formateurs experts</span>
+                    </li>
                   </ul>
                 </div>
                 
-                <div className="mt-8">
-                  <h3 className="text-lg font-semibold mb-3">Who this course is for</h3>
-                  <ul className="list-disc pl-5 space-y-2">
+                <div className="mt-8 bg-purple-50 p-6 rounded-lg border border-purple-100">
+                  <h3 className="text-lg font-semibold mb-3 text-purple-800">À qui s'adresse cette formation</h3>
+                  <ul className="list-none space-y-3">
                     {course.level === "beginner" && (
                       <>
-                        <li>Complete beginners with no prior experience</li>
-                        <li>Those looking to build a foundation in {course.category.name}</li>
+                        <li className="flex items-start">
+                          <div className="bg-purple-500 rounded-full p-1 mt-1 mr-3">
+                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                          <span>Débutants complets sans expérience préalable</span>
+                        </li>
+                        <li className="flex items-start">
+                          <div className="bg-purple-500 rounded-full p-1 mt-1 mr-3">
+                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                          <span>Personnes cherchant à construire une base en {course.category.name}</span>
+                        </li>
                       </>
                     )}
                     {course.level === "intermediate" && (
                       <>
-                        <li>Those with basic knowledge of the subject</li>
-                        <li>Professionals looking to enhance their skills</li>
+                        <li className="flex items-start">
+                          <div className="bg-purple-500 rounded-full p-1 mt-1 mr-3">
+                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                          <span>Personnes ayant des connaissances de base sur le sujet</span>
+                        </li>
+                        <li className="flex items-start">
+                          <div className="bg-purple-500 rounded-full p-1 mt-1 mr-3">
+                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                          <span>Professionnels cherchant à améliorer leurs compétences</span>
+                        </li>
                       </>
                     )}
                     {course.level === "advanced" && (
                       <>
-                        <li>Experienced professionals seeking to master advanced concepts</li>
-                        <li>Those looking to specialize in specific aspects of {course.category.name}</li>
+                        <li className="flex items-start">
+                          <div className="bg-purple-500 rounded-full p-1 mt-1 mr-3">
+                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                          <span>Professionnels expérimentés cherchant à maîtriser des concepts avancés</span>
+                        </li>
+                        <li className="flex items-start">
+                          <div className="bg-purple-500 rounded-full p-1 mt-1 mr-3">
+                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                          <span>Personnes souhaitant se spécialiser dans certains aspects de {course.category.name}</span>
+                        </li>
                       </>
                     )}
-                    <li>Professionals who prefer live interactive training</li>
+                    <li className="flex items-start">
+                      <div className="bg-purple-500 rounded-full p-1 mt-1 mr-3">
+                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span>Professionnels qui préfèrent une formation interactive en direct</span>
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -205,65 +285,90 @@ export default function CourseDetail({ id }: CourseDetailProps) {
             
             <TabsContent value="sessions">
               {sortedSessions.length > 0 ? (
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {sortedSessions.map((session) => (
-                    <div key={session.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                        <div>
+                    <div 
+                      key={session.id} 
+                      className="bg-white border border-gray-200 hover:border-indigo-300 rounded-lg p-4 transition-all duration-300 hover:shadow-md"
+                    >
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div className="space-y-3 w-full sm:w-auto">
                           <div className="flex items-center text-gray-700">
-                            <Calendar className="h-5 w-5 text-gray-400 mr-2" />
-                            <span>{formatDate(session.date)}, {formatTime(session.date)}</span>
+                            <Calendar className="h-5 w-5 text-indigo-500 mr-2 flex-shrink-0" />
+                            <span className="font-medium">{formatDate(session.date)}, {formatTime(session.date)}</span>
                           </div>
-                          <div className="flex items-center mt-2 text-gray-700">
-                            <Users className="h-5 w-5 text-gray-400 mr-2" />
-                            <span>
-                              {session.enrollmentCount} / {course.maxStudents} students enrolled
-                            </span>
+                          <div className="flex items-center text-gray-700">
+                            <Users className="h-5 w-5 text-indigo-500 mr-2 flex-shrink-0" />
+                            <div className="flex-1">
+                              <div className="text-sm font-medium">
+                                <span>{session.enrollmentCount} / {course.maxStudents} élèves inscrits</span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                                <div 
+                                  className={`h-2 rounded-full ${session.enrollmentCount >= course.maxStudents 
+                                    ? 'bg-red-500' 
+                                    : session.enrollmentCount > course.maxStudents / 2 
+                                      ? 'bg-orange-500' 
+                                      : 'bg-green-500'}`}
+                                  style={{ width: `${(session.enrollmentCount / course.maxStudents) * 100}%` }}
+                                ></div>
+                              </div>
+                            </div>
                           </div>
                         </div>
                         
-                        {session.isEnrolled ? (
-                          <Button variant="outline" disabled>
-                            Déjà inscrit
-                          </Button>
-                        ) : !user?.isSubscribed ? (
-                          <Button 
-                            onClick={() => setLocation("/subscription")}
-                            variant="default"
-                            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                          >
-                            S'abonner pour accéder
-                          </Button>
-                        ) : (
-                          <Button 
-                            onClick={() => handleEnroll(session.id)}
-                            disabled={
-                              enrollMutation.isPending || 
-                              session.enrollmentCount >= course.maxStudents
-                            }
-                          >
-                            {enrollMutation.isPending 
-                              ? "Inscription..." 
-                              : session.enrollmentCount >= course.maxStudents 
-                                ? "Session complète" 
-                                : "S'inscrire maintenant"
-                            }
-                          </Button>
-                        )}
+                        <div className="w-full sm:w-auto">
+                          {session.isEnrolled ? (
+                            <Button 
+                              variant="outline" 
+                              className="w-full sm:w-auto border-green-500 text-green-700 bg-green-50 hover:bg-green-100"
+                              disabled
+                            >
+                              <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              Déjà inscrit
+                            </Button>
+                          ) : !user?.isSubscribed ? (
+                            <Button 
+                              onClick={() => setLocation("/subscription")}
+                              variant="default"
+                              className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                            >
+                              S'abonner pour accéder
+                            </Button>
+                          ) : (
+                            <Button 
+                              onClick={() => handleEnroll(session.id)}
+                              disabled={
+                                enrollMutation.isPending || 
+                                session.enrollmentCount >= course.maxStudents
+                              }
+                              className="w-full sm:w-auto"
+                            >
+                              {enrollMutation.isPending 
+                                ? "Inscription..." 
+                                : session.enrollmentCount >= course.maxStudents 
+                                  ? "Session complète" 
+                                  : "S'inscrire maintenant"
+                              }
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 bg-gray-50 rounded-lg">
-                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900">No upcoming sessions</h3>
-                  <p className="mt-2 text-gray-600">
-                    There are currently no scheduled sessions for this course.
-                    Check back soon for updates or browse other courses.
+                <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-100">
+                  <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-medium text-gray-900">Aucune session à venir</h3>
+                  <p className="mt-2 text-gray-600 max-w-md mx-auto">
+                    Il n'y a actuellement aucune session programmée pour cette formation.
+                    Revenez bientôt pour les mises à jour ou parcourez d'autres formations.
                   </p>
-                  <Button className="mt-4" onClick={() => setLocation("/catalog")}>
-                    Browse Other Courses
+                  <Button className="mt-6" onClick={() => setLocation("/catalog")}>
+                    Parcourir d'autres formations
                   </Button>
                 </div>
               )}
@@ -275,16 +380,16 @@ export default function CourseDetail({ id }: CourseDetailProps) {
             <div className="flex flex-wrap gap-4 justify-end">
               <Button 
                 variant="outline" 
-                onClick={() => window.open(`mailto:?subject=Check out this course: ${course.title}&body=I found this interesting course on TechFormPro: ${window.location.href}`, '_blank')}
+                onClick={() => window.open(`mailto:?subject=Découvrez cette formation: ${course.title}&body=J'ai trouvé cette formation intéressante sur TechFormPro: ${window.location.href}`, '_blank')}
               >
-                Share Course
+                Partager la formation
               </Button>
               
               {!user?.isSubscribed ? (
                 <Button 
                   onClick={() => setLocation("/subscription")}
                   variant="default"
-                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg"
                 >
                   S'abonner pour accéder
                 </Button>
@@ -296,6 +401,7 @@ export default function CourseDetail({ id }: CourseDetailProps) {
                       enrollMutation.isPending || 
                       sortedSessions[0].enrollmentCount >= course.maxStudents
                     }
+                    className="shadow-lg"
                   >
                     {enrollMutation.isPending 
                       ? "Inscription..." 
