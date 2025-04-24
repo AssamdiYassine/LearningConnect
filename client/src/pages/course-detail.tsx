@@ -224,7 +224,15 @@ export default function CourseDetail({ id }: CourseDetailProps) {
                         
                         {session.isEnrolled ? (
                           <Button variant="outline" disabled>
-                            Already Enrolled
+                            Déjà inscrit
+                          </Button>
+                        ) : !user?.isSubscribed ? (
+                          <Button 
+                            onClick={() => setLocation("/subscription")}
+                            variant="default"
+                            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                          >
+                            S'abonner pour accéder
                           </Button>
                         ) : (
                           <Button 
@@ -235,10 +243,10 @@ export default function CourseDetail({ id }: CourseDetailProps) {
                             }
                           >
                             {enrollMutation.isPending 
-                              ? "Enrolling..." 
+                              ? "Inscription..." 
                               : session.enrollmentCount >= course.maxStudents 
-                                ? "Session Full" 
-                                : "Enroll Now"
+                                ? "Session complète" 
+                                : "S'inscrire maintenant"
                             }
                           </Button>
                         )}
@@ -272,21 +280,31 @@ export default function CourseDetail({ id }: CourseDetailProps) {
                 Share Course
               </Button>
               
-              {sortedSessions.length > 0 && !sortedSessions[0].isEnrolled && (
+              {!user?.isSubscribed ? (
                 <Button 
-                  onClick={() => handleEnroll(sortedSessions[0].id)}
-                  disabled={
-                    enrollMutation.isPending || 
-                    sortedSessions[0].enrollmentCount >= course.maxStudents
-                  }
+                  onClick={() => setLocation("/subscription")}
+                  variant="default"
+                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
                 >
-                  {enrollMutation.isPending 
-                    ? "Enrolling..." 
-                    : sortedSessions[0].enrollmentCount >= course.maxStudents 
-                      ? "Session Full" 
-                      : "Enroll in Next Session"
-                  }
+                  S'abonner pour accéder
                 </Button>
+              ) : (
+                sortedSessions.length > 0 && !sortedSessions[0].isEnrolled && (
+                  <Button 
+                    onClick={() => handleEnroll(sortedSessions[0].id)}
+                    disabled={
+                      enrollMutation.isPending || 
+                      sortedSessions[0].enrollmentCount >= course.maxStudents
+                    }
+                  >
+                    {enrollMutation.isPending 
+                      ? "Inscription..." 
+                      : sortedSessions[0].enrollmentCount >= course.maxStudents 
+                        ? "Session complète" 
+                        : "S'inscrire à la prochaine session"
+                    }
+                  </Button>
+                )
               )}
             </div>
           </div>

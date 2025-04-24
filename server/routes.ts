@@ -552,16 +552,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to complete onboarding" });
     }
   });
-  
-  app.post("/api/onboarding/complete", isAuthenticated, async (req, res) => {
-    try {
-      const userId = req.user!.id;
-      const onboarding = await storage.completeUserOnboarding(userId);
-      res.json(onboarding);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to complete onboarding" });
-    }
-  });
 
   // Create HTTP server
   const httpServer = createServer(app);
