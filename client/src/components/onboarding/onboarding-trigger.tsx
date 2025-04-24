@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/card';
 
 interface OnboardingTriggerProps {
-  variant?: 'button' | 'card' | 'inline';
+  variant?: 'button' | 'card' | 'inline' | 'default' | 'outline';
   className?: string;
 }
 
@@ -87,7 +87,35 @@ const OnboardingTrigger = ({
     );
   }
 
-  // Default button variant
+  if (variant === 'outline') {
+    return (
+      <Button 
+        onClick={handleStartOnboarding} 
+        variant="outline"
+        size="sm"
+        className={className}
+      >
+        <HelpCircle className="mr-2 h-4 w-4" />
+        Platform Tour
+      </Button>
+    );
+  }
+  
+  if (variant === 'default') {
+    return (
+      <Button 
+        onClick={handleStartOnboarding} 
+        variant="default"
+        size="sm"
+        className={className}
+      >
+        <HelpCircle className="mr-2 h-4 w-4" />
+        Platform Tour
+      </Button>
+    );
+  }
+  
+  // Default 'button' variant
   return (
     <Button 
       onClick={handleStartOnboarding} 
