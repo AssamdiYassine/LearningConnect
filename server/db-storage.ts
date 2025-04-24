@@ -7,7 +7,8 @@ import {
   Enrollment, InsertEnrollment, 
   Notification, InsertNotification, 
   Setting, InsertSetting,
-  users, courses, categories, sessions, enrollments, notifications, settings,
+  UserOnboarding, InsertUserOnboarding,
+  users, courses, categories, sessions, enrollments, notifications, settings, userOnboarding,
   CourseWithDetails, SessionWithDetails
 } from "@shared/schema";
 import { eq, and, gte, desc, sql } from "drizzle-orm";
@@ -459,5 +460,95 @@ export class DatabaseStorage implements IStorage {
         await this.upsertSetting(key, value, "api");
       }
     }
+  }
+
+  // Onboarding operations
+  async getUserOnboarding(userId: number): Promise<UserOnboarding | undefined> {
+    const [onboarding] = await db
+      .select()
+      .from(userOnboarding)
+      .where(eq(userOnboarding.userId, userId));
+    return onboarding;
+  }
+
+  async createUserOnboarding(userId: number): Promise<UserOnboarding> {
+    // Check if onboarding already exists
+    const existingOnboarding = await this.getUserOnboarding(userId);
+    if (existingOnboarding) {
+      return existingOnboarding;
+    }
+
+    // Create new onboarding record
+    const [newOnboarding] = await db
+      .insert(userOnboarding)
+      .values({
+        userId,
+        currentStep: "profile_completion",
+        completedSteps: [],
+        isCompleted: false
+      })
+      .returning();
+    
+    return newOnboarding;
+  }
+
+  async updateUserOnboardingStep(userId: number, currentStep: string): Promise<UserOnboarding> {
+    const [updated] = await db
+      .update(userOnboarding)
+      .set({
+        currentStep: currentStep as any, // Type casting
+        lastUpdatedAt: new Date()
+      })
+      .where(eq(userOnboarding.userId, userId))
+      .returning();
+    
+    if (!updated) {
+      throw new Error("Onboarding not found for user");
+    }
+    
+    return updated;
+  }
+
+  async completeUserOnboardingStep(userId: number, step: string): Promise<UserOnboarding> {
+    const onboarding = await this.getUserOnboarding(userId);
+    if (!onboarding) {
+      throw new Error("Onboarding not found for user");
+    }
+    
+    // Add step to completed steps if it's not already there
+    const completedSteps = [...onboarding.completedSteps];
+    if (!completedSteps.includes(step)) {
+      completedSteps.push(step);
+    }
+    
+    // Update the onboarding record
+    const [updated] = await db
+      .update(userOnboarding)
+      .set({
+        completedSteps,
+        lastUpdatedAt: new Date()
+      })
+      .where(eq(userOnboarding.userId, userId))
+      .returning();
+    
+    return updated;
+  }
+
+  async completeUserOnboarding(userId: number): Promise<UserOnboarding> {
+    const [updated] = await db
+      .update(userOnboarding)
+      .set({
+        isCompleted: true,
+        completedAt: new Date(),
+        lastUpdatedAt: new Date()
+      })
+      .where(eq(userOnboarding.userId, userId))
+      .returning();
+    
+    if (!updated) {
+      throw new Error("Onboarding not found for user");
+    }
+    
+    return updated;
   }
 }
