@@ -17,7 +17,7 @@ const MemoryStore = createMemoryStore(session);
 // Interface for the storage implementation
 export interface IStorage {
   // Session store for authentication
-  sessionStore: session.SessionStore;
+  sessionStore: any;
 
   // User operations
   getUser(id: number): Promise<User | undefined>;
@@ -97,7 +97,7 @@ export class MemStorage implements IStorage {
   private notifications: Map<number, Notification>;
   private settings: Map<string, Setting>;
   
-  sessionStore: session.SessionStore;
+  sessionStore: any;
   
   private userIdCounter: number;
   private categoryIdCounter: number;
@@ -268,7 +268,12 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userIdCounter++;
-    const user: User = { ...insertUser, id };
+    const user: User = { 
+      ...insertUser, 
+      id,
+      stripeCustomerId: null,
+      stripeSubscriptionId: null
+    };
     this.users.set(id, user);
     return user;
   }
@@ -293,8 +298,8 @@ export class MemStorage implements IStorage {
     const updatedUser = { 
       ...user, 
       isSubscribed, 
-      subscriptionType: type as "monthly" | "annual" | undefined,
-      subscriptionEndDate: endDate
+      subscriptionType: type as "monthly" | "annual" | null,
+      subscriptionEndDate: endDate || null
     };
     this.users.set(id, updatedUser);
     return updatedUser;
@@ -554,9 +559,7 @@ export class MemStorage implements IStorage {
       }
     }
     
-    return sessions.sort((a, b) => 
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
+    return sessions;
   }
 
   // Notification operations
@@ -565,7 +568,8 @@ export class MemStorage implements IStorage {
     const newNotification: Notification = { 
       ...notification, 
       id, 
-      createdAt: new Date() 
+      createdAt: new Date(),
+      isRead: notification.isRead || false
     };
     this.notifications.set(id, newNotification);
     return newNotification;

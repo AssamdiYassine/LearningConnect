@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
-import { storage } from "./storage";
+import { storage } from "./storage_fixed";
 import { z } from "zod";
 import { 
   insertCourseSchema, 
@@ -459,6 +459,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(userWithoutPassword);
     } catch (error) {
       res.status(500).json({ message: "Failed to cancel subscription" });
+    }
+  });
+
+  // API settings routes
+  app.get("/api/settings/api", hasRole(["admin"]), async (req, res) => {
+    try {
+      const apiSettings = await storage.getApiSettings();
+      res.json(apiSettings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch API settings" });
+    }
+  });
+
+  app.post("/api/settings/api", hasRole(["admin"]), async (req, res) => {
+    try {
+      const { stripePublicKey, stripeSecretKey, zoomApiKey, zoomApiSecret } = req.body;
+      
+      await storage.saveApiSettings({
+        stripePublicKey,
+        stripeSecretKey,
+        zoomApiKey,
+        zoomApiSecret
+      });
+      
+      res.json({ message: "API settings saved successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to save API settings" });
     }
   });
 
