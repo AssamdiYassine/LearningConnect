@@ -11,7 +11,7 @@ export default function Layout({ children }: LayoutProps) {
   const { user, isLoading } = useAuth();
   
   // Don't show the layout on the auth page
-  if (!user && !isLoading && window.location.pathname === "/auth") {
+  if (window.location.pathname === "/auth") {
     return <>{children}</>;
   }
 
