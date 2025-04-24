@@ -289,7 +289,8 @@ export default function CourseDetail({ id }: CourseDetailProps) {
                   {sortedSessions.map((session) => (
                     <div 
                       key={session.id} 
-                      className="bg-white border border-gray-200 hover:border-indigo-300 rounded-lg p-4 transition-all duration-300 hover:shadow-md"
+                      className="bg-white border border-gray-200 hover:border-indigo-300 rounded-lg p-4 transition-all duration-300 hover:shadow-md cursor-pointer"
+                      onClick={() => setLocation(`/session/${session.id}`)}
                     >
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div className="space-y-3 w-full sm:w-auto">

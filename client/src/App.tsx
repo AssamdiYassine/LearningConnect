@@ -13,6 +13,7 @@ import Schedule from "@/pages/schedule";
 import Subscription from "@/pages/subscription";
 import Checkout from "@/pages/checkout";
 import CourseDetail from "@/pages/course-detail";
+import SessionDetail from "@/pages/session-detail";
 import LandingPage from "@/pages/landing-page";
 import AboutPage from "@/pages/about-page";
 import CreateCourse from "@/pages/create-course";
@@ -56,6 +57,15 @@ function Router() {
         {params => (
           <ProtectedRoute 
             component={() => <CourseDetail id={parseInt(params.id)} />} 
+            allowedRoles={["student", "trainer", "admin"]} 
+          />
+        )}
+      </Route>
+      
+      <Route path="/session/:id">
+        {params => (
+          <ProtectedRoute 
+            component={() => <SessionDetail id={parseInt(params.id)} />} 
             allowedRoles={["student", "trainer", "admin"]} 
           />
         )}
