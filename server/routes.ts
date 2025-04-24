@@ -489,6 +489,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Onboarding routes
+  app.get("/api/onboarding", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const onboarding = await storage.getUserOnboarding(userId);
+      res.json(onboarding || null);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch onboarding status" });
+    }
+  });
+  
+  app.post("/api/onboarding/start", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      // Create or get existing onboarding record
+      const onboarding = await storage.createUserOnboarding(userId);
+      res.json(onboarding);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to start onboarding" });
+    }
+  });
+  
+  app.post("/api/onboarding/step", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { step } = req.body;
+      
+      if (!step || typeof step !== 'string') {
+        return res.status(400).json({ message: "Valid step parameter is required" });
+      }
+      
+      const onboarding = await storage.updateUserOnboardingStep(userId, step);
+      res.json(onboarding);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update onboarding step" });
+    }
+  });
+  
+  app.post("/api/onboarding/complete-step", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { step } = req.body;
+      
+      if (!step || typeof step !== 'string') {
+        return res.status(400).json({ message: "Valid step parameter is required" });
+      }
+      
+      const onboarding = await storage.completeUserOnboardingStep(userId, step);
+      res.json(onboarding);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to complete onboarding step" });
+    }
+  });
+  
+  app.post("/api/onboarding/complete", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const onboarding = await storage.completeUserOnboarding(userId);
+      res.json(onboarding);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to complete onboarding" });
+    }
+  });
+
   // Create HTTP server
   const httpServer = createServer(app);
 
