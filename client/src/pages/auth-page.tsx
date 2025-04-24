@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useAuth } from "@/hooks/use-auth";
 import { Redirect } from "wouter";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle2, UserCircle, Mail, LockKeyhole, User } from "lucide-react";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -74,253 +74,260 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen py-12 bg-gray-50">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-primary-50 to-secondary-50 p-4">
+      <div className="container max-w-7xl mx-auto">
         <div className="flex flex-col items-center justify-center">
-          <div className="text-4xl font-bold text-primary-600 mb-8 font-heading">TechFormPro</div>
+          <div className="text-5xl font-bold text-primary-600 mb-8 tracking-tight">TechFormPro</div>
           
-          <div className="flex flex-col lg:flex-row w-full max-w-6xl gap-8">
+          <div className="flex flex-col lg:flex-row w-full max-w-6xl rounded-3xl overflow-hidden shadow-2xl bg-white">
             {/* Left Column - Auth Forms */}
-            <div className="w-full lg:w-1/2">
+            <div className="w-full lg:w-1/2 p-8 md:p-12">
+              <h2 className="text-2xl font-semibold mb-6 text-center lg:text-left">Bienvenue</h2>
+              
               <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="login">Login</TabsTrigger>
-                  <TabsTrigger value="register">Create Account</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 mb-8 bg-primary-50">
+                  <TabsTrigger value="login" className="text-base py-3">Connexion</TabsTrigger>
+                  <TabsTrigger value="register" className="text-base py-3">S'inscrire</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="login">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Login to your account</CardTitle>
-                      <CardDescription>
-                        Enter your credentials to access the platform
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Form {...loginForm}>
-                        <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
-                          <FormField
-                            control={loginForm.control}
-                            name="username"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Username</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Enter your username" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={loginForm.control}
-                            name="password"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Password</FormLabel>
-                                <FormControl>
-                                  <Input type="password" placeholder="Enter your password" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <Button 
-                            type="submit" 
-                            className="w-full"
-                            disabled={loginMutation.isPending}
-                          >
-                            {loginMutation.isPending ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Please wait
-                              </>
-                            ) : (
-                              "Login"
-                            )}
-                          </Button>
-                        </form>
-                      </Form>
-                    </CardContent>
-                    <CardFooter className="flex flex-col items-center text-sm text-gray-600">
-                      <div className="mt-2">
-                        <span>Demo accounts: </span>
-                        <Button variant="link" size="sm" onClick={() => {
-                          loginForm.setValue("username", "student");
-                          loginForm.setValue("password", "Etudiant123");
-                        }}>
-                          Student
-                        </Button>
-                        <Button variant="link" size="sm" onClick={() => {
-                          loginForm.setValue("username", "trainer");
-                          loginForm.setValue("password", "Formateur123");
-                        }}>
-                          Trainer
-                        </Button>
-                        <Button variant="link" size="sm" onClick={() => {
-                          loginForm.setValue("username", "admin");
-                          loginForm.setValue("password", "Admin123");
-                        }}>
-                          Admin
-                        </Button>
-                      </div>
-                    </CardFooter>
-                  </Card>
+                  <Form {...loginForm}>
+                    <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-5">
+                      <FormField
+                        control={loginForm.control}
+                        name="username"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-base">Nom d'utilisateur</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <UserCircle className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                                <Input 
+                                  placeholder="Entrez votre nom d'utilisateur" 
+                                  className="pl-10 py-6" 
+                                  {...field} 
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={loginForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-base">Mot de passe</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <LockKeyhole className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                                <Input 
+                                  type="password" 
+                                  placeholder="Entrez votre mot de passe" 
+                                  className="pl-10 py-6" 
+                                  {...field} 
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <Button 
+                        type="submit" 
+                        className="w-full py-6 text-base font-medium mt-2"
+                        disabled={loginMutation.isPending}
+                      >
+                        {loginMutation.isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                            Connexion en cours...
+                          </>
+                        ) : (
+                          "Se connecter"
+                        )}
+                      </Button>
+                    </form>
+                  </Form>
+                  
+                  <div className="mt-8 text-center text-sm text-muted-foreground">
+                    <p className="mb-3 font-medium">Comptes de démonstration</p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => {
+                        loginForm.setValue("username", "student");
+                        loginForm.setValue("password", "Etudiant123");
+                      }}>
+                        Étudiant
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => {
+                        loginForm.setValue("username", "trainer");
+                        loginForm.setValue("password", "Formateur123");
+                      }}>
+                        Formateur
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => {
+                        loginForm.setValue("username", "admin");
+                        loginForm.setValue("password", "Admin123");
+                      }}>
+                        Admin
+                      </Button>
+                    </div>
+                  </div>
                 </TabsContent>
                 
                 <TabsContent value="register">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Create a new account</CardTitle>
-                      <CardDescription>
-                        Enter your information to register
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Form {...registerForm}>
-                        <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
-                          <FormField
-                            control={registerForm.control}
-                            name="displayName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Full Name</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Enter your full name" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={registerForm.control}
-                            name="username"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Username</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Choose a username" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={registerForm.control}
-                            name="email"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Email</FormLabel>
-                                <FormControl>
-                                  <Input type="email" placeholder="Enter your email" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={registerForm.control}
-                            name="password"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Password</FormLabel>
-                                <FormControl>
-                                  <Input type="password" placeholder="Create a password" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={registerForm.control}
-                            name="confirmPassword"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Confirm Password</FormLabel>
-                                <FormControl>
-                                  <Input type="password" placeholder="Confirm your password" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <Button 
-                            type="submit" 
-                            className="w-full"
-                            disabled={registerMutation.isPending}
-                          >
-                            {registerMutation.isPending ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Creating account
-                              </>
-                            ) : (
-                              "Create Account"
-                            )}
-                          </Button>
-                        </form>
-                      </Form>
-                    </CardContent>
-                  </Card>
+                  <Form {...registerForm}>
+                    <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                      <FormField
+                        control={registerForm.control}
+                        name="displayName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-base">Nom complet</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                                <Input placeholder="Entrez votre nom complet" className="pl-10 py-6" {...field} />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={registerForm.control}
+                        name="username"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-base">Nom d'utilisateur</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <UserCircle className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                                <Input placeholder="Choisissez un nom d'utilisateur" className="pl-10 py-6" {...field} />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={registerForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-base">Email</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                                <Input type="email" placeholder="Entrez votre email" className="pl-10 py-6" {...field} />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={registerForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-base">Mot de passe</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <LockKeyhole className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                                <Input type="password" placeholder="Créez un mot de passe" className="pl-10 py-6" {...field} />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={registerForm.control}
+                        name="confirmPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-base">Confirmer le mot de passe</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <LockKeyhole className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                                <Input type="password" placeholder="Confirmez votre mot de passe" className="pl-10 py-6" {...field} />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <Button 
+                        type="submit" 
+                        className="w-full py-6 text-base font-medium mt-2"
+                        disabled={registerMutation.isPending}
+                      >
+                        {registerMutation.isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                            Création en cours...
+                          </>
+                        ) : (
+                          "Créer un compte"
+                        )}
+                      </Button>
+                    </form>
+                  </Form>
                 </TabsContent>
               </Tabs>
             </div>
             
             {/* Right Column - Hero Banner */}
             <div className="w-full lg:w-1/2 hidden lg:block">
-              <div className="h-full bg-white rounded-xl shadow-sm overflow-hidden">
-                <div className="relative h-full">
-                  <img
-                    src="https://images.unsplash.com/photo-1576267423445-b2e0074d68a4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
-                    alt="IT training professionals"
-                    className="absolute h-full w-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-b from-primary-600/80 to-primary-900/80"></div>
-                  <div className="relative p-8 flex flex-col h-full justify-center z-10 text-white">
-                    <div className="text-3xl font-bold mb-4 font-heading">Live IT Training Platform</div>
-                    <p className="text-lg mb-6">
-                      Join expert-led live training sessions to boost your IT skills and advance your career.
-                    </p>
-                    <div className="space-y-4">
-                      <div className="flex items-start">
-                        <div className="flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full bg-white/20 mr-3">
-                          <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </div>
-                        <p>Live interactive sessions with industry experts</p>
+              <div className="h-full relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-800"></div>
+                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px]"></div>
+                <div className="absolute inset-0 opacity-40" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='1' fill-rule='evenodd'/%3E%3C/svg%3E\")" }}></div>
+                
+                <div className="relative p-12 flex flex-col h-full justify-center z-10 text-white">
+                  <h2 className="text-4xl font-bold mb-6">Formation IT<br />en direct</h2>
+                  <p className="text-lg mb-8 text-white/90">
+                    Rejoignez nos sessions de formation en direct avec des experts pour développer vos compétences.
+                  </p>
+                  <div className="space-y-5">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 h-7 w-7 flex items-center justify-center rounded-full bg-white/20 mr-4">
+                        <CheckCircle2 className="h-4 w-4 text-white" />
                       </div>
-                      <div className="flex items-start">
-                        <div className="flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full bg-white/20 mr-3">
-                          <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </div>
-                        <p>Real-time Q&A and personalized feedback</p>
+                      <p className="text-white/90">Sessions interactives en direct avec des experts</p>
+                    </div>
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 h-7 w-7 flex items-center justify-center rounded-full bg-white/20 mr-4">
+                        <CheckCircle2 className="h-4 w-4 text-white" />
                       </div>
-                      <div className="flex items-start">
-                        <div className="flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full bg-white/20 mr-3">
-                          <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </div>
-                        <p>Wide range of IT topics from Web Development to DevOps</p>
+                      <p className="text-white/90">Questions-réponses en temps réel et feedback personnalisé</p>
+                    </div>
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 h-7 w-7 flex items-center justify-center rounded-full bg-white/20 mr-4">
+                        <CheckCircle2 className="h-4 w-4 text-white" />
                       </div>
-                      <div className="flex items-start">
-                        <div className="flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full bg-white/20 mr-3">
-                          <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </div>
-                        <p>Flexible subscription options to suit your needs</p>
+                      <p className="text-white/90">Large éventail de sujets IT du développement web au DevOps</p>
+                    </div>
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 h-7 w-7 flex items-center justify-center rounded-full bg-white/20 mr-4">
+                        <CheckCircle2 className="h-4 w-4 text-white" />
                       </div>
+                      <p className="text-white/90">Options d'abonnement flexibles selon vos besoins</p>
+                    </div>
+                  </div>
+                  
+                  <div className="absolute bottom-8 right-8">
+                    <div className="text-sm font-medium text-white/70">
+                      TechFormPro © {new Date().getFullYear()}
                     </div>
                   </div>
                 </div>
