@@ -24,27 +24,12 @@ export default function Subscription() {
     });
   };
 
-  // Subscribe mutation
-  const subscribeMutation = useMutation({
-    mutationFn: async (type: string) => {
-      const res = await apiRequest("POST", "/api/subscription", { type });
-      return await res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Subscription activated",
-        description: `Your ${selectedPlan} subscription has been activated successfully.`,
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Subscription failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+  // Redirect to checkout page for subscription
+  const [, setLocation] = useLocation();
+
+  const handleSubscribe = () => {
+    setLocation(`/checkout?type=${selectedPlan}`);
+  };
 
   // Cancel subscription mutation
   const cancelSubscriptionMutation = useMutation({
@@ -67,10 +52,6 @@ export default function Subscription() {
       });
     },
   });
-
-  const handleSubscribe = () => {
-    subscribeMutation.mutate(selectedPlan);
-  };
 
   const handleCancel = () => {
     cancelSubscriptionMutation.mutate();
