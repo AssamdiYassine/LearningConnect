@@ -56,7 +56,7 @@ export default function AdminDashboard() {
 
   // Fetch API settings
   const { data: apiSettings } = useQuery({
-    queryKey: ["/api/settings"],
+    queryKey: ["/api/settings/api"],
     enabled: !!user && user.role === "admin",
   });
 
@@ -95,7 +95,7 @@ export default function AdminDashboard() {
   // Mutation to save API settings
   const saveApiSettingsMutation = useMutation({
     mutationFn: async (settings: any) => {
-      const res = await apiRequest("POST", "/api/settings", settings);
+      const res = await apiRequest("POST", "/api/settings/api", settings);
       return await res.json();
     },
     onSuccess: () => {
@@ -103,7 +103,7 @@ export default function AdminDashboard() {
         title: "API settings saved",
         description: "Your API settings have been saved successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/settings/api"] });
       setIsApiSaving(false);
     },
     onError: (error: Error) => {
