@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage_fixed";
 import { User } from "@shared/schema";
+import bcryptjs from "bcryptjs";
 
 declare global {
   namespace Express {
@@ -24,8 +25,7 @@ async function hashPassword(password: string) {
 async function comparePasswords(supplied: string, stored: string) {
   // For bcrypt hashed demo passwords
   if (stored.startsWith("$2b$")) {
-    const bcrypt = require('bcryptjs');
-    return bcrypt.compareSync(supplied, stored);
+    return bcryptjs.compareSync(supplied, stored);
   }
   
   // For scrypt hashed passwords
