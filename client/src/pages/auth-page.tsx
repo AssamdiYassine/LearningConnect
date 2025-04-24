@@ -27,7 +27,7 @@ const registerSchema = z.object({
 });
 
 export default function AuthPage() {
-  const { user, loginMutation, registerMutation } = useAuth();
+  const { user, loginMutation, registerMutation, error } = useAuth();
   
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -135,6 +135,12 @@ export default function AuthPage() {
                           </FormItem>
                         )}
                       />
+                      
+                      {loginMutation.error && (
+                        <div className="bg-destructive/15 text-destructive rounded-lg p-3 my-2">
+                          <p className="text-sm font-medium">{loginMutation.error.message || "Erreur de connexion. Vérifiez vos identifiants."}</p>
+                        </div>
+                      )}
                       
                       <Button 
                         type="submit" 
@@ -265,6 +271,12 @@ export default function AuthPage() {
                           </FormItem>
                         )}
                       />
+                      
+                      {registerMutation.error && (
+                        <div className="bg-destructive/15 text-destructive rounded-lg p-3 my-2">
+                          <p className="text-sm font-medium">{registerMutation.error.message || "Erreur de création de compte. Veuillez réessayer."}</p>
+                        </div>
+                      )}
                       
                       <Button 
                         type="submit" 
