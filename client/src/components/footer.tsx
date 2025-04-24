@@ -8,7 +8,7 @@ export default function Footer() {
           <div className="space-y-8 xl:col-span-1">
             <div className="text-primary-600 font-heading font-bold text-xl">TechFormPro</div>
             <p className="text-gray-500 text-base">
-              Platform for online IT training courses delivered by experts via live sessions.
+              Plateforme de formations professionnelles IT en live dispensées par des experts du domaine.
             </p>
             <div className="flex space-x-6">
               <a href="#" className="text-gray-400 hover:text-gray-500">
@@ -41,32 +41,28 @@ export default function Footer() {
             <div className="md:grid md:grid-cols-2 md:gap-8">
               <div>
                 <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">
-                  Training
+                  Formation
                 </h3>
                 <ul className="mt-4 space-y-4">
                   <li>
-                    <Link href="/catalog">
-                      <a className="text-base text-gray-500 hover:text-gray-900">
-                        Catalog
-                      </a>
+                    <Link href="/catalog" className="text-base text-gray-500 hover:text-gray-900">
+                      Catalogue des formations
                     </Link>
                   </li>
                   <li>
-                    <a href="#" className="text-base text-gray-500 hover:text-gray-900">
-                      Trainers
-                    </a>
-                  </li>
-                  <li>
-                    <Link href="/schedule">
-                      <a className="text-base text-gray-500 hover:text-gray-900">
-                        Schedule
-                      </a>
+                    <Link href="/trainer" className="text-base text-gray-500 hover:text-gray-900">
+                      Nos formateurs
                     </Link>
                   </li>
                   <li>
-                    <a href="#" className="text-base text-gray-500 hover:text-gray-900">
-                      Testimonials
-                    </a>
+                    <Link href="/schedule" className="text-base text-gray-500 hover:text-gray-900">
+                      Mon calendrier
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/" className="text-base text-gray-500 hover:text-gray-900">
+                      Témoignages
+                    </Link>
                   </li>
                 </ul>
               </div>
@@ -76,24 +72,24 @@ export default function Footer() {
                 </h3>
                 <ul className="mt-4 space-y-4">
                   <li>
-                    <a href="#" className="text-base text-gray-500 hover:text-gray-900">
+                    <Link href="/" className="text-base text-gray-500 hover:text-gray-900">
                       FAQ
-                    </a>
+                    </Link>
                   </li>
                   <li>
-                    <a href="#" className="text-base text-gray-500 hover:text-gray-900">
+                    <Link href="/" className="text-base text-gray-500 hover:text-gray-900">
                       Contact
-                    </a>
+                    </Link>
                   </li>
                   <li>
-                    <a href="#" className="text-base text-gray-500 hover:text-gray-900">
-                      Technical Support
-                    </a>
+                    <Link href="/" className="text-base text-gray-500 hover:text-gray-900">
+                      Support technique
+                    </Link>
                   </li>
                   <li>
-                    <a href="#" className="text-base text-gray-500 hover:text-gray-900">
-                      Become a Trainer
-                    </a>
+                    <Link href="/" className="text-base text-gray-500 hover:text-gray-900">
+                      Devenir formateur
+                    </Link>
                   </li>
                 </ul>
               </div>
@@ -101,50 +97,50 @@ export default function Footer() {
             <div className="md:grid md:grid-cols-2 md:gap-8">
               <div>
                 <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">
-                  Company
+                  Entreprise
                 </h3>
                 <ul className="mt-4 space-y-4">
                   <li>
-                    <a href="#" className="text-base text-gray-500 hover:text-gray-900">
-                      About
-                    </a>
+                    <Link href="/about" className="text-base text-gray-500 hover:text-gray-900">
+                      À propos
+                    </Link>
                   </li>
                   <li>
-                    <a href="#" className="text-base text-gray-500 hover:text-gray-900">
-                      Careers
-                    </a>
+                    <Link href="/" className="text-base text-gray-500 hover:text-gray-900">
+                      Carrières
+                    </Link>
                   </li>
                   <li>
-                    <a href="#" className="text-base text-gray-500 hover:text-gray-900">
+                    <Link href="/" className="text-base text-gray-500 hover:text-gray-900">
                       Blog
-                    </a>
+                    </Link>
                   </li>
                   <li>
-                    <a href="#" className="text-base text-gray-500 hover:text-gray-900">
-                      Partners
-                    </a>
+                    <Link href="/" className="text-base text-gray-500 hover:text-gray-900">
+                      Partenaires
+                    </Link>
                   </li>
                 </ul>
               </div>
               <div className="mt-12 md:mt-0">
                 <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">
-                  Legal
+                  Mentions légales
                 </h3>
                 <ul className="mt-4 space-y-4">
                   <li>
-                    <a href="#" className="text-base text-gray-500 hover:text-gray-900">
-                      Terms of Service
-                    </a>
+                    <Link href="/" className="text-base text-gray-500 hover:text-gray-900">
+                      Conditions d'utilisation
+                    </Link>
                   </li>
                   <li>
-                    <a href="#" className="text-base text-gray-500 hover:text-gray-900">
-                      Privacy Policy
-                    </a>
+                    <Link href="/" className="text-base text-gray-500 hover:text-gray-900">
+                      Politique de confidentialité
+                    </Link>
                   </li>
                   <li>
-                    <a href="#" className="text-base text-gray-500 hover:text-gray-900">
+                    <Link href="/" className="text-base text-gray-500 hover:text-gray-900">
                       Cookies
-                    </a>
+                    </Link>
                   </li>
                 </ul>
               </div>
@@ -153,7 +149,7 @@ export default function Footer() {
         </div>
         <div className="mt-12 border-t border-gray-200 pt-8">
           <p className="text-base text-gray-400 text-center">
-            &copy; 2023 TechFormPro. All rights reserved.
+            &copy; {new Date().getFullYear()} TechFormPro. Tous droits réservés.
           </p>
         </div>
       </div>
