@@ -16,6 +16,8 @@ import LandingPage from "@/pages/landing-page";
 import AboutPage from "@/pages/about-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
+import { OnboardingProvider } from "./hooks/onboarding-provider";
+import OnboardingModal from "@/components/onboarding/onboarding-modal";
 import Layout from "@/components/layout";
 
 function Router() {
@@ -72,12 +74,15 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <Layout>
-            <Router />
-          </Layout>
-          <Toaster />
-        </TooltipProvider>
+        <OnboardingProvider>
+          <TooltipProvider>
+            <Layout>
+              <Router />
+              <OnboardingModal />
+            </Layout>
+            <Toaster />
+          </TooltipProvider>
+        </OnboardingProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
