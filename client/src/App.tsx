@@ -12,6 +12,8 @@ import Catalog from "@/pages/catalog";
 import Schedule from "@/pages/schedule";
 import Subscription from "@/pages/subscription";
 import CourseDetail from "@/pages/course-detail";
+import LandingPage from "@/pages/landing-page";
+import AboutPage from "@/pages/about-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import Layout from "@/components/layout";
@@ -19,10 +21,13 @@ import Layout from "@/components/layout";
 function Router() {
   return (
     <Switch>
+      {/* Public routes */}
+      <Route path="/" component={LandingPage} />
+      <Route path="/about" component={AboutPage} />
       <Route path="/auth" component={AuthPage} />
       
       {/* Student routes */}
-      <Route path="/">
+      <Route path="/student">
         <ProtectedRoute component={StudentDashboard} allowedRoles={["student", "trainer", "admin"]} />
       </Route>
       

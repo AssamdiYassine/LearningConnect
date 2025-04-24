@@ -62,7 +62,7 @@ export default function UserDropdown() {
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} disabled={logoutMutation.isPending}>
           <LogOut className="mr-2 h-4 w-4" />
-          <span>{logoutMutation.isPending ? "Logging out..." : "Logout"}</span>
+          <span>{logoutMutation.isPending ? "Déconnexion en cours..." : "Déconnexion"}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

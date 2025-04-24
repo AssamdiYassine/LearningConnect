@@ -36,12 +36,13 @@ export default function Navbar() {
   const unreadNotifications = notifications?.filter(n => !n.isRead) || [];
 
   const navLinks = [
-    { path: "/", label: "Home", roles: ["student", "trainer", "admin"] },
-    { path: "/catalog", label: "Catalog", roles: ["student", "trainer", "admin"] },
-    { path: "/schedule", label: "My Schedule", roles: ["student"] },
-    { path: "/subscription", label: "Subscription", roles: ["student"] },
-    { path: "/trainer", label: "Trainer Dashboard", roles: ["trainer"] },
-    { path: "/admin", label: "Admin Dashboard", roles: ["admin"] },
+    { path: "/", label: "Accueil", roles: ["student", "trainer", "admin"], public: true },
+    { path: "/about", label: "À propos", roles: ["student", "trainer", "admin"], public: true },
+    { path: "/catalog", label: "Formations", roles: ["student", "trainer", "admin"] },
+    { path: "/schedule", label: "Mon calendrier", roles: ["student"] },
+    { path: "/subscription", label: "Abonnement", roles: ["student"] },
+    { path: "/trainer", label: "Espace formateur", roles: ["trainer"] },
+    { path: "/admin", label: "Administration", roles: ["admin"] },
   ];
 
   // Filter links based on user role
