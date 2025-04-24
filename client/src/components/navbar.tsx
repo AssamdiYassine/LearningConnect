@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import UserDropdown from "@/components/user-dropdown";
 import { useQuery } from "@tanstack/react-query";
-import { Bell } from "lucide-react";
+import { Bell, HelpCircle } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -21,6 +21,7 @@ import {
 import NotificationItem from "@/components/notification-item";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import OnboardingTrigger from "@/components/onboarding/onboarding-trigger";
 
 export default function Navbar() {
   const [location] = useLocation();
@@ -80,6 +81,8 @@ export default function Navbar() {
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
             {user ? (
               <>
+                <OnboardingTrigger className="mr-2" />
+                
                 <div className="relative">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -168,6 +171,10 @@ export default function Navbar() {
                           <div className="text-base font-medium text-gray-800">{user.displayName}</div>
                           <div className="text-sm font-medium text-gray-500">{user.email}</div>
                         </div>
+                      </div>
+                      
+                      <div className="mt-4 px-3">
+                        <OnboardingTrigger variant="card" />
                       </div>
                     </div>
                   ) : (
