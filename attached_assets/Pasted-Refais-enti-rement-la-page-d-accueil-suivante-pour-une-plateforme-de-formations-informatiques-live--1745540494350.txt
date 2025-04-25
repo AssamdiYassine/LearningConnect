@@ -1,0 +1,78 @@
+Refais entièrement la page d’accueil suivante pour une plateforme de formations informatiques live (Zoom), en corrigeant tous les problèmes visibles dans la version actuelle :
+
+🎯 Objectifs :
+Rendre le site ultra moderne, professionnel, impactant
+
+Créer une identité visuelle forte avec une palette de bleu foncé, blanc, et violet
+
+Avoir une structure claire, équilibrée, avec de l'espace
+
+Tout doit être UX/UI optimal, responsive, fluide
+
+🔥 Problèmes à corriger :
+Couleurs du header absentes ou trop fades : rends-le contrasté, moderne et visible
+
+Hero section trop vide : ajoute une vraie accroche + image dynamique + bouton CTA visible
+
+Cartes pas assez design : rends-les plus modernes, avec ombrage doux, coins arrondis, icônes pro
+
+Témoignages trop simples : ajoute photos ou initiales stylisées, design clean
+
+Manque de rythme visuel : ajoute des sections séparées, de bons contrastes et des animations légères
+
+💡 Structure finale demandée :
+Hero section moderne
+
+Grand titre accrocheur
+
+Sous-titre court
+
+Illustration dynamique (visio/ordinateur)
+
+Bouton CTA “Voir les formations” ou “Commencer”
+
+Pourquoi choisir TechFormPro
+
+4 blocs stylisés : Interactivité / Formateurs experts / Suivi personnalisé / Accès illimité
+
+Icônes modernes, fond légèrement dégradé, ombre douce
+
+Formations populaires
+
+Grille de cartes formation avec :
+
+Titre
+
+Catégorie
+
+Niveau
+
+Durée
+
+Bouton
+
+Avec badge “Nouveau” ou “Complet” si possible
+
+Témoignages clients
+
+Cartes stylisées avec nom, poste, étoile, citation
+
+Photos ou initiales pro
+
+Stats / Logos confiance
+
+3 à 5 statistiques clés
+
+Logos d’entreprises partenaires visibles et bien alignés
+
+Call to action final
+
+Phrase motivante + bouton clair
+
+Footer clair et pro
+
+Lien rapide, icônes réseaux sociaux, mentions légales
+
+🧠 Inspire-toi de sites modernes comme Stripe, TechFormPro v1, Notion, ou Framer
+
+📌 Crée une UI plus belle, plus cohérente et plus professionnelle que la version actuelle.
