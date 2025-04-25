@@ -1,0 +1,107 @@
+Je veux que tu me refasses entièrement la page d’accueil d’une plateforme de formation informatique en ligne live (visioconférence, pas d’e-learning), en m’inspirant fortement du design moderne et épuré de la première image (TechFormPro) et en corrigeant les erreurs de la version actuelle (style dépassé, trop chargé, désorganisé).
+
+🎯 Objectif de la page :
+Donner une excellente première impression
+
+Mettre en avant que les formations sont live et animées par des experts
+
+Attirer les étudiants et formateurs à rejoindre la plateforme
+
+Expliquer clairement les avantages
+
+Proposer un catalogue clair et dynamique
+
+Donner de la confiance via des témoignages, statistiques, logos de partenaires
+
+🎨 Charte visuelle
+Couleurs dominantes : bleu foncé, blanc, accents violet ou cyan
+
+Style : moderne, professionnel, épuré
+
+Éléments bien espacés, boutons visibles, sections claires, icônes modernes
+
+🧱 Structure de la nouvelle homepage
+Hero section (bannière d’accueil)
+
+Titre fort : "Formations professionnelles IT en direct avec les meilleurs formateurs"
+
+Sous-titre : "Rejoignez des milliers d’apprenants et suivez des formations live en visioconférence."
+
+Bouton CTA : "Accéder à mon espace" ou "Voir les prochaines formations"
+
+Pourquoi choisir [Nom de la plateforme]
+
+Trois ou quatre cartes modernes :
+
+100% Live & Interactif
+
+Formateurs experts reconnus
+
+Certifications de participation
+
+Accès illimité pour les abonnés
+
+Nos formations populaires
+
+Cartes avec titre, durée, niveau, catégorie, bouton "En savoir plus"
+
+Exemples : React JS, GitLab + Kubernetes, Sécurité Web
+
+Bouton : "Voir toutes les formations"
+
+Témoignages étudiants
+
+3 ou 4 témoignages (nom, fonction, citation)
+
+Avec photo ou initiales dans un cercle
+
+Section stats / réassurance
+
+Exemple :
+
+🎓 +5000 étudiants formés
+
+⭐ 4.9/5 de satisfaction
+
+💼 200+ formateurs actifs
+
+Partenaires de confiance
+
+Logos des entreprises partenaires (placeholder au début)
+
+Appel à l’action clair
+
+"Prêt à développer vos compétences ?"
+
+CTA : "Commencez maintenant"
+
+Footer moderne
+
+Menus : Formations / À propos / FAQ / Conditions / Réseaux sociaux
+
+Texte légal + copyright
+
+⚙️ Compatibilité avec les fonctionnalités
+Tous les éléments de la page doivent refléter la logique de la plateforme :
+
+Formations en live
+
+Abonnement obligatoire
+
+Formateurs qui planifient leurs sessions
+
+Zoom intégré
+
+Catalogue dynamique
+
+🎁 Bonus à intégrer si possible :
+Calendrier des prochaines formations
+
+Section blog / actualités
+
+Bloc “Vous êtes formateur ? Proposez votre formation”
+
+Badge “Nouveau” ou “Complet” sur les formations
+
+📌 Résumé :
+Crée une homepage belle, moderne, performante et engageante, bien plus fluide et attrayante que la version actuelle. Base-toi sur la version TechFormPro comme référence d’esthétique et de clarté, tout en l’adaptant à notre système de formations live payantes via abonnement.

@@ -1,0 +1,102 @@
+ChatGPT said:
+Voici le prompt formaté prêt à être copié-collé dans Replit AI, Cursor ou tout outil de génération :
+
+PROMPT :
+
+Crée une nouvelle page d’accueil moderne, professionnelle et engageante pour une plateforme de formations informatiques en visioconférence (live).
+
+Le design doit être inspiré fortement de la première image (TechFormPro), avec une identité visuelle en bleu foncé et blanc, un style épuré, aéré et haut de gamme. Il faut améliorer radicalement la version actuelle (de type Necform.fr) qui est trop chargée et dépassée.
+
+Objectif :
+Mettre en valeur :
+
+Le fait que les formations sont 100% live, pas du e-learning
+
+La qualité des formateurs
+
+La valeur de l’abonnement
+
+Le catalogue des formations
+
+La preuve sociale via témoignages et partenaires
+
+Structure demandée :
+Hero section (bannière d’accueil)
+
+Titre clair et percutant
+
+Sous-titre qui explique le concept
+
+Bouton principal “Commencer maintenant” ou “Voir les formations”
+
+Pourquoi choisir notre plateforme
+
+3 à 4 blocs avec icônes modernes :
+
+Formations 100% live
+
+Formateurs experts
+
+Certifications reconnues
+
+Accès avec abonnement
+
+Nos formations populaires
+
+Cartes claires avec :
+
+Titre formation
+
+Catégorie (ex : Développement Web)
+
+Niveau (ex : Avancé)
+
+Durée (ex : 16h)
+
+Bouton “En savoir plus”
+
+Témoignages étudiants
+
+3 à 4 témoignages avec noms, rôles et citations
+
+Présentation élégante et crédible
+
+Statistiques / preuves sociales
+
+Blocs visuels avec chiffres :
+
++5000 étudiants
+
+4.9/5 de satisfaction
+
+200+ formateurs
+
+Logos des entreprises partenaires (placeholder au début)
+
+Appel à l’action final
+
+Titre motivant : “Prêt à développer vos compétences ?”
+
+Bouton CTA : “Rejoignez-nous maintenant”
+
+Footer complet et moderne
+
+Sections : Formations | À propos | Contact | Mentions légales | Réseaux sociaux
+
+Style visuel :
+Utiliser bleu foncé, blanc, violet ou cyan en accent
+
+Design clean, flat, professionnel, responsive
+
+Boutons bien visibles, typographie moderne
+
+Icônes claires et alignées
+
+Ce que tu dois respecter :
+L’UX doit être fluide
+
+Tout doit être compatible avec une plateforme live (Zoom, catalogue dynamique, abonnements)
+
+Le résultat doit être bien meilleur que la page actuelle de Necform.fr
+
+N’inclus aucune technologie ni code de backend, seulement le front complet de la page d’accueil
