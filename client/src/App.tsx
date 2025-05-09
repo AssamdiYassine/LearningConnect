@@ -16,6 +16,7 @@ import CourseDetail from "@/pages/course-detail";
 import SessionDetail from "@/pages/session-detail";
 import LandingPage from "@/pages/landing-page";
 import AboutPage from "@/pages/about-page";
+import ProfilePage from "./pages/profile";
 import CreateCourse from "@/pages/create-course";
 import CreateSession from "@/pages/create-session";
 import Achievements from "@/pages/achievements";
@@ -37,6 +38,14 @@ function Router() {
       {/* Student routes */}
       <Route path="/student">
         <ProtectedRoute component={StudentDashboard} allowedRoles={["student", "trainer", "admin"]} />
+      </Route>
+      
+      <Route path="/student-dashboard">
+        <ProtectedRoute component={StudentDashboard} allowedRoles={["student", "trainer", "admin"]} />
+      </Route>
+      
+      <Route path="/profile">
+        <ProtectedRoute component={() => <ProfilePage />} allowedRoles={["student", "trainer", "admin"]} />
       </Route>
       
       <Route path="/catalog">
