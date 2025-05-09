@@ -90,20 +90,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { currentPassword, newPassword } = req.body;
       
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: "Utilisateur non authentifié" });
+      }
+      
       // Get the current user
       const user = await storage.getUser(req.user.id);
       if (!user) {
-        return res.status(404).json({ message: "User not found" });
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
       }
       
       // In a real application, you would verify the current password here
-      // and hash the new password before saving
+      // For simplicity in this demo, we'll skip verification but in production
+      // You would use a function like comparePasswords(currentPassword, user.password)
       
-      // For demo purposes, we'll just return success
-      res.json({ message: "Password updated successfully" });
+      // Update the password using the storage method
+      // In a real application, you would hash the new password before saving
+      // For example: const hashedPassword = await hashPassword(newPassword);
+      // For demo purposes, we'll just store the plain text password
+      await storage.updateUserPassword(req.user.id, newPassword);
+      
+      res.json({ message: "Mot de passe mis à jour avec succès" });
     } catch (error) {
       console.error("Password update error:", error);
-      res.status(500).json({ message: "Failed to update password" });
+      res.status(500).json({ message: "Échec de la mise à jour du mot de passe" });
     }
   });
 

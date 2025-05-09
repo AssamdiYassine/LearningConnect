@@ -27,12 +27,12 @@ import { useState } from "react";
 
 // Create form schema based on the course schema
 const courseFormSchema = z.object({
-  title: z.string().min(5, "Title must be at least 5 characters"),
-  description: z.string().min(20, "Description must be at least 20 characters"),
+  title: z.string().min(5, "Le titre doit contenir au moins 5 caractères"),
+  description: z.string().min(20, "La description doit contenir au moins 20 caractères"),
   level: z.enum(["beginner", "intermediate", "advanced"]),
-  categoryId: z.string().min(1, "Please select a category"),
-  duration: z.string().min(1, "Duration is required").transform(val => parseInt(val, 10)),
-  maxStudents: z.string().min(1, "Max students is required").transform(val => parseInt(val, 10)),
+  categoryId: z.string().min(1, "Veuillez sélectionner une catégorie"),
+  duration: z.string().min(1, "La durée est requise").transform(val => parseInt(val, 10)),
+  maxStudents: z.string().min(1, "Le nombre maximum d'apprenants est requis").transform(val => parseInt(val, 10)),
 });
 
 interface CreateCourseFormProps {
@@ -53,7 +53,7 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
   });
 
   // Fetch categories
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery<any[]>({
     queryKey: ["/api/categories"],
   });
 
@@ -312,7 +312,7 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {categories?.map((category) => (
+                      {categories.map((category: { id: number; name: string }) => (
                         <SelectItem key={category.id} value={category.id.toString()}>
                           {category.name}
                         </SelectItem>

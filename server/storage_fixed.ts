@@ -285,10 +285,20 @@ export class MemStorage implements IStorage {
     const user: User = { 
       ...insertUser, 
       id,
+      role: insertUser.role || "student", // Définir "student" comme rôle par défaut
+      isSubscribed: insertUser.isSubscribed ?? false,
+      subscriptionType: insertUser.subscriptionType ?? null,
+      subscriptionEndDate: insertUser.subscriptionEndDate ?? null,
       stripeCustomerId: null,
       stripeSubscriptionId: null
     };
     this.users.set(id, user);
+    
+    // Create onboarding record if needed
+    this.createUserOnboarding(id).catch(err => 
+      console.error("Failed to create onboarding record:", err)
+    );
+    
     return user;
   }
 
