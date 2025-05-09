@@ -127,9 +127,12 @@ export default function Navbar() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
-                    <Link href={user.role === "admin" ? "/admin-dashboard" : user.role === "trainer" ? "/trainer-dashboard" : "/student-dashboard"}>
-                      <a className="w-full cursor-pointer">Mon tableau de bord</a>
-                    </Link>
+                    <div 
+                      className="w-full cursor-pointer"
+                      onClick={() => window.location.href = user.role === "admin" ? "/admin-dashboard" : user.role === "trainer" ? "/trainer-dashboard" : "/student-dashboard"}
+                    >
+                      Mon tableau de bord
+                    </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/profile">
