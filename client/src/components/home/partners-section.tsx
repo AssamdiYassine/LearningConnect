@@ -1,44 +1,112 @@
 import { motion } from "framer-motion";
+import { 
+  FaWindows, 
+  FaAmazon, 
+  FaGoogle, 
+  FaRedhat, 
+  FaDatabase, 
+  FaCloud, 
+  FaNetworkWired, 
+  FaServer 
+} from "react-icons/fa";
 
-// Partner logos with monogram fallbacks
+// Partner data with icons from react-icons
 const partners = [
-  { name: "TechCorp", logo: "TC" },
-  { name: "InnovateSoft", logo: "IS" },
-  { name: "DataCloud", logo: "DC" },
-  { name: "SecureNet", logo: "SN" },
-  { name: "DevSphere", logo: "DS" },
-  { name: "NextGen Systems", logo: "NS" },
-  { name: "LogicWave", logo: "LW" },
-  { name: "CloudFlex", logo: "CF" },
+  { 
+    name: "Microsoft", 
+    icon: <FaWindows className="w-10 h-10 text-[#0078D4]" />,
+    color: "from-[#0078D4]/10 to-[#0078D4]/5"
+  },
+  { 
+    name: "AWS", 
+    icon: <FaAmazon className="w-10 h-10 text-[#FF9900]" />,
+    color: "from-[#FF9900]/10 to-[#FF9900]/5"
+  },
+  { 
+    name: "Google Cloud", 
+    icon: <FaGoogle className="w-10 h-10 text-[#4285F4]" />,
+    color: "from-[#4285F4]/10 to-[#4285F4]/5"
+  },
+  { 
+    name: "Red Hat", 
+    icon: <FaRedhat className="w-10 h-10 text-[#EE0000]" />,
+    color: "from-[#EE0000]/10 to-[#EE0000]/5"
+  },
+  { 
+    name: "Oracle", 
+    icon: <FaDatabase className="w-10 h-10 text-[#F80000]" />,
+    color: "from-[#F80000]/10 to-[#F80000]/5"
+  },
+  { 
+    name: "Salesforce", 
+    icon: <FaCloud className="w-10 h-10 text-[#00A1E0]" />,
+    color: "from-[#00A1E0]/10 to-[#00A1E0]/5"
+  },
+  { 
+    name: "Cisco", 
+    icon: <FaNetworkWired className="w-10 h-10 text-[#1BA0D7]" />,
+    color: "from-[#1BA0D7]/10 to-[#1BA0D7]/5"
+  },
+  { 
+    name: "IBM", 
+    icon: <FaServer className="w-10 h-10 text-[#054ADA]" />,
+    color: "from-[#054ADA]/10 to-[#054ADA]/5"
+  },
 ];
+
+// Animation variants
+const fadeIn = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
 
 export default function PartnersSection() {
   return (
-    <section className="py-16 bg-white">
+    <section className="py-20 bg-gradient-to-b from-white to-[#F7F9FC]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Nos partenaires</h2>
+        <div className="text-center mb-16">
+          <span className="px-4 py-1 rounded-full bg-[#5F8BFF]/10 text-[#5F8BFF] text-sm font-medium">
+            Écosystème
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-bold text-[#1D2B6C] mt-4 mb-4">Nos partenaires</h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Ils font confiance à nos formations pour développer leurs talents
+            Ils font confiance à nos formations pour développer les talents de demain
           </p>
         </div>
         
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
+          initial="hidden"
+          animate="visible"
+          variants={staggerContainer}
           className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8"
         >
           {partners.map((partner, idx) => (
-            <div 
-              key={idx} 
-              className="bg-gray-50 border border-gray-100 rounded-lg py-6 px-4 flex flex-col items-center justify-center hover:shadow-md transition-shadow duration-300 h-32"
+            <motion.div
+              key={idx}
+              variants={fadeIn}
+              className="relative group"
             >
-              <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-xl mb-3">
-                {partner.logo}
+              <div 
+                className={`h-36 bg-white rounded-[20px] border border-gray-100 shadow-xl flex flex-col items-center justify-center px-4 
+                           hover:scale-105 transition-all duration-300 bg-gradient-to-br ${partner.color} overflow-hidden relative`}
+              >
+                <div className="absolute w-40 h-40 rounded-full bg-white/50 -top-20 -right-20 opacity-0 group-hover:opacity-30 transition-opacity duration-500 blur-xl"></div>
+                <div className="mb-4">
+                  {partner.icon}
+                </div>
+                <span className="text-gray-800 font-semibold">{partner.name}</span>
               </div>
-              <span className="text-gray-800 font-medium">{partner.name}</span>
-            </div>
+            </motion.div>
           ))}
         </motion.div>
         

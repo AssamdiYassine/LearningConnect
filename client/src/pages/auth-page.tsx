@@ -74,12 +74,14 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-primary-50 to-secondary-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#F7F9FC] to-white p-4">
       <div className="container max-w-7xl mx-auto">
         <div className="flex flex-col items-center justify-center">
-          <div className="text-5xl font-bold text-primary-600 mb-8 tracking-tight">TechFormPro</div>
+          <div className="text-5xl font-bold mb-8 tracking-tight">
+            <span className="text-[#5F8BFF]">Nec</span><span className="text-[#7A6CFF]">form</span>
+          </div>
           
-          <div className="flex flex-col lg:flex-row w-full max-w-6xl rounded-3xl overflow-hidden shadow-2xl bg-white">
+          <div className="flex flex-col lg:flex-row w-full max-w-6xl rounded-[20px] overflow-hidden shadow-2xl bg-white border border-gray-100">
             {/* Left Column - Auth Forms */}
             <div className="w-full lg:w-1/2 p-8 md:p-12">
               <h2 className="text-2xl font-semibold mb-6 text-center lg:text-left">Bienvenue</h2>
@@ -301,14 +303,16 @@ export default function AuthPage() {
             {/* Right Column - Hero Banner */}
             <div className="w-full lg:w-1/2 hidden lg:block">
               <div className="h-full relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-800"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-[#1D2B6C] via-[#5F8BFF] to-[#7A6CFF]"></div>
                 <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px]"></div>
-                <div className="absolute inset-0 opacity-40" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='1' fill-rule='evenodd'/%3E%3C/svg%3E\")" }}></div>
+                <div className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full bg-blue-500/10 blur-3xl"></div>
+                <div className="absolute -top-40 -left-40 w-80 h-80 rounded-full bg-purple-500/10 blur-3xl animate-pulse"></div>
+                <div className="absolute -bottom-40 -right-40 w-80 h-80 rounded-full bg-indigo-500/10 blur-3xl animate-pulse"></div>
                 
                 <div className="relative p-12 flex flex-col h-full justify-center z-10 text-white">
-                  <h2 className="text-4xl font-bold mb-6">Formation IT<br />en direct</h2>
+                  <h2 className="text-4xl font-bold mb-6">Formation IT<br />100% en <span className="text-[#F7F9FC]">direct</span></h2>
                   <p className="text-lg mb-8 text-white/90">
-                    Rejoignez nos sessions de formation en direct avec des experts pour développer vos compétences.
+                    Rejoignez nos sessions de formation live avec des experts pour développer vos compétences IT.
                   </p>
                   <div className="space-y-5">
                     <div className="flex items-start">
@@ -339,7 +343,7 @@ export default function AuthPage() {
                   
                   <div className="absolute bottom-8 right-8">
                     <div className="text-sm font-medium text-white/70">
-                      TechFormPro © {new Date().getFullYear()}
+                      Necform © {new Date().getFullYear()}
                     </div>
                   </div>
                 </div>

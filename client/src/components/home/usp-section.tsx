@@ -52,10 +52,10 @@ const staggerContainer = {
 
 export default function USPSection() {
   return (
-    <section className="py-16 bg-white">
+    <section className="py-16 bg-[#F7F9FC]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Pourquoi choisir nos formations ?</h2>
+          <h2 className="text-3xl font-bold text-[#1D2B6C] mb-4">Pourquoi choisir nos formations ?</h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Une approche innovante pour développer vos compétences techniques
           </p>
@@ -69,15 +69,18 @@ export default function USPSection() {
         >
           {uspFeatures.map((feature, index) => (
             <motion.div key={index} variants={fadeIn}>
-              <Card className="h-full border-none shadow-md overflow-hidden bg-gradient-to-b from-white to-gray-50 hover:shadow-lg transition-shadow duration-300">
-                <div className={`h-2 bg-gradient-to-r ${feature.gradient}`}></div>
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center mb-4">
+              <Card className="h-full group hover:scale-105 transition-all duration-300 border-none shadow-xl rounded-[20px] overflow-hidden bg-white relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-transparent to-white/50 z-0"></div>
+                <div className={`absolute top-0 left-0 w-2 h-full bg-gradient-to-b ${feature.gradient}`}></div>
+                <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-gradient-to-br from-white to-blue-50 opacity-80 blur-3xl z-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                <CardHeader className="relative z-10">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-white to-blue-50 shadow-md flex items-center justify-center mb-4">
                     {feature.icon}
                   </div>
-                  <CardTitle className="text-xl font-bold text-gray-800">{feature.title}</CardTitle>
+                  <CardTitle className="text-xl font-bold text-[#1D2B6C]">{feature.title}</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="relative z-10">
                   <p className="text-gray-600">
                     {feature.description}
                   </p>
