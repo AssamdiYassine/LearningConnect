@@ -19,21 +19,24 @@
     --card: 0 0% 100%;
     --card-foreground: 222.2 47.4% 11.2%;
 
-    --primary: 235 70% 40%;
-    --primary-foreground: 210 40% 98%;
+    /* Necform colors */
+    --primary: 225 59% 27%; /* #1D2B6C */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
+    --secondary: 224 100% 68%; /* #5F8BFF */
     --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 251 100% 71%; /* #7A6CFF */
+    --accent-foreground: 0 0% 100%;
+
+    --light-bg: 220 60% 98%; /* #F7F9FC */
 
     --destructive: 0 100% 50%;
     --destructive-foreground: 210 40% 98%;
 
     --ring: 215 20.2% 65.1%;
 
-    --radius: 0.5rem;
+    --radius: 1.25rem; /* 20px border radius */
   }
 
   .dark {
@@ -43,8 +46,15 @@
     --muted: 223 47% 11%;
     --muted-foreground: 215.4 16.3% 56.9%;
 
-    --accent: 216 34% 17%;
-    --accent-foreground: 210 40% 98%;
+    /* Dark mode Necform colors */
+    --primary: 225 59% 27%; /* #1D2B6C - same as light for brand consistency */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 224 70% 55%; /* darker version of #5F8BFF */
+    --secondary-foreground: 0 0% 100%;
+
+    --accent: 251 80% 65%; /* darker version of #7A6CFF */
+    --accent-foreground: 0 0% 100%;
 
     --popover: 224 71% 4%;
     --popover-foreground: 215 20.2% 65.1%;
@@ -55,18 +65,12 @@
     --card: 224 71% 4%;
     --card-foreground: 213 31% 91%;
 
-    --primary: 235 70% 40%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 222.2 47.4% 11.2%;
-    --secondary-foreground: 210 40% 98%;
-
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
 
     --ring: 216 34% 17%;
 
-    --radius: 0.5rem;
+    --radius: 1.25rem; /* 20px border radius - same as light */
   }
 }
 
@@ -77,6 +81,11 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: 'Be Vietnam Pro', sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Be Vietnam Pro', sans-serif;
+    @apply font-semibold;
   }
 }
 
@@ -99,12 +108,35 @@ html {
 
 /* Custom gradient text */
 .gradient-text {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500;
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-secondary to-accent;
+}
+
+/* Necform custom styles */
+.necform-heading {
+  @apply text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight;
+}
+
+.necform-subheading {
+  @apply text-xl md:text-2xl font-medium text-muted-foreground;
+}
+
+/* Header styles */
+.header-sticky {
+  @apply fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-white/90 dark:bg-gray-900/90 border-b border-gray-200 dark:border-gray-800 transition-all duration-300;
 }
 
 /* Custom card styles */
+.card {
+  @apply rounded-[20px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden;
+}
+
+.card-hover {
+  @apply transition-all duration-300 hover:shadow-md hover:-translate-y-1;
+}
+
+/* Feature cards */
 .feature-card {
-  @apply relative overflow-hidden rounded-xl transition-all duration-300;
+  @apply relative overflow-hidden rounded-[20px] transition-all duration-300;
 }
 
 .feature-card:hover {
@@ -120,9 +152,22 @@ html {
   @apply opacity-10;
 }
 
+/* USP Card Styles */
+.usp-card {
+  @apply p-6 rounded-[20px] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm transition-all duration-300;
+}
+
+.usp-card:hover {
+  @apply shadow-md transform -translate-y-1;
+}
+
+.usp-card-gradient {
+  @apply bg-gradient-to-br shadow-md;
+}
+
 /* Testimonial card styles */
 .testimonial-card {
-  @apply relative overflow-hidden rounded-xl transition-all duration-300;
+  @apply relative overflow-hidden rounded-[20px] transition-all duration-300 p-6 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800;
 }
 
 .testimonial-card:hover {
@@ -130,16 +175,50 @@ html {
 }
 
 /* Custom button styles */
-.btn-primary-gradient {
-  @apply relative overflow-hidden bg-gradient-to-r from-indigo-600 to-blue-600 text-white;
+.btn-primary {
+  @apply bg-primary text-white hover:bg-primary/90 transition-colors duration-300;
 }
 
-.btn-primary-gradient::after {
+.btn-accent {
+  @apply bg-accent text-white hover:bg-accent/90 transition-colors duration-300;
+}
+
+.btn-secondary {
+  @apply bg-secondary text-white hover:bg-secondary/90 transition-colors duration-300;
+}
+
+.btn-outline-primary {
+  @apply border-2 border-primary text-primary hover:bg-primary/10 transition-colors duration-300;
+}
+
+.btn-outline-accent {
+  @apply border-2 border-accent text-accent hover:bg-accent/10 transition-colors duration-300;
+}
+
+.btn-gradient-primary {
+  @apply relative overflow-hidden bg-gradient-to-r from-primary to-secondary text-white;
+}
+
+.btn-gradient-accent {
+  @apply relative overflow-hidden bg-gradient-to-r from-secondary to-accent text-white;
+}
+
+.btn-gradient-primary::after,
+.btn-gradient-accent::after {
   content: '';
-  @apply absolute inset-0 opacity-0 bg-gradient-to-r from-blue-600 to-indigo-600 transition-opacity duration-300;
+  @apply absolute inset-0 opacity-0 transition-opacity duration-300;
 }
 
-.btn-primary-gradient:hover::after {
+.btn-gradient-primary::after {
+  @apply bg-gradient-to-r from-secondary to-primary;
+}
+
+.btn-gradient-accent::after {
+  @apply bg-gradient-to-r from-accent to-secondary;
+}
+
+.btn-gradient-primary:hover::after,
+.btn-gradient-accent:hover::after {
   @apply opacity-100;
 }
 
@@ -157,7 +236,7 @@ html {
   @apply absolute bg-gradient-to-br rounded-full opacity-20 blur-3xl;
 }
 
-/* Decorative grid background */
+/* Background styles */
 .bg-grid {
   background-size: 40px 40px;
   background-image: 
@@ -165,7 +244,59 @@ html {
     linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
 }
 
+.bg-light {
+  @apply bg-[#F7F9FC] dark:bg-gray-900;
+}
+
+.bg-gradient-primary {
+  @apply bg-gradient-to-br from-primary via-primary/90 to-primary/80;
+}
+
+.bg-gradient-primary-accent {
+  @apply bg-gradient-to-br from-primary via-secondary to-accent;
+}
+
+.bg-gradient-accent {
+  @apply bg-gradient-to-br from-accent via-accent/90 to-secondary;
+}
+
+/* Hero section */
+.hero-radial-gradient {
+  background: radial-gradient(circle at 50% 50%, theme('colors.primary.DEFAULT'), theme('colors.accent.DEFAULT'));
+}
+
 /* Custom avatar styles */
+.avatar-circle {
+  @apply rounded-full overflow-hidden;
+}
+
 .avatar-initials {
-  @apply flex items-center justify-center rounded-full bg-blue-100 text-blue-700 font-medium;
+  @apply flex items-center justify-center rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 font-medium;
+}
+
+/* Timeline styles for about page */
+.timeline-container {
+  @apply relative pl-8 border-l border-gray-300 dark:border-gray-700;
+}
+
+.timeline-dot {
+  @apply absolute -left-[9px] w-[18px] h-[18px] bg-primary rounded-full border-[3px] border-white dark:border-gray-900;
+}
+
+/* Section spacing */
+.section-padding {
+  @apply py-16 md:py-24;
+}
+
+.section-spacing {
+  @apply mb-16 md:mb-24;
+}
+
+/* Container classes */
+.container-narrow {
+  @apply max-w-5xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.container-wide {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
 }

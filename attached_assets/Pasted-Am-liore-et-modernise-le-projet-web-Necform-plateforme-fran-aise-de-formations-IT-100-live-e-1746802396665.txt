@@ -1,0 +1,81 @@
+Améliore et modernise le projet web « Necform » (plateforme française de formations IT 100 % live) en suivant les directives ci-dessous ; garde le contenu existant mais refonds l’UI, ajoute les fonctionnalités manquantes et relie tout dynamiquement à la base de données.  
+La plateforme doit rester **entièrement en français**, responsive (mobile-first) et prête à recevoir de vraies clés API (Zoom, Stripe, emails) ultérieurement.
+
+────────────────────────────────────────
+🎨 1. UI/UX GLOBALE
+────────────────────────────────────────
+• Palette : bleu profond #1D2B6C, bleu clair #5F8BFF, violet doux #7A6CFF, blanc #FFFFFF, gris très clair #F7F9FC.  
+• **Police principale obligatoire : “Be Vietnam” (Google Fonts) + fallback sans-serif.**  
+• Style : espaces généreux, grille 12 colonnes, cartes à coins 20 px, ombre subtile, dégradés doux, animations légères (fade-in, hover-lift).  
+• Header collant translucide ; mode sombre optionnel.
+
+────────────────────────────────────────
+🏠 2. HOMEPAGE (refonte)
+────────────────────────────────────────
+• **Header** : logo + menu (Catalogue | Calendrier | Tarifs | Blog | À propos) + boutons « Connexion » (texte) & « S’inscrire » (accent violet).  
+• **Hero section** :  
+  – Background dégradé radial bleu / violet + flous décoratifs.  
+  – Titre H1 sur 2 lignes + sous-titre.  
+  – Mock-up ou capture du tableau de bord (droite desktop / dessous mobile).  
+  – CTA « Commencer maintenant » + CTA secondaire « Voir le catalogue ».  
+• **Blocs USP** : 4 cartes interactives (100 % Live | Expertise | Suivi individuel | Communauté).  
+• Sections dynamiques reliées BDD :  
+  – Slider « Formations les plus demandées ».  
+  – Grid « Formations populaires ».  
+  – Carrousel témoignages.  
+  – Bande composée de logos clients (défilement doux).  
+• CTA final pleine largeur sur dégradé.
+
+────────────────────────────────────────
+ℹ️ 3. PAGE ABOUT US (refonte)
+────────────────────────────────────────
+• Header plein écran (dégradé bleu→violet) avec H1 + baseline.  
+• Sections : Mission (2 colonnes) | Histoire (timeline horizontale) | Équipe (cartes photos rondes) | Valeurs (quad-grid cartes icône+texte).  
+• Bandeau CTA « Rejoignez notre communauté » + bouton « Voir le catalogue ».
+
+────────────────────────────────────────
+🛠 4. PANNEAU ADMIN
+────────────────────────────────────────
+• Dashboard temps réel (utilisateurs, sessions, revenus, NPS).  
+• Modules CRUD : Utilisateurs | Formations | Sessions | Abonnements | Témoignages | Blog.  
+• Filtres, recherche, pagination, exports CSV, graphiques KPI.
+
+────────────────────────────────────────
+🎓 5. PANNEAU FORMATEUR
+────────────────────────────────────────
+• Dashboard perso (stats cours, participants, avis).  
+• « Créer une formation » : titre, description rich-text, niveau, durée, visuel.  
+• Planifier session live : date, heure, lien Zoom (placeholder), limite de places.  
+• Gestion inscriptions, messagerie étudiants, vue feedbacks.
+
+────────────────────────────────────────
+👨‍🎓 6. PANNEAU ÉTUDIANT
+────────────────────────────────────────
+• Tableau de bord : prochains cours, bouton rejoindre, historique, progression.  
+• Catalogue filtrable, réservation, rappels (placeholder email + in-app).  
+• Profil : données perso, abonnement (29 €/mois | 240 €/an), certificats.
+
+────────────────────────────────────────
+📚 7. BASE DE DONNÉES & BACK-END
+────────────────────────────────────────
+• Collections/Tables : Users, Formations, Sessions, Subscriptions, Testimonials, BlogPosts.  
+• Auth multi-rôle (Admin, Formateur, Étudiant) sécurisée.  
+• Endpoints CRUD + validations côté serveur.  
+• Intégrations Zoom, Stripe, Email = **TODO placeholders** clairement commentés.
+
+────────────────────────────────────────
+🔔 8. FONCTIONNALITÉS COMPLÉMENTAIRES
+────────────────────────────────────────
+• Notifications (in-app + email placeholders).  
+• Système d’avis ⭐⭐⭐⭐⭐ sur chaque formation (affiché sur site).  
+• CMS Blog minimal (CRUD via admin).  
+• Mode sombre activable via toggle.
+
+────────────────────────────────────────
+💡 9. LIVRABLE FINAL
+────────────────────────────────────────
+• Code refactoré, composants clairs, routing propre.  
+• Homepage & About Us redesignés comme décrit avec **“Be Vietnam”**.  
+• Admin, Formateur, Étudiant – panneaux 100 % reliés à la BDD.  
+• Mobile-first, Lighthouse ≥ 90, commentaires concis pour dév futur.  
+• Aucune clé API réelle ; insérer TODO pour Zoom/Stripe/Email.
