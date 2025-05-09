@@ -64,21 +64,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { displayName, email } = req.body;
       
-      // Update user in storage
-      const currentUser = await storage.getUser(req.user.id);
-      if (!currentUser) {
-        return res.status(404).json({ message: "User not found" });
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: "Utilisateur non authentifié" });
       }
       
-      // Create updated user object
-      const updatedUser = {
-        ...currentUser,
-        displayName: displayName || currentUser.displayName,
-        email: email || currentUser.email
-      };
-      
-      // Save to database would happen here in a real application
-      // For now, we'll just mock it with the in-memory storage
+      // Update user using the storage method
+      const updatedUser = await storage.updateUserProfile(req.user.id, {
+        displayName,
+        email
+      });
       
       // Remove password from response
       const { password, ...userWithoutPassword } = updatedUser;
@@ -87,7 +81,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(userWithoutPassword);
     } catch (error) {
       console.error("Profile update error:", error);
-      res.status(500).json({ message: "Failed to update profile" });
+      res.status(500).json({ message: "Échec de la mise à jour du profil" });
     }
   });
   

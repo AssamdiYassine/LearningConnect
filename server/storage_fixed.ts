@@ -26,6 +26,8 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
+  updateUserProfile(id: number, data: { displayName?: string, email?: string }): Promise<User>;
+  updateUserPassword(id: number, newPassword: string): Promise<User>;
   updateUserRole(id: number, role: string): Promise<User>;
   updateSubscription(id: number, isSubscribed: boolean, type?: string, endDate?: Date): Promise<User>;
   updateUserStripeInfo(id: number, stripeInfo: { customerId: string, subscriptionId: string }): Promise<User>;
@@ -294,6 +296,33 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values());
   }
 
+  async updateUserProfile(id: number, data: { displayName?: string, email?: string }): Promise<User> {
+    const user = await this.getUser(id);
+    if (!user) throw new Error("User not found");
+    
+    const updatedUser = { 
+      ...user,
+      displayName: data.displayName || user.displayName,
+      email: data.email || user.email
+    };
+    
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+  
+  async updateUserPassword(id: number, newPassword: string): Promise<User> {
+    const user = await this.getUser(id);
+    if (!user) throw new Error("User not found");
+    
+    const updatedUser = { 
+      ...user,
+      password: newPassword
+    };
+    
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+  
   async updateUserRole(id: number, role: string): Promise<User> {
     const user = await this.getUser(id);
     if (!user) throw new Error("User not found");
