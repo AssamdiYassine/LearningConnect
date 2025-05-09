@@ -178,7 +178,7 @@ export default function TrainerCourses() {
           <CardContent className="pt-6">
             <div className="flex items-center">
               <div className="p-2 bg-amber-50 rounded-md">
-                <Graduation className="h-5 w-5 text-amber-600" />
+                <GraduationCap className="h-5 w-5 text-amber-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Note Moyenne</p>
