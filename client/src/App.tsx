@@ -17,6 +17,7 @@ import SessionDetail from "@/pages/session-detail";
 import LandingPage from "@/pages/landing-page";
 import AboutPage from "@/pages/about-page";
 import ProfilePage from "./pages/profile";
+import TrainerProfilePage from "./pages/trainer-profile";
 import CreateCourse from "@/pages/create-course";
 import CreateSession from "@/pages/create-session";
 import Achievements from "@/pages/achievements";
@@ -45,7 +46,14 @@ function Router() {
       </Route>
       
       <Route path="/profile">
-        <ProtectedRoute component={() => <ProfilePage />} allowedRoles={["student", "trainer", "admin"]} />
+        <ProtectedRoute 
+          component={({ user }) => {
+            return user?.role === "trainer" 
+              ? <TrainerProfilePage /> 
+              : <ProfilePage />
+          }} 
+          allowedRoles={["student", "trainer", "admin"]} 
+        />
       </Route>
       
       <Route path="/catalog">

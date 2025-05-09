@@ -88,6 +88,36 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async updateUserProfile(id: number, data: { displayName?: string, email?: string }): Promise<User> {
+    const updateData: Partial<User> = {};
+    
+    if (data.displayName) {
+      updateData.displayName = data.displayName;
+    }
+    
+    if (data.email) {
+      updateData.email = data.email;
+    }
+    
+    const [user] = await db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, id))
+      .returning();
+      
+    return user;
+  }
+  
+  async updateUserPassword(id: number, newPassword: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ password: newPassword })
+      .where(eq(users.id, id))
+      .returning();
+      
+    return user;
+  }
+
   // Category operations
   async createCategory(category: InsertCategory): Promise<Category> {
     const [newCategory] = await db.insert(categories).values(category).returning();
