@@ -345,6 +345,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch session enrollments" });
     }
   });
+  
+  // Récupérer la liste des étudiants inscrits aux cours d'un formateur
+  app.get("/api/trainer/:trainerId/students", hasRole(["trainer", "admin"]), async (req, res) => {
+    try {
+      const { trainerId } = req.params;
+      
+      // Récupérer tous les cours du formateur
+      const courses = await storage.getCoursesByTrainer(parseInt(trainerId));
+      
+      // Récupérer toutes les sessions pour ces cours
+      const sessions = await Promise.all(
+        courses.map(async (course) => {
+          return await storage.getSessionsByCourse(course.id);
+        })
+      );
+      
+      // Aplatir le tableau de sessions
+      const allSessions = sessions.flat();
+      
+      // Récupérer tous les inscriptions pour ces sessions
+      const enrollments = await Promise.all(
+        allSessions.map(async (session) => {
+          return await storage.getEnrollmentsBySession(session.id);
+        })
+      );
+      
+      // Aplatir le tableau d'inscriptions
+      const allEnrollments = enrollments.flat();
+      
+      // Obtenir les IDs uniques d'étudiants
+      const studentIds = [...new Set(allEnrollments.map(enrollment => enrollment.userId))];
+      
+      // Récupérer les détails des étudiants
+      const students = await Promise.all(
+        studentIds.map(async (studentId) => {
+          const user = await storage.getUser(studentId);
+          if (!user) return null;
+          
+          // Récupérer les inscriptions de cet étudiant
+          const studentEnrollments = allEnrollments.filter(e => e.userId === studentId);
+          
+          // Récupérer les détails des sessions pour ces inscriptions
+          const enrollmentsWithSessions = await Promise.all(
+            studentEnrollments.map(async (enrollment) => {
+              try {
+                const session = await storage.getSessionWithDetails(enrollment.sessionId);
+                if (!session) {
+                  return null;
+                }
+                return {
+                  id: enrollment.id,
+                  sessionId: enrollment.sessionId,
+                  session: session,
+                  enrollmentDate: new Date().toISOString()
+                };
+              } catch (err) {
+                console.error("Error fetching session details:", err);
+                return null;
+              }
+            })
+          ).then(results => results.filter(r => r !== null));
+          
+          return {
+            ...user,
+            enrollments: enrollmentsWithSessions
+          };
+        })
+      );
+      
+      // Filtrer les étudiants null
+      const validStudents = students.filter(student => student !== null);
+      
+      res.json(validStudents);
+    } catch (error) {
+      console.error("Error fetching trainer students:", error);
+      res.status(500).json({ message: "Failed to fetch trainer students" });
+    }
+  });
 
   app.post("/api/enrollments", isAuthenticated, async (req, res) => {
     try {

@@ -47,8 +47,22 @@ export default function TrainerStudents() {
     }
   });
 
-  // Pour un vrai système nous aurions besoin d'une API pour récupérer les étudiants inscrits
-  // Pour l'instant, nous allons simuler des données
+  // Récupérer les étudiants inscrits aux cours du formateur
+  const { data: studentsWithEnrollments, isLoading: isStudentsLoading } = useQuery<StudentWithEnrollments[]>({
+    queryKey: ["/api/trainer/students"],
+    enabled: !!user && user.role === "trainer",
+    queryFn: async () => {
+      try {
+        const res = await apiRequest("GET", `/api/trainer/${user?.id}/students`);
+        return await res.json();
+      } catch (error) {
+        console.error("Error fetching trainer students:", error);
+        return [];
+      }
+    }
+  });
+  
+  // Données temporaires pour preview en attendant l'implémentation backend
   const mockStudents: StudentWithEnrollments[] = [
     {
       id: 3,
