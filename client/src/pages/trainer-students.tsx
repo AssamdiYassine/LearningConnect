@@ -272,7 +272,8 @@ export default function TrainerStudents() {
   ];
 
   // Filtrer les étudiants
-  const filteredStudents = mockStudents.filter(student => {
+  const students = studentsWithEnrollments || [];
+  const filteredStudents = students.filter(student => {
     // Filtre de recherche
     const matchesSearch = !searchQuery || 
       student.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -287,12 +288,12 @@ export default function TrainerStudents() {
   });
 
   // Calculer des statistiques
-  const totalStudents = mockStudents.length;
-  const activeStudents = mockStudents.filter(s => s.isSubscribed).length;
+  const totalStudents = students.length;
+  const activeStudents = students.filter(s => s.isSubscribed).length;
   const averageEnrollments = totalStudents ? 
-    mockStudents.reduce((acc, student) => acc + student.enrollments.length, 0) / totalStudents : 0;
+    students.reduce((acc, student) => acc + student.enrollments.length, 0) / totalStudents : 0;
 
-  if (isSessionsLoading) {
+  if (isSessionsLoading || isStudentsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
