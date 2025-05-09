@@ -30,9 +30,9 @@ const courseFormSchema = z.object({
   title: z.string().min(5, "Le titre doit contenir au moins 5 caractères"),
   description: z.string().min(20, "La description doit contenir au moins 20 caractères"),
   level: z.enum(["beginner", "intermediate", "advanced"]),
-  categoryId: z.string().min(1, "Veuillez sélectionner une catégorie"),
-  duration: z.string().min(1, "La durée est requise").transform(val => parseInt(val, 10)),
-  maxStudents: z.string().min(1, "Le nombre maximum d'apprenants est requis").transform(val => parseInt(val, 10)),
+  categoryId: z.coerce.number().int().positive("Veuillez sélectionner une catégorie"),
+  duration: z.coerce.number().int().min(1, "La durée est requise"),
+  maxStudents: z.coerce.number().int().min(1, "Le nombre maximum d'apprenants est requis"),
 });
 
 interface CreateCourseFormProps {
@@ -49,7 +49,11 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
   const sessionFormSchema = z.object({
     date: z.string().min(1, "Date is required"),
     time: z.string().min(1, "Time is required"),
-    zoomLink: z.string().url("Please enter a valid Zoom link"),
+    zoomLink: z.string()
+      .url({ message: "Veuillez entrer une URL valide" })
+      .optional()
+      .or(z.string().length(0))
+      .transform(val => val === "" ? undefined : val),
   });
 
   // Fetch categories
@@ -64,9 +68,9 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
       title: "",
       description: "",
       level: "beginner",
-      categoryId: "",
-      duration: "60",
-      maxStudents: "20",
+      categoryId: 0,
+      duration: 60,
+      maxStudents: 20,
     },
   });
 
@@ -302,8 +306,8 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
                 <FormItem>
                   <FormLabel>Catégorie</FormLabel>
                   <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
+                    onValueChange={(value) => field.onChange(Number(value))} 
+                    defaultValue={field.value ? field.value.toString() : undefined}
                     disabled={categoriesLoading}
                   >
                     <FormControl>

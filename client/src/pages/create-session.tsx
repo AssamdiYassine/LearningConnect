@@ -27,12 +27,10 @@ const createSessionSchema = insertSessionSchema.extend({
     required_error: "Please select a time",
   }),
   zoomLink: z.string()
-    .url("Please enter a valid URL")
-    .startsWith("https://", "URL must start with https://")
-    .refine(
-      (val) => val.includes("zoom"), 
-      { message: "Must be a Zoom link" }
-    ),
+    .url({ message: "Veuillez entrer une URL valide" })
+    .optional()
+    .or(z.string().length(0))
+    .transform(val => val === "" ? undefined : val),
 });
 
 // Create the form type from the schema
