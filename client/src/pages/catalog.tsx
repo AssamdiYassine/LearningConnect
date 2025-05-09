@@ -37,6 +37,8 @@ export default function Catalog() {
 
   // Filter and sort courses
   const filteredCourses = courses?.filter(course => {
+    if (!course || !course.title || !course.description || !course.category) return false;
+    
     // Text search
     const matchesSearch = searchTerm.trim() === "" || 
       course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -55,6 +57,8 @@ export default function Catalog() {
 
   // Sort courses
   const sortedCourses = [...filteredCourses].sort((a, b) => {
+    if (!a || !b) return 0;
+    
     switch (sortOrder) {
       case "title-asc":
         return a.title.localeCompare(b.title);
@@ -62,20 +66,20 @@ export default function Catalog() {
         return b.title.localeCompare(a.title);
       case "level-asc":
         const levelOrder = { beginner: 1, intermediate: 2, advanced: 3 };
-        return levelOrder[a.level as keyof typeof levelOrder] - levelOrder[b.level as keyof typeof levelOrder];
+        return (levelOrder[a.level as keyof typeof levelOrder] || 0) - (levelOrder[b.level as keyof typeof levelOrder] || 0);
       case "level-desc":
         const levelOrderDesc = { beginner: 1, intermediate: 2, advanced: 3 };
-        return levelOrderDesc[b.level as keyof typeof levelOrderDesc] - levelOrderDesc[a.level as keyof typeof levelOrderDesc];
+        return (levelOrderDesc[b.level as keyof typeof levelOrderDesc] || 0) - (levelOrderDesc[a.level as keyof typeof levelOrderDesc] || 0);
       case "date-asc":
-        const aSession = sessions?.find(s => s.course.id === a.id);
-        const bSession = sessions?.find(s => s.course.id === b.id);
+        const aSession = sessions?.find(s => s?.course?.id === a.id);
+        const bSession = sessions?.find(s => s?.course?.id === b.id);
         if (!aSession && !bSession) return 0;
         if (!aSession) return 1;
         if (!bSession) return -1;
         return new Date(aSession.date).getTime() - new Date(bSession.date).getTime();
       case "date-desc":
-        const aSessionDesc = sessions?.find(s => s.course.id === a.id);
-        const bSessionDesc = sessions?.find(s => s.course.id === b.id);
+        const aSessionDesc = sessions?.find(s => s?.course?.id === a.id);
+        const bSessionDesc = sessions?.find(s => s?.course?.id === b.id);
         if (!aSessionDesc && !bSessionDesc) return 0;
         if (!aSessionDesc) return 1;
         if (!bSessionDesc) return -1;

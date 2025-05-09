@@ -14,6 +14,11 @@ interface CourseCardProps {
 }
 
 export default function CourseCard({ course }: CourseCardProps) {
+  // Add defensive checks for missing course props
+  if (!course || typeof course !== 'object') {
+    return <div className="bg-white rounded-xl shadow-sm p-4 text-center">Course data unavailable</div>;
+  }
+
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -22,7 +27,7 @@ export default function CourseCard({ course }: CourseCardProps) {
     queryKey: ["/api/sessions/upcoming"],
   });
 
-  const nextSession = sessions?.find(session => session.course.id === course.id);
+  const nextSession = sessions?.find(session => session?.course?.id === course.id);
 
   const enrollMutation = useMutation({
     mutationFn: async () => {
@@ -61,20 +66,21 @@ export default function CourseCard({ course }: CourseCardProps) {
   };
 
   // Format session date if available
-  const sessionDate = nextSession ? new Date(nextSession.date).toLocaleDateString(undefined, {
+  const sessionDate = nextSession?.date ? new Date(nextSession.date).toLocaleDateString(undefined, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
   }) : null;
 
   // Format session time if available
-  const sessionTime = nextSession ? new Date(nextSession.date).toLocaleTimeString(undefined, {
+  const sessionTime = nextSession?.date ? new Date(nextSession.date).toLocaleTimeString(undefined, {
     hour: '2-digit',
     minute: '2-digit',
   }) : null;
 
-  const isEnrolled = nextSession?.isEnrolled;
-  const remainingSpots = nextSession ? course.maxStudents - nextSession.enrollmentCount : 0;
+  const isEnrolled = nextSession?.isEnrolled || false;
+  const remainingSpots = nextSession && course.maxStudents ? 
+    course.maxStudents - (nextSession.enrollmentCount || 0) : 0;
 
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-300">
