@@ -101,7 +101,7 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
         
         if (!res.ok) {
           const errorData = await res.json();
-          throw new Error(errorData.message || "Failed to create course");
+          throw new Error(errorData.message || "Échec de création du cours");
         }
         
         return await res.json();
@@ -112,8 +112,8 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
     },
     onSuccess: (data) => {
       toast({
-        title: "Course created",
-        description: "Your course has been created successfully.",
+        title: "Cours créé",
+        description: "Votre cours a été créé avec succès.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/courses"] });
       setCourseId(data.id);
@@ -121,7 +121,7 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
     },
     onError: (error: Error) => {
       toast({
-        title: "Failed to create course",
+        title: "Échec de création du cours",
         description: error.message,
         variant: "destructive",
       });
@@ -138,7 +138,7 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
         
         if (!res.ok) {
           const errorData = await res.json();
-          throw new Error(errorData.message || "Failed to schedule session");
+          throw new Error(errorData.message || "Échec de planification de la session");
         }
         
         return await res.json();
