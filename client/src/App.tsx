@@ -7,6 +7,10 @@ import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import StudentDashboard from "@/pages/student-dashboard";
 import TrainerDashboard from "@/pages/trainer-dashboard";
+import TrainerStudents from "@/pages/trainer-students";
+import TrainerCourses from "@/pages/trainer-courses";
+import TrainerSchedule from "@/pages/trainer-schedule";
+import TrainerRatings from "@/pages/trainer-ratings";
 import AdminDashboard from "@/pages/admin-dashboard";
 import Catalog from "@/pages/catalog";
 import Schedule from "@/pages/schedule";
@@ -105,19 +109,19 @@ function Router() {
       </Route>
       
       <Route path="/trainer/students">
-        <ProtectedRoute path="/trainer/students" component={() => import("./pages/trainer-students").then(m => <m.default />)} allowedRoles={["trainer", "admin"]} />
+        <ProtectedRoute component={TrainerStudents} allowedRoles={["trainer", "admin"]} />
       </Route>
       
       <Route path="/trainer/courses">
-        <ProtectedRoute path="/trainer/courses" component={() => import("./pages/trainer-courses").then(m => <m.default />)} allowedRoles={["trainer", "admin"]} />
+        <ProtectedRoute component={TrainerCourses} allowedRoles={["trainer", "admin"]} />
       </Route>
       
       <Route path="/trainer/schedule">
-        <ProtectedRoute path="/trainer/schedule" component={() => import("./pages/trainer-schedule").then(m => <m.default />)} allowedRoles={["trainer", "admin"]} />
+        <ProtectedRoute component={TrainerSchedule} allowedRoles={["trainer", "admin"]} />
       </Route>
       
       <Route path="/trainer/ratings">
-        <ProtectedRoute path="/trainer/ratings" component={() => import("./pages/trainer-ratings").then(m => <m.default />)} allowedRoles={["trainer", "admin"]} />
+        <ProtectedRoute component={TrainerRatings} allowedRoles={["trainer", "admin"]} />
       </Route>
       
       <Route path="/create-course">
