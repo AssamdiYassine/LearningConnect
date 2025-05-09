@@ -360,7 +360,7 @@ export default function TrainerStudents() {
               <SelectValue placeholder="Statut" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Tous les statuts</SelectItem>
+              <SelectItem value="all">Tous les statuts</SelectItem>
               <SelectItem value="active">Abonnement actif</SelectItem>
               <SelectItem value="inactive">Abonnement inactif</SelectItem>
             </SelectContent>

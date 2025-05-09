@@ -640,7 +640,7 @@ export default function TrainerRatings() {
               <SelectValue placeholder="Tous les cours" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Tous les cours</SelectItem>
+              <SelectItem value="all">Tous les cours</SelectItem>
               {courses?.map(course => (
                 <SelectItem key={course.id} value={course.id.toString()}>
                   {course.title}
