@@ -83,8 +83,28 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
   // Course creation mutation
   const createCourseMutation = useMutation({
     mutationFn: async (courseData: z.infer<typeof courseFormSchema>) => {
-      const res = await apiRequest("POST", "/api/courses", courseData);
-      return await res.json();
+      try {
+        // Ensure we're sending the proper data format
+        const payload = {
+          ...courseData,
+          categoryId: parseInt(courseData.categoryId.toString(), 10),
+          trainerId: user?.id // Explicitly include the trainerId
+        };
+        
+        console.log("Submitting course data:", payload);
+        
+        const res = await apiRequest("POST", "/api/courses", payload);
+        
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || "Failed to create course");
+        }
+        
+        return await res.json();
+      } catch (error) {
+        console.error("Course creation error:", error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       toast({
@@ -107,13 +127,26 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
   // Session creation mutation
   const createSessionMutation = useMutation({
     mutationFn: async (sessionData: any) => {
-      const res = await apiRequest("POST", "/api/sessions", sessionData);
-      return await res.json();
+      try {
+        console.log("Submitting session data:", sessionData);
+        
+        const res = await apiRequest("POST", "/api/sessions", sessionData);
+        
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || "Failed to schedule session");
+        }
+        
+        return await res.json();
+      } catch (error) {
+        console.error("Session creation error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({
-        title: "Session scheduled",
-        description: "Your course session has been scheduled successfully.",
+        title: "Session planifiée",
+        description: "Votre session de cours a été planifiée avec succès.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/sessions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/sessions/trainer", user?.id] });
@@ -121,8 +154,8 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
     },
     onError: (error: Error) => {
       toast({
-        title: "Failed to schedule session",
-        description: error.message,
+        title: "Échec de planification de la session",
+        description: error.message || "Une erreur s'est produite lors de la planification de la session",
         variant: "destructive",
       });
     },
@@ -130,10 +163,8 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
 
   // Handle course form submission
   function onSubmitCourse(data: z.infer<typeof courseFormSchema>) {
-    createCourseMutation.mutate({
-      ...data,
-      categoryId: parseInt(data.categoryId, 10),
-    });
+    // Conversion déjà effectuée dans la mutation, pas besoin de le refaire ici
+    createCourseMutation.mutate(data);
   }
 
   // Handle session form submission
@@ -154,9 +185,9 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
     return (
       <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-medium text-gray-900">Schedule a Session</h3>
+          <h3 className="text-lg font-medium text-gray-900">Planifier une Session</h3>
           <p className="text-sm text-gray-500 mt-1">
-            Set a date and time for your course session and provide the Zoom link.
+            Définissez une date et une heure pour votre session de cours et fournissez le lien Zoom.
           </p>
         </div>
         
@@ -182,7 +213,7 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
                 name="time"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Time</FormLabel>
+                    <FormLabel>Heure</FormLabel>
                     <FormControl>
                       <Input type="time" {...field} />
                     </FormControl>
@@ -197,7 +228,7 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
               name="zoomLink"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Zoom Link</FormLabel>
+                  <FormLabel>Lien Zoom</FormLabel>
                   <FormControl>
                     <Input placeholder="https://zoom.us/j/123456789" {...field} />
                   </FormControl>
@@ -211,7 +242,7 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
                 type="submit" 
                 disabled={createSessionMutation.isPending}
               >
-                {createSessionMutation.isPending ? "Scheduling..." : "Schedule Session"}
+                {createSessionMutation.isPending ? "Planification en cours..." : "Planifier la session"}
               </Button>
             </div>
           </form>
@@ -223,9 +254,9 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-gray-900">Create a New Course</h3>
+        <h3 className="text-lg font-medium text-gray-900">Créer un nouveau cours</h3>
         <p className="text-sm text-gray-500 mt-1">
-          Fill in the details to create a new course. You'll be able to schedule sessions after creating the course.
+          Remplissez les détails pour créer un nouveau cours. Vous pourrez planifier des sessions après la création du cours.
         </p>
       </div>
       
@@ -236,9 +267,9 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
             name="title"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Course Title</FormLabel>
+                <FormLabel>Titre du cours</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. JavaScript Modern (ES6+)" {...field} />
+                  <Input placeholder="ex: JavaScript Moderne (ES6+)" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -253,7 +284,7 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
                 <FormLabel>Description</FormLabel>
                 <FormControl>
                   <Textarea 
-                    placeholder="Provide a detailed description of what students will learn"
+                    placeholder="Fournissez une description détaillée de ce que les apprenants vont acquérir"
                     rows={4}
                     {...field} 
                   />
@@ -269,7 +300,7 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
               name="categoryId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Category</FormLabel>
+                  <FormLabel>Catégorie</FormLabel>
                   <Select 
                     onValueChange={field.onChange} 
                     defaultValue={field.value}
@@ -277,7 +308,7 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
+                        <SelectValue placeholder="Sélectionner une catégorie" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -298,17 +329,17 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
               name="level"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Level</FormLabel>
+                  <FormLabel>Niveau</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a level" />
+                        <SelectValue placeholder="Sélectionner un niveau" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="beginner">Beginner</SelectItem>
-                      <SelectItem value="intermediate">Intermediate</SelectItem>
-                      <SelectItem value="advanced">Advanced</SelectItem>
+                      <SelectItem value="beginner">Débutant</SelectItem>
+                      <SelectItem value="intermediate">Intermédiaire</SelectItem>
+                      <SelectItem value="advanced">Avancé</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -323,7 +354,7 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
               name="duration"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Duration (minutes)</FormLabel>
+                  <FormLabel>Durée (minutes)</FormLabel>
                   <FormControl>
                     <Input type="number" min="30" step="30" {...field} />
                   </FormControl>
@@ -337,7 +368,7 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
               name="maxStudents"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Maximum Number of Students</FormLabel>
+                  <FormLabel>Nombre maximum d'apprenants</FormLabel>
                   <FormControl>
                     <Input type="number" min="1" max="100" {...field} />
                   </FormControl>
@@ -352,7 +383,7 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
               type="submit" 
               disabled={createCourseMutation.isPending}
             >
-              {createCourseMutation.isPending ? "Creating..." : "Create Course"}
+              {createCourseMutation.isPending ? "Création en cours..." : "Créer le cours"}
             </Button>
           </div>
         </form>
