@@ -96,6 +96,10 @@ function Router() {
       </Route>
 
       {/* Trainer routes */}
+      <Route path="/trainer-dashboard">
+        <ProtectedRoute component={TrainerDashboard} allowedRoles={["trainer", "admin"]} />
+      </Route>
+      
       <Route path="/trainer">
         <ProtectedRoute component={TrainerDashboard} allowedRoles={["trainer", "admin"]} />
       </Route>

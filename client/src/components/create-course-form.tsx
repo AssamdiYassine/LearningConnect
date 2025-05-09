@@ -47,8 +47,8 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
 
   // Session form schema
   const sessionFormSchema = z.object({
-    date: z.string().min(1, "Date is required"),
-    time: z.string().min(1, "Time is required"),
+    date: z.string().min(1, "La date est requise"),
+    time: z.string().min(1, "L'heure est requise"),
     zoomLink: z.string()
       .url({ message: "Veuillez entrer une URL valide" })
       .optional()
