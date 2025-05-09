@@ -209,7 +209,7 @@ export default function TrainerCourses() {
               <SelectValue placeholder="Niveau" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Tous les niveaux</SelectItem>
+              <SelectItem value="all">Tous les niveaux</SelectItem>
               <SelectItem value="beginner">Débutant</SelectItem>
               <SelectItem value="intermediate">Intermédiaire</SelectItem>
               <SelectItem value="advanced">Avancé</SelectItem>
@@ -221,7 +221,7 @@ export default function TrainerCourses() {
               <SelectValue placeholder="Catégorie" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Toutes les catégories</SelectItem>
+              <SelectItem value="all">Toutes les catégories</SelectItem>
               {[...new Set(coursesWithStats.map(course => course.category?.id))].map(categoryId => {
                 const category = coursesWithStats.find(course => course.category?.id === categoryId)?.category;
                 return category ? (

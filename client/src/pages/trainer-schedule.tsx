@@ -303,11 +303,13 @@ export default function TrainerSchedule() {
             </div>
           </div>
           <div className="flex space-x-2 mt-2">
-            <TabsList>
-              <TabsTrigger value="month" onClick={() => setView("month")}>Mois</TabsTrigger>
-              <TabsTrigger value="week" onClick={() => setView("week")}>Semaine</TabsTrigger>
-              <TabsTrigger value="day" onClick={() => setView("day")}>Jour</TabsTrigger>
-            </TabsList>
+            <Tabs defaultValue="month">
+              <TabsList>
+                <TabsTrigger value="month" onClick={() => setView("month")}>Mois</TabsTrigger>
+                <TabsTrigger value="week" onClick={() => setView("week")}>Semaine</TabsTrigger>
+                <TabsTrigger value="day" onClick={() => setView("day")}>Jour</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
         </CardHeader>
         <CardContent>
