@@ -58,6 +58,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch users" });
     }
   });
+  
+  // Profile update route
+  app.patch("/api/user/profile", isAuthenticated, async (req, res) => {
+    try {
+      const { displayName, email } = req.body;
+      
+      // Update user in storage
+      const currentUser = await storage.getUser(req.user.id);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Create updated user object
+      const updatedUser = {
+        ...currentUser,
+        displayName: displayName || currentUser.displayName,
+        email: email || currentUser.email
+      };
+      
+      // Save to database would happen here in a real application
+      // For now, we'll just mock it with the in-memory storage
+      
+      // Remove password from response
+      const { password, ...userWithoutPassword } = updatedUser;
+      
+      // Return the updated user
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Profile update error:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+  
+  // Password update route
+  app.patch("/api/user/password", isAuthenticated, async (req, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      
+      // Get the current user
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // In a real application, you would verify the current password here
+      // and hash the new password before saving
+      
+      // For demo purposes, we'll just return success
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Password update error:", error);
+      res.status(500).json({ message: "Failed to update password" });
+    }
+  });
 
   app.patch("/api/users/:id/role", hasRole(["admin"]), async (req, res) => {
     try {

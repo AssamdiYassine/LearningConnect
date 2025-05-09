@@ -137,8 +137,17 @@ export default function ProfilePage() {
   // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (data: z.infer<typeof profileUpdateSchema>) => {
-      const res = await apiRequest("PATCH", "/api/user/profile", data);
-      return await res.json();
+      try {
+        const res = await apiRequest("PATCH", "/api/user/profile", data);
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || "Failed to update profile");
+        }
+        return await res.json();
+      } catch (error) {
+        console.error("Profile update error:", error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       toast({
@@ -151,7 +160,7 @@ export default function ProfilePage() {
     onError: (error: Error) => {
       toast({
         title: "Échec de la mise à jour",
-        description: error.message,
+        description: error.message || "Une erreur s'est produite lors de la mise à jour du profil",
         variant: "destructive",
       });
     },
@@ -160,8 +169,17 @@ export default function ProfilePage() {
   // Update password mutation
   const updatePasswordMutation = useMutation({
     mutationFn: async (data: z.infer<typeof passwordUpdateSchema>) => {
-      const res = await apiRequest("PATCH", "/api/user/password", data);
-      return await res.json();
+      try {
+        const res = await apiRequest("PATCH", "/api/user/password", data);
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || "Failed to update password");
+        }
+        return await res.json();
+      } catch (error) {
+        console.error("Password update error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({
@@ -173,7 +191,7 @@ export default function ProfilePage() {
     onError: (error: Error) => {
       toast({
         title: "Échec de la mise à jour du mot de passe",
-        description: error.message,
+        description: error.message || "Une erreur s'est produite lors de la mise à jour du mot de passe",
         variant: "destructive",
       });
     },
