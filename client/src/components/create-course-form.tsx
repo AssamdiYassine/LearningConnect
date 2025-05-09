@@ -153,7 +153,7 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
         description: "Votre session de cours a été planifiée avec succès.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/sessions"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/sessions/trainer", user?.id] });
+      queryClient.invalidateQueries({ queryKey: [`/api/sessions/trainer/${user?.id}`] });
       onSuccess?.();
     },
     onError: (error: Error) => {
