@@ -1,175 +1,110 @@
-import { useState, useEffect } from 'react';
-import { useOnboarding } from '@/hooks/use-onboarding';
-import { useAuth } from '@/hooks/use-auth';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  CheckCircle,
-  ChevronRight,
-  X,
-  UserCircle,
-  CreditCard,
-  BookOpen,
-  Calendar,
-  LayoutDashboard,
-} from 'lucide-react';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useOnboarding } from "@/hooks/onboarding-provider";
+import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
+import { ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
 
-// Step components
-import ProfileStep from './steps/profile-step';
-import SubscriptionStep from './steps/subscription-step';
-import CoursesStep from './steps/courses-step';
-import SessionsStep from './steps/sessions-step';
-import TourStep from './steps/tour-step';
+// Stub component - will be implemented fully in the future
+export default function OnboardingModal() {
+  const { isOpen, closeOnboarding, currentStep, completeStep, skipStep, steps } = useOnboarding();
+  const [progress, setProgress] = useState(0);
 
-const stepComponents: Record<string, React.FC<{ onNext: () => void }>> = {
-  profile_completion: ProfileStep,
-  subscription_selection: SubscriptionStep,
-  course_exploration: CoursesStep,
-  session_booking: SessionsStep,
-  platform_tour: TourStep,
-};
-
-const stepIcons: Record<string, React.ReactNode> = {
-  profile_completion: <UserCircle className="h-5 w-5" />,
-  subscription_selection: <CreditCard className="h-5 w-5" />,
-  course_exploration: <BookOpen className="h-5 w-5" />,
-  session_booking: <Calendar className="h-5 w-5" />,
-  platform_tour: <LayoutDashboard className="h-5 w-5" />,
-};
-
-const stepTitles: Record<string, string> = {
-  profile_completion: "Complete Your Profile",
-  subscription_selection: "Choose a Subscription Plan",
-  course_exploration: "Explore Available Courses",
-  session_booking: "Book Your First Session",
-  platform_tour: "Platform Tour",
-};
-
-export function OnboardingModal() {
-  const [open, setOpen] = useState(false);
-  const { user } = useAuth();
-  const { 
-    onboarding, 
-    isLoading, 
-    startOnboarding, 
-    updateStep, 
-    completeStep, 
-    completeOnboarding,
-    isStepCompleted,
-    getNextStep,
-  } = useOnboarding();
-
-  // Decide if we should show the onboarding modal
   useEffect(() => {
-    if (user && onboarding && !onboarding.isCompleted) {
-      setOpen(true);
-    } else {
-      setOpen(false);
+    if (steps && steps.length > 0) {
+      const currentIndex = steps.findIndex(step => step.id === currentStep);
+      const percentage = ((currentIndex + 1) / steps.length) * 100;
+      setProgress(percentage);
     }
-  }, [user, onboarding]);
+  }, [currentStep, steps]);
 
-  // Handle the case when there's no onboarding record yet
-  useEffect(() => {
-    if (user && !isLoading && !onboarding) {
-      startOnboarding();
-    }
-  }, [user, isLoading, onboarding, startOnboarding]);
-
-  if (isLoading || !onboarding || !user) {
-    return null;
-  }
-
-  const currentStep = onboarding.currentStep;
-  const StepComponent = stepComponents[currentStep];
-
-  const handleNextStep = () => {
-    const nextStep = getNextStep(currentStep);
-    if (nextStep) {
-      // Mark current step as completed and move to next
-      completeStep(currentStep);
-      updateStep(nextStep);
-    } else {
-      // Complete the entire onboarding process
-      completeOnboarding();
-      setOpen(false);
-    }
-  };
-
-  const handleSkip = () => {
-    completeOnboarding();
-    setOpen(false);
-  };
+  const currentStepData = steps?.find(step => step.id === currentStep);
+  
+  if (!isOpen || !currentStepData) return null;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-[600px]">
+    <Dialog open={isOpen} onOpenChange={closeOnboarding}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">
-            Getting Started with TechFormation
-          </DialogTitle>
+          <DialogTitle>{currentStepData.title}</DialogTitle>
           <DialogDescription>
-            Complete these steps to get the most out of your training experience.
+            {currentStepData.description}
           </DialogDescription>
         </DialogHeader>
-
-        {/* Progress indicators */}
-        <div className="flex space-x-2 justify-center pt-4">
-          {Object.keys(stepComponents).map((step) => (
-            <div
-              key={step}
-              className={`flex items-center ${
-                currentStep === step
-                  ? 'text-primary font-bold'
-                  : isStepCompleted(step)
-                  ? 'text-green-500'
-                  : 'text-muted-foreground'
-              }`}
-            >
-              <div className="flex items-center">
-                {stepIcons[step]}
-                {isStepCompleted(step) && (
-                  <CheckCircle className="h-3 w-3 absolute text-green-500 ml-3 mt-3" />
-                )}
-              </div>
-              <ChevronRight
-                className={`h-4 w-4 mx-1 ${
-                  Object.keys(stepComponents).indexOf(step) ===
-                  Object.keys(stepComponents).length - 1
-                    ? 'hidden'
-                    : ''
-                }`}
-              />
+        
+        <div className="py-4">
+          {/* Progress bar */}
+          <div className="mb-4">
+            <Progress value={progress} className="h-2" />
+            <div className="flex justify-between mt-1 text-xs text-muted-foreground">
+              <span>Étape {steps.findIndex(step => step.id === currentStep) + 1} sur {steps.length}</span>
+              <span>{Math.round(progress)}%</span>
             </div>
-          ))}
-        </div>
-
-        <div className="pt-4">
-          <h3 className="text-xl font-semibold mb-4">
-            {stepTitles[currentStep]}
-          </h3>
+          </div>
           
-          {/* Render the current step component */}
-          {StepComponent && <StepComponent onNext={handleNextStep} />}
+          {/* Content placeholder */}
+          <div className="min-h-[120px] flex items-center justify-center rounded-md border border-dashed p-8 text-center animate-pulse">
+            <p className="text-sm text-muted-foreground">
+              Contenu de l'étape d'onboarding à implémenter
+            </p>
+          </div>
         </div>
-
-        <DialogFooter className="flex justify-between pt-6">
-          <Button variant="outline" onClick={handleSkip}>
-            Skip Onboarding
+        
+        <div className="flex justify-between items-center mt-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => skipStep(currentStep)}
+          >
+            Ignorer
           </Button>
-          <Button onClick={handleNextStep}>
-            {getNextStep(currentStep) ? 'Next Step' : 'Complete'}
-          </Button>
-        </DialogFooter>
+          
+          <div className="flex space-x-2">
+            {steps.findIndex(step => step.id === currentStep) > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const currentIndex = steps.findIndex(step => step.id === currentStep);
+                  if (currentIndex > 0) {
+                    completeStep(steps[currentIndex - 1].id);
+                  }
+                }}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Précédent
+              </Button>
+            )}
+            
+            <Button
+              size="sm"
+              onClick={() => completeStep(currentStep)}
+              className={cn(
+                "bg-accent hover:bg-accent/90 text-white"
+              )}
+            >
+              {steps.findIndex(step => step.id === currentStep) === steps.length - 1 ? (
+                <>
+                  Terminer
+                  <CheckCircle2 className="h-4 w-4 ml-1" />
+                </>
+              ) : (
+                <>
+                  Suivant
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
 }
-
-export default OnboardingModal;

@@ -24,6 +24,7 @@ import { AuthProvider } from "./hooks/use-auth";
 import { OnboardingProvider } from "./hooks/onboarding-provider";
 import OnboardingModal from "@/components/onboarding/onboarding-modal";
 import Layout from "@/components/layout";
+import { ThemeProvider } from "@/components/theme-provider";
 
 function Router() {
   return (
@@ -104,17 +105,19 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <OnboardingProvider>
-          <TooltipProvider>
-            <Layout>
-              <Router />
-              <OnboardingModal />
-            </Layout>
-            <Toaster />
-          </TooltipProvider>
-        </OnboardingProvider>
-      </AuthProvider>
+      <ThemeProvider defaultTheme="light">
+        <AuthProvider>
+          <OnboardingProvider>
+            <TooltipProvider>
+              <Layout>
+                <Router />
+                <OnboardingModal />
+              </Layout>
+              <Toaster />
+            </TooltipProvider>
+          </OnboardingProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

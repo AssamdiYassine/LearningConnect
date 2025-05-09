@@ -1,176 +1,191 @@
-import React, { createContext, ReactNode } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { UserOnboarding } from '@shared/schema';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
 
-interface OnboardingContextType {
-  onboarding: UserOnboarding | null;
-  isLoading: boolean;
-  error: Error | null;
-  startOnboarding: () => void;
-  updateStep: (step: string) => void;
-  completeStep: (step: string) => void;
-  completeOnboarding: () => void;
-  isStepCompleted: (step: string) => boolean;
-  getNextStep: (currentStep: string) => string | null;
-  isStarting: boolean;
-  isUpdatingStep: boolean;
-  isCompletingStep: boolean;
-  isCompletingOnboarding: boolean;
-}
+type Step = {
+  id: string;
+  title: string;
+  description: string;
+  completed: boolean;
+};
 
-export const OnboardingContext = createContext<OnboardingContextType | null>(null);
+type OnboardingContextType = {
+  isOpen: boolean;
+  currentStep: string;
+  steps: Step[];
+  openOnboarding: () => void;
+  closeOnboarding: () => void;
+  completeStep: (stepId: string) => void;
+  skipStep: (stepId: string) => void;
+  completeAllSteps: () => void;
+  isStepCompleted: (stepId: string) => boolean;
+};
+
+const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
+
+// Demo steps that would normally come from the API
+const demoSteps: Step[] = [
+  {
+    id: "welcome",
+    title: "Bienvenue sur TechFormPro",
+    description: "Découvrez notre plateforme de formations IT en direct.",
+    completed: false
+  },
+  {
+    id: "profile",
+    title: "Complétez votre profil",
+    description: "Aidez-nous à personnaliser votre expérience d'apprentissage.",
+    completed: false
+  },
+  {
+    id: "preferences",
+    title: "Vos préférences",
+    description: "Quels domaines de l'IT vous intéressent le plus ?",
+    completed: false
+  },
+  {
+    id: "first-course",
+    title: "Votre première formation",
+    description: "Choisissez une formation pour commencer votre apprentissage.",
+    completed: false
+  }
+];
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
-  const { toast } = useToast();
-  
-  // Get the current user's onboarding status
-  const {
-    data: onboarding,
-    isLoading,
-    error,
-  } = useQuery<UserOnboarding | null>({
-    queryKey: ['/api/onboarding'],
-    retry: false,
-  });
+  const { user } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentStep, setCurrentStep] = useState("");
+  const [steps, setSteps] = useState<Step[]>(demoSteps);
 
-  // Start the onboarding process
-  const startOnboardingMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest('POST', '/api/onboarding/start');
-      return await res.json();
-    },
-    onSuccess: (data: UserOnboarding) => {
-      queryClient.setQueryData(['/api/onboarding'], data);
-      toast({
-        title: 'Onboarding started',
-        description: 'Welcome to your personalized onboarding experience!',
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Failed to start onboarding',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Update the current onboarding step
-  const updateStepMutation = useMutation({
-    mutationFn: async (step: string) => {
-      const res = await apiRequest('POST', '/api/onboarding/step', { step });
-      return await res.json();
-    },
-    onSuccess: (data: UserOnboarding) => {
-      queryClient.setQueryData(['/api/onboarding'], data);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Failed to update onboarding step',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Mark a step as completed
-  const completeStepMutation = useMutation({
-    mutationFn: async (step: string) => {
-      const res = await apiRequest('POST', '/api/onboarding/complete-step', { step });
-      return await res.json();
-    },
-    onSuccess: (data: UserOnboarding) => {
-      queryClient.setQueryData(['/api/onboarding'], data);
-      toast({
-        title: 'Step completed',
-        description: 'Great progress! Keep going with your onboarding.',
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Failed to complete step',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Complete the entire onboarding process
-  const completeOnboardingMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest('POST', '/api/onboarding/complete');
-      return await res.json();
-    },
-    onSuccess: (data: UserOnboarding) => {
-      queryClient.setQueryData(['/api/onboarding'], data);
-      toast({
-        title: 'Onboarding completed',
-        description: 'Congratulations on completing your onboarding!',
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Failed to complete onboarding',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Check if a specific step is completed
-  const isStepCompleted = (step: string): boolean => {
-    if (!onboarding) return false;
-    return onboarding.completedSteps.includes(step);
-  };
-
-  // Get the next step in the onboarding flow
-  const getNextStep = (currentStep: string): string | null => {
-    // Define the onboarding flow sequence
-    const steps = [
-      'profile_completion',
-      'subscription_selection',
-      'course_exploration',
-      'session_booking',
-      'platform_tour'
-    ];
-    
-    const currentIndex = steps.indexOf(currentStep);
-    if (currentIndex === -1 || currentIndex === steps.length - 1) {
-      return null;
+  // Fetch onboarding data when user changes
+  useEffect(() => {
+    if (user) {
+      fetchOnboardingData();
     }
-    
-    return steps[currentIndex + 1];
+  }, [user]);
+
+  const fetchOnboardingData = async () => {
+    try {
+      const response = await apiRequest("GET", "/api/onboarding");
+      if (response.ok) {
+        const data = await response.json();
+        if (data) {
+          setSteps(prevSteps => 
+            prevSteps.map(step => ({
+              ...step,
+              completed: data.completedSteps?.includes(step.id) || false
+            }))
+          );
+          setCurrentStep(data.currentStep || steps[0].id);
+          
+          // Automatically open onboarding if not completed and user is logged in
+          if (data.currentStep && !data.isCompleted) {
+            setIsOpen(true);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch onboarding data", error);
+    }
   };
 
-  const contextValue: OnboardingContextType = {
-    onboarding: onboarding || null,
-    isLoading,
-    error: error || null,
-    startOnboarding: () => startOnboardingMutation.mutate(),
-    updateStep: (step: string) => updateStepMutation.mutate(step),
-    completeStep: (step: string) => completeStepMutation.mutate(step),
-    completeOnboarding: () => completeOnboardingMutation.mutate(),
-    isStepCompleted,
-    getNextStep,
-    isStarting: startOnboardingMutation.isPending,
-    isUpdatingStep: updateStepMutation.isPending,
-    isCompletingStep: completeStepMutation.isPending,
-    isCompletingOnboarding: completeOnboardingMutation.isPending,
+  const openOnboarding = () => {
+    const firstIncompleteStep = steps.find(step => !step.completed);
+    if (firstIncompleteStep) {
+      setCurrentStep(firstIncompleteStep.id);
+      setIsOpen(true);
+    }
+  };
+
+  const closeOnboarding = () => {
+    setIsOpen(false);
+  };
+
+  const completeStep = async (stepId: string) => {
+    if (!user) return;
+
+    try {
+      const response = await apiRequest("POST", `/api/onboarding/complete-step`, { step: stepId });
+      if (response.ok) {
+        // Update local state
+        setSteps(prevSteps => 
+          prevSteps.map(step => ({
+            ...step,
+            completed: step.id === stepId ? true : step.completed
+          }))
+        );
+
+        // Move to next step or close if last step
+        const currentIndex = steps.findIndex(step => step.id === stepId);
+        if (currentIndex < steps.length - 1) {
+          setCurrentStep(steps[currentIndex + 1].id);
+        } else {
+          // If last step, close the modal
+          setIsOpen(false);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to complete onboarding step", error);
+    }
+  };
+
+  const skipStep = (stepId: string) => {
+    // Just move to the next step without marking as completed
+    const currentIndex = steps.findIndex(step => step.id === stepId);
+    if (currentIndex < steps.length - 1) {
+      setCurrentStep(steps[currentIndex + 1].id);
+    } else {
+      setIsOpen(false);
+    }
+  };
+
+  const completeAllSteps = async () => {
+    if (!user) return;
+
+    try {
+      const response = await apiRequest("POST", `/api/onboarding/complete`);
+      if (response.ok) {
+        // Mark all steps as completed
+        setSteps(prevSteps => 
+          prevSteps.map(step => ({
+            ...step,
+            completed: true
+          }))
+        );
+        setIsOpen(false);
+      }
+    } catch (error) {
+      console.error("Failed to complete all onboarding steps", error);
+    }
+  };
+
+  const isStepCompleted = (stepId: string) => {
+    return steps.find(step => step.id === stepId)?.completed || false;
   };
 
   return (
-    <OnboardingContext.Provider value={contextValue}>
+    <OnboardingContext.Provider 
+      value={{
+        isOpen,
+        currentStep,
+        steps,
+        openOnboarding,
+        closeOnboarding,
+        completeStep,
+        skipStep,
+        completeAllSteps,
+        isStepCompleted
+      }}
+    >
       {children}
     </OnboardingContext.Provider>
   );
 }
 
-export function useOnboarding(): OnboardingContextType {
-  const context = React.useContext(OnboardingContext);
-  if (context === null) {
-    throw new Error('useOnboarding must be used within an OnboardingProvider');
+export const useOnboarding = () => {
+  const context = useContext(OnboardingContext);
+  if (context === undefined) {
+    throw new Error("useOnboarding must be used within an OnboardingProvider");
   }
   return context;
-}
+};
