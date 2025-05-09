@@ -1,150 +1,229 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { format, isToday, isYesterday, isTomorrow } from "date-fns";
-import { fr } from "date-fns/locale";
+
+// Couleurs de la plateforme Necform
+const COLORS = {
+  primary: "#1D2B6C",
+  secondary: "#5F8BFF",
+  tertiary: "#7A6CFF",
+  light: "#F7F9FC",
+  white: "#FFFFFF",
+};
 
 /**
- * Combines multiple class values using clsx and then merges them with Tailwind classes
- * to properly handle Tailwind class conflicts.
- * 
- * Example:
- * ```jsx
- * <div className={cn("px-4 py-2", isActive && "bg-blue-500", className)}>
- *   Content
- * </div>
- * ```
+ * Combine multiple class names using clsx and tailwind-merge
  */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 /**
- * Formats a date in a human-readable format with special handling for today, yesterday, tomorrow.
- * 
- * @param date Date to format
- * @returns Formatted date string in French locale
+ * Format a date as a string in the French format (DD/MM/YYYY)
  */
-export function formatDate(date: Date | string): string {
-  if (!date) return "";
-  
-  const dateObj = typeof date === "string" ? new Date(date) : date;
-  
-  if (isToday(dateObj)) {
-    return "Aujourd'hui";
-  } else if (isYesterday(dateObj)) {
-    return "Hier";
-  } else if (isTomorrow(dateObj)) {
-    return "Demain";
+export function formatDate(date: Date): string {
+  try {
+    return new Intl.DateTimeFormat('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(date);
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'Date invalide';
   }
-  
-  return format(dateObj, "dd MMMM yyyy", { locale: fr });
 }
 
 /**
- * Formats a time from a date object
- * 
- * @param date Date object containing the time to format
- * @returns Formatted time string (HH:mm)
+ * Format a time as a string in the 24-hour format (HH:MM)
  */
-export function formatTime(date: Date | string): string {
-  if (!date) return "";
-  
-  const dateObj = typeof date === "string" ? new Date(date) : date;
-  return format(dateObj, "HH:mm");
+export function formatTime(date: Date): string {
+  try {
+    return new Intl.DateTimeFormat('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).format(date);
+  } catch (error) {
+    console.error('Error formatting time:', error);
+    return 'Heure invalide';
+  }
 }
 
 /**
- * Formats a duration in minutes into a human-readable format
- * 
- * @param minutes Duration in minutes
- * @returns Formatted duration string, e.g. "2h 30min"
+ * Format a duration in minutes to a human-readable string (e.g., "2h 30min")
  */
 export function formatDuration(minutes: number): string {
-  if (!minutes) return "";
+  if (!minutes || minutes <= 0) return '0 min';
   
   const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
+  const remainingMinutes = minutes % 60;
   
-  if (hours > 0 && mins > 0) {
-    return `${hours}h ${mins}min`;
+  if (hours > 0 && remainingMinutes > 0) {
+    return `${hours}h ${remainingMinutes}min`;
   } else if (hours > 0) {
     return `${hours}h`;
   } else {
-    return `${mins}min`;
+    return `${remainingMinutes}min`;
   }
 }
 
 /**
- * Returns a color class for badge based on the level
- * 
- * @param level Course difficulty level
- * @returns CSS class for the badge color
+ * Calculate the difference in days between two dates
  */
-export function getLevelBadgeColor(level: string): string {
-  switch (level?.toLowerCase()) {
-    case 'débutant':
-      return 'bg-green-100 text-green-800 hover:bg-green-200';
-    case 'intermédiaire':
-      return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
-    case 'avancé':
-      return 'bg-orange-100 text-orange-800 hover:bg-orange-200';
-    case 'expert':
-      return 'bg-red-100 text-red-800 hover:bg-red-200';
+export function daysBetween(startDate: Date, endDate: Date): number {
+  const oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  
+  // Reset time part for accurate day calculation
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+  
+  // Calculate the difference
+  const diffDays = Math.round(Math.abs((end.getTime() - start.getTime()) / oneDay));
+  return diffDays;
+}
+
+/**
+ * Check if a date is today
+ */
+export function isToday(date: Date): boolean {
+  const today = new Date();
+  return (
+    date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear()
+  );
+}
+
+/**
+ * Check if a date is in the future
+ */
+export function isFuture(date: Date): boolean {
+  const now = new Date();
+  return date.getTime() > now.getTime();
+}
+
+/**
+ * Check if a date is in the past
+ */
+export function isPast(date: Date): boolean {
+  const now = new Date();
+  return date.getTime() < now.getTime();
+}
+
+/**
+ * Format price with currency symbol
+ */
+export function formatPrice(price: number, currency: string = 'EUR'): string {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: currency
+  }).format(price);
+}
+
+/**
+ * Limit string length with ellipsis
+ */
+export function truncateString(str: string, maxLength: number = 100): string {
+  if (!str) return '';
+  if (str.length <= maxLength) return str;
+  return str.substring(0, maxLength) + '...';
+}
+
+/**
+ * Get initials from a name (e.g., "John Doe" -> "JD")
+ */
+export function getInitials(name: string): string {
+  if (!name) return '';
+  
+  const parts = name.split(' ').filter(Boolean);
+  if (parts.length === 0) return '';
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
+
+/**
+ * Generate a random color based on a string (consistent for same input)
+ */
+export function stringToColor(str: string): string {
+  if (!str) return '#5F8BFF'; // Default color
+  
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  let color = '#';
+  for (let i = 0; i < 3; i++) {
+    const value = (hash >> (i * 8)) & 0xFF;
+    color += ('00' + value.toString(16)).substr(-2);
+  }
+  
+  return color;
+}
+
+/**
+ * Get badge color for a course level
+ */
+export function getLevelBadgeColor(level: string | undefined): string {
+  if (!level) return 'bg-gray-200 text-gray-800';
+  
+  switch (level.toLowerCase()) {
+    case 'beginner':
+      return 'bg-green-100 text-green-800 border-green-200';
+    case 'intermediate':
+      return 'bg-blue-100 text-blue-800 border-blue-200';
+    case 'advanced':
+      return 'bg-purple-100 text-purple-800 border-purple-200';
     default:
-      return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+      return 'bg-gray-100 text-gray-800 border-gray-200';
   }
 }
 
 /**
- * Returns a color class for badge based on the category
- * 
- * @param category Category name or key
- * @returns CSS class for the badge color
+ * Get badge color for a category
  */
-export function getCategoryBadgeColor(category: string): string {
-  switch (category?.toLowerCase()) {
-    case 'dev-web':
-    case 'développement web':
-      return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
-    case 'devops':
-    case 'cloud':
-      return 'bg-purple-100 text-purple-800 hover:bg-purple-200';
-    case 'data':
-    case 'données':
-    case 'base de données':
-      return 'bg-green-100 text-green-800 hover:bg-green-200';
-    case 'mobile':
-    case 'développement mobile':
-      return 'bg-amber-100 text-amber-800 hover:bg-amber-200';
-    case 'ia':
-    case 'intelligence artificielle':
-      return 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200';
-    case 'sécurité':
-    case 'cybersécurité':
-      return 'bg-red-100 text-red-800 hover:bg-red-200';
-    default:
-      return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
-  }
+export function getCategoryBadgeColor(categoryName: string | undefined): string {
+  if (!categoryName) return 'bg-gray-200 text-gray-800';
+  
+  // Générer une couleur basée sur le nom de la catégorie
+  const baseColor = stringToColor(categoryName);
+  
+  // Conversion simple hexadécimale vers RGB
+  const r = parseInt(baseColor.slice(1, 3), 16);
+  const g = parseInt(baseColor.slice(3, 5), 16);
+  const b = parseInt(baseColor.slice(5, 7), 16);
+  
+  // Créer la version plus claire pour le fond
+  const bgColorRgb = `rgba(${r}, ${g}, ${b}, 0.15)`;
+  
+  return `text-[${baseColor}] bg-[${bgColorRgb}] border-[${baseColor}]/20`;
 }
 
 /**
- * Returns a relative date label (Aujourd'hui, Demain, Hier, etc.)
- * 
- * @param date Date to get relative label for
- * @returns Relative date label
+ * Get a relative date label for a given date (e.g., "Today", "Tomorrow", "In 3 days", etc.)
  */
-export function getRelativeDateLabel(date: Date | string): string {
-  if (!date) return "";
+export function getRelativeDateLabel(date: Date): string {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
   
-  const dateObj = typeof date === "string" ? new Date(date) : date;
+  const comparingDate = new Date(date);
+  comparingDate.setHours(0, 0, 0, 0);
   
-  if (isToday(dateObj)) {
-    return "Aujourd'hui";
-  } else if (isYesterday(dateObj)) {
-    return "Hier";
-  } else if (isTomorrow(dateObj)) {
-    return "Demain";
+  const diffTime = comparingDate.getTime() - now.getTime();
+  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+  
+  if (diffDays < 0) {
+    if (diffDays === -1) return "Hier";
+    if (diffDays > -7) return `Il y a ${Math.abs(diffDays)} jours`;
+    return formatDate(date);
   }
   
-  return format(dateObj, "dd MMMM", { locale: fr });
+  if (diffDays === 0) return "Aujourd'hui";
+  if (diffDays === 1) return "Demain";
+  if (diffDays < 7) return `Dans ${diffDays} jours`;
+  
+  return formatDate(date);
 }

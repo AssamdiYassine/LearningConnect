@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { CourseWithDetails } from "@shared/schema";
+import { CourseWithDetails, SessionWithDetails, SessionWithEnrollment } from "@shared/schema";
 import { Star, Users, Clock, SignalHigh } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +23,7 @@ export default function CourseCard({ course }: CourseCardProps) {
   const { toast } = useToast();
 
   // Get the next session for this course
-  const { data: sessions } = useQuery<SessionWithDetails[]>({
+  const { data: sessions } = useQuery<SessionWithEnrollment[]>({
     queryKey: ["/api/sessions/upcoming"],
   });
 
