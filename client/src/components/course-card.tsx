@@ -23,11 +23,13 @@ export default function CourseCard({ course }: CourseCardProps) {
   const { toast } = useToast();
 
   // Get the next session for this course
-  const { data: sessions } = useQuery({
+  const { data: sessions } = useQuery<SessionWithDetails[]>({
     queryKey: ["/api/sessions/upcoming"],
   });
 
-  const nextSession = sessions?.find(session => session?.course?.id === course.id);
+  const nextSession = Array.isArray(sessions) ? 
+    sessions.find(session => session?.course?.id === course.id) : 
+    undefined;
 
   const enrollMutation = useMutation({
     mutationFn: async () => {

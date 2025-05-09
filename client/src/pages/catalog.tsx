@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { CourseWithDetails, Category } from "@shared/schema";
+import { CourseWithDetails, Category, SessionWithDetails } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Loader2, Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -31,7 +31,7 @@ export default function Catalog() {
   });
 
   // Fetch upcoming sessions
-  const { data: sessions, isLoading: isSessionsLoading } = useQuery({
+  const { data: sessions, isLoading: isSessionsLoading } = useQuery<SessionWithDetails[]>({
     queryKey: ["/api/sessions/upcoming"],
   });
 

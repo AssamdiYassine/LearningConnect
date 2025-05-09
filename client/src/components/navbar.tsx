@@ -86,17 +86,17 @@ export default function Navbar() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-1">
             {navItems.map((item) => (
-              <Link key={item.path} href={item.path}>
-                <a
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive(item.path)
-                      ? "text-primary dark:text-white font-semibold"
-                      : "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-white"
-                  }`}
-                >
-                  {item.name}
-                </a>
-              </Link>
+              <div
+                key={item.path}
+                onClick={() => window.location.href = item.path}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+                  isActive(item.path)
+                    ? "text-primary dark:text-white font-semibold"
+                    : "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-white"
+                }`}
+              >
+                {item.name}
+              </div>
             ))}
           </div>
 
@@ -135,14 +135,20 @@ export default function Navbar() {
                     </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/profile">
-                      <a className="w-full cursor-pointer">Mon profil</a>
-                    </Link>
+                    <div 
+                      className="w-full cursor-pointer"
+                      onClick={() => window.location.href = "/profile"}
+                    >
+                      Mon profil
+                    </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/achievements">
-                      <a className="w-full cursor-pointer">Mes réussites</a>
-                    </Link>
+                    <div 
+                      className="w-full cursor-pointer"
+                      onClick={() => window.location.href = "/achievements"}
+                    >
+                      Mes réussites
+                    </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="text-red-600 dark:text-red-400 cursor-pointer"
@@ -196,33 +202,35 @@ export default function Navbar() {
           <div className="md:hidden pt-4 pb-2">
             <div className="flex flex-col space-y-2">
               {navItems.map((item) => (
-                <Link key={item.path} href={item.path}>
-                  <a
-                    className={`px-4 py-3 rounded-md text-sm font-medium transition-colors ${
-                      isActive(item.path)
-                        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-white font-semibold"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                    }`}
-                  >
-                    {item.name}
-                  </a>
-                </Link>
+                <div 
+                  key={item.path}
+                  onClick={() => window.location.href = item.path}
+                  className={`px-4 py-3 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+                    isActive(item.path)
+                      ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-white font-semibold"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  {item.name}
+                </div>
               ))}
 
               {/* Auth Buttons Mobile */}
               <div className="border-t border-gray-200 dark:border-gray-800 my-2 pt-2">
                 {user ? (
                   <>
-                    <Link href={user.role === "admin" ? "/admin-dashboard" : user.role === "trainer" ? "/trainer-dashboard" : "/student-dashboard"}>
-                      <a className="block px-4 py-3 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
-                        Mon tableau de bord
-                      </a>
-                    </Link>
-                    <Link href="/profile">
-                      <a className="block px-4 py-3 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
-                        Mon profil
-                      </a>
-                    </Link>
+                    <div
+                      onClick={() => window.location.href = user.role === "admin" ? "/admin-dashboard" : user.role === "trainer" ? "/trainer-dashboard" : "/student-dashboard"}
+                      className="block px-4 py-3 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                    >
+                      Mon tableau de bord
+                    </div>
+                    <div
+                      onClick={() => window.location.href = "/profile"}
+                      className="block px-4 py-3 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                    >
+                      Mon profil
+                    </div>
                     <button
                       onClick={handleLogout}
                       className="w-full text-left px-4 py-3 rounded-md text-sm font-medium text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -232,16 +240,18 @@ export default function Navbar() {
                   </>
                 ) : (
                   <>
-                    <Link href="/auth">
-                      <a className="block px-4 py-3 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
-                        Connexion
-                      </a>
-                    </Link>
-                    <Link href="/auth?register=true">
-                      <a className="block px-4 py-3 rounded-md text-sm font-medium bg-accent text-white hover:bg-accent/90">
-                        S'inscrire
-                      </a>
-                    </Link>
+                    <div
+                      onClick={() => window.location.href = "/auth"}
+                      className="block px-4 py-3 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                    >
+                      Connexion
+                    </div>
+                    <div
+                      onClick={() => window.location.href = "/auth?register=true"}
+                      className="block px-4 py-3 rounded-md text-sm font-medium bg-accent text-white hover:bg-accent/90 cursor-pointer"
+                    >
+                      S'inscrire
+                    </div>
                   </>
                 )}
               </div>
