@@ -104,6 +104,22 @@ function Router() {
         <ProtectedRoute component={TrainerDashboard} allowedRoles={["trainer", "admin"]} />
       </Route>
       
+      <Route path="/trainer/students">
+        <ProtectedRoute path="/trainer/students" component={() => import("./pages/trainer-students").then(m => <m.default />)} allowedRoles={["trainer", "admin"]} />
+      </Route>
+      
+      <Route path="/trainer/courses">
+        <ProtectedRoute path="/trainer/courses" component={() => import("./pages/trainer-courses").then(m => <m.default />)} allowedRoles={["trainer", "admin"]} />
+      </Route>
+      
+      <Route path="/trainer/schedule">
+        <ProtectedRoute path="/trainer/schedule" component={() => import("./pages/trainer-schedule").then(m => <m.default />)} allowedRoles={["trainer", "admin"]} />
+      </Route>
+      
+      <Route path="/trainer/ratings">
+        <ProtectedRoute path="/trainer/ratings" component={() => import("./pages/trainer-ratings").then(m => <m.default />)} allowedRoles={["trainer", "admin"]} />
+      </Route>
+      
       <Route path="/create-course">
         <ProtectedRoute component={CreateCourse} allowedRoles={["trainer", "admin"]} />
       </Route>

@@ -73,8 +73,9 @@ export default function TrainerDashboard() {
             </div>
           </CardContent>
           <CardFooter className="bg-gray-50 px-5 py-3">
-            <Link href="/trainer/students" className="text-sm font-medium text-primary-600 hover:text-primary-500">
+            <Link href="/trainer/students" className="text-sm font-medium text-primary-600 hover:text-primary-500 flex items-center">
               Voir tous les apprenants
+              <ChevronRight className="ml-1 h-4 w-4" />
             </Link>
           </CardFooter>
         </Card>
@@ -101,8 +102,9 @@ export default function TrainerDashboard() {
             </div>
           </CardContent>
           <CardFooter className="bg-gray-50 px-5 py-3">
-            <Link href="/trainer/courses" className="text-sm font-medium text-primary-600 hover:text-primary-500">
+            <Link href="/trainer/courses" className="text-sm font-medium text-primary-600 hover:text-primary-500 flex items-center">
               Voir tous les cours
+              <ChevronRight className="ml-1 h-4 w-4" />
             </Link>
           </CardFooter>
         </Card>
@@ -129,8 +131,9 @@ export default function TrainerDashboard() {
             </div>
           </CardContent>
           <CardFooter className="bg-gray-50 px-5 py-3">
-            <Link href="/trainer/schedule" className="text-sm font-medium text-primary-600 hover:text-primary-500">
+            <Link href="/trainer/schedule" className="text-sm font-medium text-primary-600 hover:text-primary-500 flex items-center">
               Voir le calendrier
+              <ChevronRight className="ml-1 h-4 w-4" />
             </Link>
           </CardFooter>
         </Card>
@@ -157,8 +160,9 @@ export default function TrainerDashboard() {
             </div>
           </CardContent>
           <CardFooter className="bg-gray-50 px-5 py-3">
-            <Link href="/trainer/ratings" className="text-sm font-medium text-primary-600 hover:text-primary-500">
+            <Link href="/trainer/ratings" className="text-sm font-medium text-primary-600 hover:text-primary-500 flex items-center">
               Voir les évaluations
+              <ChevronRight className="ml-1 h-4 w-4" />
             </Link>
           </CardFooter>
         </Card>
