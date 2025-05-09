@@ -13,15 +13,15 @@ export default function HeroSection() {
   const [location, setLocation] = useLocation();
   
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-primary-950 via-primary-900 to-purple-900 text-white">
+    <section className="relative overflow-hidden bg-gradient-to-br from-[#1D2B6C] via-[#5F8BFF] to-[#7A6CFF] text-white">
       {/* Background elements */}
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iLjUiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMjkuNSIvPjxwYXRoIGQ9Ik0yOS41IDE1Ljk5OEgzMC41VjQ0aC0xeiIvPjxwYXRoIGQ9Ik0xNiAyOS41VjMwLjVINDR2LTF6Ii8+PC9nPjwvc3ZnPg==')] opacity-[0.03]"></div>
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iLjUiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMjkuNSIvPjxwYXRoIGQ9Ik0yOS41IDE1Ljk5OEgzMC41VjQ0aC0xeiIvPjxwYXRoIGQ9Ik0xNiAyOS41VjMwLjVINDR2LTF6Ii8+PC9nPjwvc3ZnPg==')] opacity-[0.05]"></div>
       
       {/* Animated gradients */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -left-40 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl animate-pulse"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full bg-primary-800/20 blur-3xl"></div>
-        <div className="absolute -bottom-40 -right-40 w-80 h-80 rounded-full bg-purple-500/10 blur-3xl animate-pulse"></div>
+        <div className="absolute -top-40 -left-40 w-80 h-80 rounded-full bg-white/10 blur-3xl animate-pulse"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full bg-[#5F8BFF]/20 blur-3xl"></div>
+        <div className="absolute -bottom-40 -right-40 w-80 h-80 rounded-full bg-[#7A6CFF]/10 blur-3xl animate-pulse"></div>
       </div>
       
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 md:py-32">
@@ -106,7 +106,7 @@ export default function HeroSection() {
                         <div className="w-3 h-3 rounded-full bg-green-400"></div>
                       </div>
                       <div className="mx-auto bg-white/10 rounded-full px-4 py-1 text-xs text-white/70">
-                        formation.techformpro.com
+                        formation.necform.fr
                       </div>
                     </div>
                     

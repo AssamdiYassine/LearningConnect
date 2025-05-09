@@ -78,8 +78,8 @@ export default function Navbar() {
         <nav className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center">
-            <div className="text-2xl font-bold text-primary dark:text-white">
-              Tech<span className="text-accent">Form</span>Pro
+            <div className="text-2xl font-bold text-[#5F8BFF] dark:text-white">
+              Nec<span className="text-[#7A6CFF]">form</span>
             </div>
           </Link>
 
