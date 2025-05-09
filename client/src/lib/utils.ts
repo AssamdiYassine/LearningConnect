@@ -20,13 +20,18 @@ export function cn(...inputs: ClassValue[]) {
 /**
  * Format a date as a string in the French format (DD/MM/YYYY)
  */
-export function formatDate(date: Date): string {
+export function formatDate(date: Date | string | null | undefined): string {
+  if (!date) return "Date inconnue";
+  
   try {
+    const dateObject = date instanceof Date ? date : new Date(date);
+    if (isNaN(dateObject.getTime())) return "Date invalide";
+    
     return new Intl.DateTimeFormat('fr-FR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
-    }).format(date);
+    }).format(dateObject);
   } catch (error) {
     console.error('Error formatting date:', error);
     return 'Date invalide';
@@ -36,13 +41,18 @@ export function formatDate(date: Date): string {
 /**
  * Format a time as a string in the 24-hour format (HH:MM)
  */
-export function formatTime(date: Date): string {
+export function formatTime(date: Date | string | null | undefined): string {
+  if (!date) return "Heure inconnue";
+  
   try {
+    const dateObject = date instanceof Date ? date : new Date(date);
+    if (isNaN(dateObject.getTime())) return "Heure invalide";
+    
     return new Intl.DateTimeFormat('fr-FR', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false
-    }).format(date);
+    }).format(dateObject);
   } catch (error) {
     console.error('Error formatting time:', error);
     return 'Heure invalide';
@@ -70,46 +80,85 @@ export function formatDuration(minutes: number): string {
 /**
  * Calculate the difference in days between two dates
  */
-export function daysBetween(startDate: Date, endDate: Date): number {
-  const oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+export function daysBetween(startDate: Date | string | null | undefined, endDate: Date | string | null | undefined): number {
+  if (!startDate || !endDate) return 0;
   
-  // Reset time part for accurate day calculation
-  start.setHours(0, 0, 0, 0);
-  end.setHours(0, 0, 0, 0);
-  
-  // Calculate the difference
-  const diffDays = Math.round(Math.abs((end.getTime() - start.getTime()) / oneDay));
-  return diffDays;
+  try {
+    const oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
+    const start = startDate instanceof Date ? new Date(startDate) : new Date(startDate);
+    const end = endDate instanceof Date ? new Date(endDate) : new Date(endDate);
+    
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+    
+    // Reset time part for accurate day calculation
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+    
+    // Calculate the difference
+    const diffDays = Math.round(Math.abs((end.getTime() - start.getTime()) / oneDay));
+    return diffDays;
+  } catch (error) {
+    console.error('Error calculating days between dates:', error);
+    return 0;
+  }
 }
 
 /**
  * Check if a date is today
  */
-export function isToday(date: Date): boolean {
-  const today = new Date();
-  return (
-    date.getDate() === today.getDate() &&
-    date.getMonth() === today.getMonth() &&
-    date.getFullYear() === today.getFullYear()
-  );
+export function isToday(date: Date | string | null | undefined): boolean {
+  if (!date) return false;
+  
+  try {
+    const dateObj = date instanceof Date ? date : new Date(date);
+    if (isNaN(dateObj.getTime())) return false;
+    
+    const today = new Date();
+    return (
+      dateObj.getDate() === today.getDate() &&
+      dateObj.getMonth() === today.getMonth() &&
+      dateObj.getFullYear() === today.getFullYear()
+    );
+  } catch (error) {
+    console.error('Error checking if date is today:', error);
+    return false;
+  }
 }
 
 /**
  * Check if a date is in the future
  */
-export function isFuture(date: Date): boolean {
-  const now = new Date();
-  return date.getTime() > now.getTime();
+export function isFuture(date: Date | string | null | undefined): boolean {
+  if (!date) return false;
+  
+  try {
+    const dateObj = date instanceof Date ? date : new Date(date);
+    if (isNaN(dateObj.getTime())) return false;
+    
+    const now = new Date();
+    return dateObj.getTime() > now.getTime();
+  } catch (error) {
+    console.error('Error checking if date is in the future:', error);
+    return false;
+  }
 }
 
 /**
  * Check if a date is in the past
  */
-export function isPast(date: Date): boolean {
-  const now = new Date();
-  return date.getTime() < now.getTime();
+export function isPast(date: Date | string | null | undefined): boolean {
+  if (!date) return false;
+  
+  try {
+    const dateObj = date instanceof Date ? date : new Date(date);
+    if (isNaN(dateObj.getTime())) return false;
+    
+    const now = new Date();
+    return dateObj.getTime() < now.getTime();
+  } catch (error) {
+    console.error('Error checking if date is in the past:', error);
+    return false;
+  }
 }
 
 /**
@@ -205,25 +254,35 @@ export function getCategoryBadgeColor(categoryName: string | undefined): string 
 /**
  * Get a relative date label for a given date (e.g., "Today", "Tomorrow", "In 3 days", etc.)
  */
-export function getRelativeDateLabel(date: Date): string {
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
+export function getRelativeDateLabel(date: Date | string | null | undefined): string {
+  if (!date) return "Date inconnue";
   
-  const comparingDate = new Date(date);
-  comparingDate.setHours(0, 0, 0, 0);
-  
-  const diffTime = comparingDate.getTime() - now.getTime();
-  const diffDays = diffTime / (1000 * 60 * 60 * 24);
-  
-  if (diffDays < 0) {
-    if (diffDays === -1) return "Hier";
-    if (diffDays > -7) return `Il y a ${Math.abs(diffDays)} jours`;
-    return formatDate(date);
+  try {
+    const dateObject = date instanceof Date ? date : new Date(date);
+    if (isNaN(dateObject.getTime())) return "Date invalide";
+    
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    
+    const comparingDate = new Date(dateObject);
+    comparingDate.setHours(0, 0, 0, 0);
+    
+    const diffTime = comparingDate.getTime() - now.getTime();
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    
+    if (diffDays < 0) {
+      if (diffDays === -1) return "Hier";
+      if (diffDays > -7) return `Il y a ${Math.abs(diffDays)} jours`;
+      return formatDate(dateObject);
+    }
+    
+    if (diffDays === 0) return "Aujourd'hui";
+    if (diffDays === 1) return "Demain";
+    if (diffDays < 7) return `Dans ${Math.floor(diffDays)} jours`;
+    
+    return formatDate(dateObject);
+  } catch (error) {
+    console.error('Error getting relative date label:', error);
+    return 'Date invalide';
   }
-  
-  if (diffDays === 0) return "Aujourd'hui";
-  if (diffDays === 1) return "Demain";
-  if (diffDays < 7) return `Dans ${diffDays} jours`;
-  
-  return formatDate(date);
 }
