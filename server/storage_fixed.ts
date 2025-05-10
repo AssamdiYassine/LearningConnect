@@ -61,6 +61,7 @@ export interface IStorage {
   getUpcomingSessions(): Promise<SessionWithDetails[]>;
   getSessionWithDetails(id: number): Promise<SessionWithDetails | undefined>;
   getAllSessionsWithDetails(): Promise<SessionWithDetails[]>;
+  updateSession(id: number, data: Partial<Session>): Promise<Session>;
 
   // Enrollment operations
   createEnrollment(enrollment: InsertEnrollment): Promise<Enrollment>;

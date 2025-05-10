@@ -336,6 +336,15 @@ export class DatabaseStorage implements IStorage {
       enrollmentCount
     }));
   }
+  
+  async updateSession(id: number, data: Partial<Session>): Promise<Session> {
+    const [updatedSession] = await db
+      .update(sessions)
+      .set(data)
+      .where(eq(sessions.id, id))
+      .returning();
+    return updatedSession;
+  }
 
   // Enrollment operations
   async createEnrollment(enrollment: InsertEnrollment): Promise<Enrollment> {
