@@ -182,7 +182,7 @@ export default function AdminPendingCourses() {
                 <Clock className="h-6 w-6 text-amber-600" />
               </div>
             </div>
-            <Progress value={60} className="h-1.5 mt-5 bg-amber-200" indicatorClassName="bg-amber-500" />
+            <Progress value={60} className="h-1.5 mt-5 bg-amber-200" />
             <p className="text-xs text-amber-700 mt-2">Temps d'attente moyen: 2 jours</p>
           </CardContent>
         </Card>
@@ -199,7 +199,7 @@ export default function AdminPendingCourses() {
                 <CheckCircle2 className="h-6 w-6 text-green-600" />
               </div>
             </div>
-            <Progress value={100} className="h-1.5 mt-5 bg-green-200" indicatorClassName="bg-green-500" />
+            <Progress value={100} className="h-1.5 mt-5 bg-green-200" />
             <p className="text-xs text-green-700 mt-2">Taux d'approbation: 85%</p>
           </CardContent>
         </Card>
@@ -216,7 +216,7 @@ export default function AdminPendingCourses() {
                 <XCircle className="h-6 w-6 text-red-600" />
               </div>
             </div>
-            <Progress value={15} className="h-1.5 mt-5 bg-red-200" indicatorClassName="bg-red-500" />
+            <Progress value={15} className="h-1.5 mt-5 bg-red-200" />
             <p className="text-xs text-red-700 mt-2">Taux de refus: 15%</p>
           </CardContent>
         </Card>
