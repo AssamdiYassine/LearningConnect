@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import StudentDashboard from "@/pages/student-dashboard";
 import TrainerDashboard from "@/pages/trainer-dashboard";
+import TrainerDashboardNew from "@/pages/trainer-dashboard-new";
 import TrainerStudents from "@/pages/trainer-students";
 import TrainerCourses from "@/pages/trainer-courses";
 import TrainerSchedule from "@/pages/trainer-schedule";
@@ -148,6 +149,10 @@ function Router() {
       
       <Route path="/trainer/notifications">
         <ProtectedRoute component={TrainerNotifications} allowedRoles={["trainer", "admin"]} />
+      </Route>
+      
+      <Route path="/trainer/dashboard-new">
+        <ProtectedRoute component={TrainerDashboardNew} allowedRoles={["trainer", "admin"]} />
       </Route>
       
       <Route path="/create-course">
