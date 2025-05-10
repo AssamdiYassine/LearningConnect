@@ -8,11 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import CreateCourseForm from "@/components/create-course-form";
 import { useState } from "react";
 import { SessionWithDetails } from "@shared/schema";
+import { useNotifications } from "@/hooks/use-notifications";
 import { formatDate, formatTime } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export default function TrainerDashboard() {
   const { user } = useAuth();
+  const { unreadCount } = useNotifications();
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   // Fetch trainer sessions
@@ -136,6 +138,44 @@ export default function TrainerDashboard() {
           <CardFooter className="bg-gray-50 px-5 py-3">
             <Link href="/trainer/schedule" className="text-sm font-medium text-primary-600 hover:text-primary-500 flex items-center">
               Voir le calendrier
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </Link>
+          </CardFooter>
+        </Card>
+
+        {/* Carte des Notifications */}
+        <Card>
+          <CardContent className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Bell className="h-6 w-6 text-gray-400" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">
+                    Notifications
+                  </dt>
+                  <dd>
+                    <div className="text-lg font-medium text-gray-900 flex items-center">
+                      {unreadCount > 0 ? (
+                        <>
+                          <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full mr-2">
+                            {unreadCount}
+                          </span>
+                          non lue{unreadCount > 1 ? 's' : ''}
+                        </>
+                      ) : (
+                        "Aucune nouvelle"
+                      )}
+                    </div>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter className="bg-gray-50 px-5 py-3">
+            <Link href="/trainer/notifications" className="text-sm font-medium text-primary-600 hover:text-primary-500 flex items-center">
+              Gérer les notifications
               <ChevronRight className="ml-1 h-4 w-4" />
             </Link>
           </CardFooter>
