@@ -44,6 +44,13 @@ import AdminAnalytics from "@/pages/admin/admin-analytics";
 import AdminRevenue from "@/pages/admin/admin-revenue";
 import AdminSettings from "@/pages/admin/admin-settings";
 
+// Blog pages
+import BlogPage from "@/pages/blog";
+import BlogPostPage from "@/pages/blog/[slug]";
+import BlogAdminPage from "@/pages/blog/admin";
+import EditBlogCategoryPage from "@/pages/blog/admin/edit-category";
+import EditBlogPostPage from "@/pages/blog/admin/edit-post";
+
 function Router() {
   return (
     <Switch>
@@ -198,6 +205,47 @@ function Router() {
       
       <Route path="/admin/settings">
         <ProtectedRoute component={AdminSettings} allowedRoles={["admin"]} />
+      </Route>
+      
+      {/* Blog routes */}
+      <Route path="/blog">
+        <Route path="/">
+          <BlogPage />
+        </Route>
+        
+        <Route path="/:slug">
+          {params => <BlogPostPage slug={params.slug} />}
+        </Route>
+        
+        <Route path="/admin">
+          <ProtectedRoute component={BlogAdminPage} allowedRoles={["admin"]} />
+        </Route>
+        
+        <Route path="/admin/edit-category">
+          <ProtectedRoute component={EditBlogCategoryPage} allowedRoles={["admin"]} />
+        </Route>
+        
+        <Route path="/admin/edit-category/:id">
+          {params => (
+            <ProtectedRoute 
+              component={() => <EditBlogCategoryPage />} 
+              allowedRoles={["admin"]} 
+            />
+          )}
+        </Route>
+        
+        <Route path="/admin/edit-post">
+          <ProtectedRoute component={EditBlogPostPage} allowedRoles={["admin"]} />
+        </Route>
+        
+        <Route path="/admin/edit-post/:id">
+          {params => (
+            <ProtectedRoute 
+              component={() => <EditBlogPostPage />} 
+              allowedRoles={["admin"]} 
+            />
+          )}
+        </Route>
       </Route>
       
       {/* Fallback to 404 */}

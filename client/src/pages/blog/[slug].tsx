@@ -15,9 +15,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTitle } from "@/hooks/use-title";
 
-const BlogPostPage = () => {
+interface BlogPostPageProps {
+  slug?: string;
+}
+
+const BlogPostPage = ({ slug: propSlug }: BlogPostPageProps) => {
   const [, params] = useRoute("/blog/:slug");
-  const slug = params?.slug;
+  const slug = propSlug || params?.slug;
   const { user } = useAuth();
   const { toast } = useToast();
   const [comment, setComment] = useState("");

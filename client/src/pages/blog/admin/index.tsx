@@ -25,7 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AdminLayout } from "@/components/admin-layout";
+import AdminLayout from "@/components/admin-layout";
 import { 
   AlertDialog,
   AlertDialogAction,
