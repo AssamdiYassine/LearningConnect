@@ -8,7 +8,12 @@ import {
   Setting, InsertSetting,
   CourseWithDetails,
   SessionWithDetails,
-  UserOnboarding
+  UserOnboarding,
+  BlogCategory, InsertBlogCategory,
+  BlogPost, InsertBlogPost, 
+  BlogComment, InsertBlogComment,
+  BlogPostWithDetails,
+  BlogCommentWithUser
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -95,6 +100,38 @@ export interface IStorage {
   updateUserOnboardingStep(userId: number, currentStep: string): Promise<UserOnboarding>;
   completeUserOnboardingStep(userId: number, step: string): Promise<UserOnboarding>;
   completeUserOnboarding(userId: number): Promise<UserOnboarding>;
+
+  // Blog category operations
+  createBlogCategory(category: InsertBlogCategory): Promise<BlogCategory>;
+  getAllBlogCategories(): Promise<BlogCategory[]>;
+  getBlogCategory(id: number): Promise<BlogCategory | undefined>;
+  getBlogCategoryBySlug(slug: string): Promise<BlogCategory | undefined>;
+  updateBlogCategory(id: number, data: Partial<InsertBlogCategory>): Promise<BlogCategory>;
+  deleteBlogCategory(id: number): Promise<void>;
+
+  // Blog post operations
+  createBlogPost(post: InsertBlogPost): Promise<BlogPost>;
+  getBlogPost(id: number): Promise<BlogPost | undefined>;
+  getBlogPostWithDetails(id: number): Promise<BlogPostWithDetails | undefined>;
+  getBlogPostBySlugWithDetails(slug: string): Promise<BlogPostWithDetails | undefined>;
+  getAllBlogPostsWithDetails(params?: {
+    status?: string;
+    limit?: number;
+    offset?: number;
+    categoryId?: number;
+  }): Promise<BlogPostWithDetails[]>;
+  getBlogPostsByAuthor(authorId: number): Promise<BlogPost[]>;
+  getBlogPostsByCategory(categoryId: number): Promise<BlogPost[]>;
+  updateBlogPost(id: number, data: Partial<InsertBlogPost>): Promise<BlogPost>;
+  deleteBlogPost(id: number): Promise<void>;
+  incrementBlogPostViewCount(id: number): Promise<void>;
+
+  // Blog comment operations
+  createBlogComment(comment: InsertBlogComment): Promise<BlogComment>;
+  getBlogComment(id: number): Promise<BlogComment | undefined>;
+  getBlogPostComments(postId: number): Promise<BlogCommentWithUser[]>;
+  approveBlogComment(id: number): Promise<BlogComment>;
+  deleteBlogComment(id: number): Promise<void>;
 }
 
 // In-memory storage implementation
@@ -107,6 +144,9 @@ export class MemStorage implements IStorage {
   private notifications: Map<number, Notification>;
   private settings: Map<string, Setting>;
   private userOnboardings: Map<number, UserOnboarding>;
+  private blogCategories: Map<number, BlogCategory>;
+  private blogPosts: Map<number, BlogPost>;
+  private blogComments: Map<number, BlogComment>;
   
   sessionStore: any;
   
@@ -117,6 +157,9 @@ export class MemStorage implements IStorage {
   private enrollmentIdCounter: number;
   private notificationIdCounter: number;
   private onboardingIdCounter: number;
+  private blogCategoryIdCounter: number;
+  private blogPostIdCounter: number;
+  private blogCommentIdCounter: number;
 
   constructor() {
     this.users = new Map();
@@ -127,6 +170,9 @@ export class MemStorage implements IStorage {
     this.notifications = new Map();
     this.settings = new Map();
     this.userOnboardings = new Map();
+    this.blogCategories = new Map();
+    this.blogPosts = new Map();
+    this.blogComments = new Map();
     
     this.userIdCounter = 1;
     this.categoryIdCounter = 1;
@@ -135,6 +181,9 @@ export class MemStorage implements IStorage {
     this.enrollmentIdCounter = 1;
     this.notificationIdCounter = 1;
     this.onboardingIdCounter = 1;
+    this.blogCategoryIdCounter = 1;
+    this.blogPostIdCounter = 1;
+    this.blogCommentIdCounter = 1;
     
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
