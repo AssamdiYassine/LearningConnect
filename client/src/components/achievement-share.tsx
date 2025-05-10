@@ -21,15 +21,15 @@ import {
   Share2, 
   Linkedin, 
   Facebook, 
-  Twitter, 
   Mail, 
   Copy, 
-  Check 
+  Check,
+  BookX
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface AchievementShareProps {
   courseTitle: string;
@@ -89,6 +89,8 @@ export function AchievementShare({
     setShareText(generateShareText(platform));
   };
 
+  const { toast } = useToast();
+  
   const handleShare = () => {
     // Construction de l'URL avec les paramètres
     const params = new URLSearchParams();
@@ -148,7 +150,7 @@ export function AchievementShare({
       case "linkedin":
         return <Linkedin className="h-4 w-4 mr-2" />;
       case "twitter":
-        return <Twitter className="h-4 w-4 mr-2" />;
+        return <BookX className="h-4 w-4 mr-2" />;
       case "facebook":
         return <Facebook className="h-4 w-4 mr-2" />;
       case "email":
@@ -162,7 +164,7 @@ export function AchievementShare({
 
   const shareOptions = [
     { value: "linkedin", label: "LinkedIn" },
-    { value: "twitter", label: "Twitter" },
+    { value: "twitter", label: "X (Twitter)" },
     { value: "facebook", label: "Facebook" },
     { value: "email", label: "Email" },
     { value: "copy", label: "Copier le texte" },
@@ -219,7 +221,7 @@ export function AchievementShare({
             }}
           >
             {option.value === "linkedin" && <Linkedin className="h-4 w-4" />}
-            {option.value === "twitter" && <Twitter className="h-4 w-4" />}
+            {option.value === "twitter" && <BookX className="h-4 w-4" />}
             {option.value === "facebook" && <Facebook className="h-4 w-4" />}
             {option.value === "email" && <Mail className="h-4 w-4" />}
             {option.value === "copy" && (copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />)}
@@ -266,6 +268,17 @@ function ShareDialogContent({
   handleShare: () => void;
   getShareIcon: () => JSX.Element;
 }) {
+  const displayShareButtonText = () => {
+    const currentOption = shareOptions.find(o => o.value === socialPlatform);
+    
+    if (socialPlatform === "copy") {
+      return "Copier le texte";
+    } else if (currentOption) {
+      return `Partager sur ${currentOption.label}`;
+    }
+    return "Partager";
+  };
+
   return (
     <DialogContent className="sm:max-w-lg">
       <DialogHeader>
@@ -307,9 +320,7 @@ function ShareDialogContent({
       <DialogFooter>
         <Button onClick={handleShare} className="w-full sm:w-auto">
           {getShareIcon()}
-          {socialPlatform === "copy" 
-            ? (copied ? "Copié !" : "Copier le texte") 
-            : `Partager sur ${shareOptions.find(o => o.value === socialPlatform)?.label}`}
+          {displayShareButtonText()}
         </Button>
       </DialogFooter>
     </DialogContent>
