@@ -32,6 +32,7 @@ import { AuthProvider } from "./hooks/use-auth";
 import { OnboardingProvider } from "./hooks/onboarding-provider";
 import OnboardingModal from "@/components/onboarding/onboarding-modal";
 import Layout from "@/components/layout";
+import AdminLayout from "@/components/admin-layout";
 import { ThemeProvider } from "@/components/theme-provider";
 
 function Router() {
@@ -154,6 +155,10 @@ function Router() {
       
       {/* Admin routes */}
       <Route path="/admin">
+        <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
+      </Route>
+      
+      <Route path="/admin-dashboard">
         <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
       </Route>
       
