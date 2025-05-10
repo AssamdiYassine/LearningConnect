@@ -162,33 +162,33 @@ function Router() {
         <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
       </Route>
       
-      {/* Nouvelles routes admin */}
+      {/* Nouvelles routes admin avec leurs composants spécifiques */}
       <Route path="/admin/users">
-        <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
+        <ProtectedRoute component={() => import("./pages/admin/admin-users").then(m => m.default())} allowedRoles={["admin"]} />
       </Route>
       
       <Route path="/admin/courses">
-        <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
+        <ProtectedRoute component={() => import("./pages/admin/admin-courses").then(m => m.default())} allowedRoles={["admin"]} />
       </Route>
       
       <Route path="/admin/sessions">
-        <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
+        <ProtectedRoute component={() => import("./pages/admin/admin-sessions").then(m => m.default())} allowedRoles={["admin"]} />
       </Route>
       
       <Route path="/admin/pending-courses">
-        <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
+        <ProtectedRoute component={() => import("./pages/admin/admin-pending-courses").then(m => m.default())} allowedRoles={["admin"]} />
       </Route>
       
       <Route path="/admin/analytics">
-        <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
+        <ProtectedRoute component={() => import("./pages/admin/admin-analytics").then(m => m.default())} allowedRoles={["admin"]} />
       </Route>
       
       <Route path="/admin/revenue">
-        <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
+        <ProtectedRoute component={() => import("./pages/admin/admin-revenue").then(m => m.default())} allowedRoles={["admin"]} />
       </Route>
       
       <Route path="/admin/settings">
-        <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
+        <ProtectedRoute component={() => import("./pages/admin/admin-settings").then(m => m.default())} allowedRoles={["admin"]} />
       </Route>
       
       {/* Fallback to 404 */}
