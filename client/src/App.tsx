@@ -162,6 +162,35 @@ function Router() {
         <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
       </Route>
       
+      {/* Nouvelles routes admin */}
+      <Route path="/admin/users">
+        <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
+      </Route>
+      
+      <Route path="/admin/courses">
+        <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
+      </Route>
+      
+      <Route path="/admin/sessions">
+        <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
+      </Route>
+      
+      <Route path="/admin/pending-courses">
+        <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
+      </Route>
+      
+      <Route path="/admin/analytics">
+        <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
+      </Route>
+      
+      <Route path="/admin/revenue">
+        <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
+      </Route>
+      
+      <Route path="/admin/settings">
+        <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
+      </Route>
+      
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
