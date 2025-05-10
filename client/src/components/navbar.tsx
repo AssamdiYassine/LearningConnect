@@ -8,7 +8,9 @@ import {
   Moon,
   Sun,
   ChevronDown,
+  Bell,
 } from "lucide-react";
+import NotificationBell from "@/components/notification-bell";
 import {
   DropdownMenu,
   DropdownMenuContent,
