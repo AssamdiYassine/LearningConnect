@@ -40,35 +40,37 @@
   }
 
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
+    --background: 225 25% 10%; /* Deeper blue-tinted background for better contrast with brand colors */
+    --foreground: 210 20% 98%; /* Brighter white text for better readability */
 
-    --muted: 223 47% 11%;
-    --muted-foreground: 215.4 16.3% 56.9%;
+    --muted: 223 25% 18%; /* Slightly lighter muted background */
+    --muted-foreground: 215 20% 65%; /* More vibrant muted text */
 
-    /* Dark mode Necform colors */
-    --primary: 225 59% 27%; /* #1D2B6C - same as light for brand consistency */
+    /* Dark mode Necform colors - more vibrant for dark mode */
+    --primary: 225 70% 40%; /* Brighter version of #1D2B6C for dark mode visibility */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 224 70% 55%; /* darker version of #5F8BFF */
+    --secondary: 224 85% 70%; /* Vibrant version of #5F8BFF for dark mode */
     --secondary-foreground: 0 0% 100%;
 
-    --accent: 251 80% 65%; /* darker version of #7A6CFF */
+    --accent: 251 85% 75%; /* Vibrant version of #7A6CFF for dark mode */
     --accent-foreground: 0 0% 100%;
 
-    --popover: 224 71% 4%;
-    --popover-foreground: 215 20.2% 65.1%;
+    --light-bg: 225 25% 15%; /* Dark mode equivalent of light background */
 
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
+    --popover: 225 25% 10%;
+    --popover-foreground: 210 20% 98%;
 
-    --card: 224 71% 4%;
-    --card-foreground: 213 31% 91%;
+    --border: 225 25% 20%; /* Slightly lighter borders for visibility */
+    --input: 225 25% 20%; 
 
-    --destructive: 0 63% 31%;
+    --card: 225 25% 12%; /* Slightly lighter than background for depth */
+    --card-foreground: 210 20% 98%;
+
+    --destructive: 0 70% 45%; /* Brighter red for visibility */
     --destructive-foreground: 210 40% 98%;
 
-    --ring: 216 34% 17%;
+    --ring: 225 25% 30%; /* Brighter ring for focus states */
 
     --radius: 1.25rem; /* 20px border radius - same as light */
   }
@@ -244,8 +246,14 @@ html {
     linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
 }
 
+.dark .bg-grid {
+  background-image: 
+    linear-gradient(to right, rgba(255,255,255,0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.07) 1px, transparent 1px);
+}
+
 .bg-light {
-  @apply bg-[#F7F9FC] dark:bg-gray-900;
+  @apply bg-[#F7F9FC] dark:bg-[#161b2d];
 }
 
 .bg-gradient-primary {
