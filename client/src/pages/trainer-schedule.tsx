@@ -277,7 +277,7 @@ export default function TrainerSchedule() {
           </Button>
           
           <Link href="/create-session">
-            <Button className="flex items-center">
+            <Button className="flex items-center bg-[#5F8BFF] hover:bg-[#5F8BFF]/90">
               <Plus className="mr-2 h-4 w-4" />
               Créer une Session
             </Button>
