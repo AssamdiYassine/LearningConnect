@@ -82,15 +82,15 @@ type TeamMember = {
 // L'équipe de direction
 const teamMembers: TeamMember[] = [
   {
-    name: "Thomas Dubois",
-    role: "CEO & Co-fondateur",
-    bio: "Expert en développement web avec plus de 15 ans d'expérience dans la formation professionnelle.",
-    specialties: ["Développement Web", "Entrepreneuriat", "Formation"],
-    avatar: "TD" // Initiales pour l'avatar
+    name: "Mohamed",
+    role: "CEO & Fondateur",
+    bio: "Visionnaire du secteur tech avec plus de 15 ans d'expérience en leadership et formation IT. Fondateur passionné de Necform.",
+    specialties: ["Leadership", "Innovation", "Formation IT"],
+    avatar: "M" // Initiales pour l'avatar
   },
   {
     name: "Sarah Laurent",
-    role: "CTO & Co-fondatrice",
+    role: "CTO",
     bio: "Architecte logiciel spécialisée en systèmes distribués et en méthodologies DevOps.",
     specialties: ["Cloud Computing", "DevOps", "Architecture Logicielle"],
     avatar: "SL"

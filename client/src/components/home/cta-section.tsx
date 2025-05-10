@@ -32,7 +32,7 @@ export default function CtaSection() {
                 <div className="space-y-4 sm:space-y-0 sm:flex sm:gap-4">
                   <Button 
                     size="lg" 
-                    className="bg-white text-primary-900 hover:bg-white/90 py-6 px-8 text-lg shadow-lg"
+                    className="bg-white text-primary-900 hover:bg-white/90 py-6 px-8 text-lg shadow-lg font-semibold"
                     onClick={() => setLocation("/subscription")}
                   >
                     <span className="flex items-center">
@@ -43,11 +43,13 @@ export default function CtaSection() {
                   
                   <Button 
                     size="lg" 
-                    variant="outline" 
-                    className="border-white/30 text-white hover:bg-white/10 py-6 px-8 text-lg backdrop-blur-sm"
+                    className="bg-blue-600 hover:bg-blue-700 text-white py-6 px-8 text-lg shadow-lg font-semibold"
                     onClick={() => setLocation("/catalog")}
                   >
-                    Explorer le catalogue
+                    <span className="flex items-center">
+                      Explorer le catalogue
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </span>
                   </Button>
                 </div>
               </div>

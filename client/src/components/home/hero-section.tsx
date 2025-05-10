@@ -49,20 +49,19 @@ export default function HeroSection() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Button 
                 size="lg" 
-                className="bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 py-6 px-8 text-lg relative overflow-hidden group"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/25 py-6 px-8 text-lg relative overflow-hidden group font-semibold"
                 onClick={() => setLocation("/catalog")}
               >
                 <span className="relative z-10 flex items-center">
                   Commencer maintenant
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </span>
-                <span className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                <span className="absolute inset-0 bg-gradient-to-r from-indigo-700 to-blue-700 opacity-0 group-hover:opacity-100 transition-opacity"></span>
               </Button>
               
               <Button 
                 size="lg" 
-                variant="secondary" 
-                className="bg-white/15 backdrop-blur-sm border-white/30 text-white hover:bg-white/20 py-6 px-8 text-lg"
+                className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/40 text-white py-6 px-8 text-lg font-semibold"
                 onClick={() => setLocation("/subscription")}
               >
                 Nos abonnements
