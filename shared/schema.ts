@@ -49,6 +49,11 @@ export const courses = pgTable("courses", {
   trainerId: integer("trainer_id").notNull(),
   duration: integer("duration").notNull(), // in minutes
   maxStudents: integer("max_students").notNull(),
+  isApproved: boolean("is_approved").default(false),
+  price: integer("price").default(0), // price in cents
+  thumbnail: text("thumbnail"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 // Sessions table
@@ -123,6 +128,41 @@ export const blogComments = pgTable("blog_comments", {
   parentId: integer("parent_id"), // For reply comments
   content: text("content").notNull(),
   isApproved: boolean("is_approved").default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Rating table for sessions
+export const ratings = pgTable("ratings", {
+  id: serial("id").primaryKey(),
+  sessionId: integer("session_id").notNull(),
+  userId: integer("user_id").notNull(),
+  score: integer("score").notNull(), // 1-5 stars
+  comment: text("comment"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Trainer earnings table
+export const trainerEarnings = pgTable("trainer_earnings", {
+  id: serial("id").primaryKey(),
+  trainerId: integer("trainer_id").notNull(),
+  amount: integer("amount").notNull(), // in cents
+  type: text("type").notNull(), // "session", "subscription_share", etc.
+  sessionId: integer("session_id"),
+  courseId: integer("course_id"),
+  paymentProcessed: boolean("payment_processed").default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Admin approval requests table
+export const approvalRequests = pgTable("approval_requests", {
+  id: serial("id").primaryKey(),
+  type: text("type").notNull(), // "course", "session", etc.
+  itemId: integer("item_id").notNull(), // ID of the course, session, etc.
+  requesterId: integer("requester_id").notNull(), // User ID who requested
+  status: text("status").notNull().default("pending"), // "pending", "approved", "rejected"
+  notes: text("notes"),
+  reviewerId: integer("reviewer_id"), // Admin ID who reviewed
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -212,6 +252,31 @@ export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
 export type BlogComment = typeof blogComments.$inferSelect;
 export type InsertBlogComment = z.infer<typeof insertBlogCommentSchema>;
 
+// Rating types
+export const insertRatingSchema = createInsertSchema(ratings).omit({
+  id: true,
+  createdAt: true,
+});
+export type Rating = typeof ratings.$inferSelect;
+export type InsertRating = z.infer<typeof insertRatingSchema>;
+
+// Trainer earnings types
+export const insertTrainerEarningSchema = createInsertSchema(trainerEarnings).omit({
+  id: true,
+  createdAt: true,
+});
+export type TrainerEarning = typeof trainerEarnings.$inferSelect;
+export type InsertTrainerEarning = z.infer<typeof insertTrainerEarningSchema>;
+
+// Approval request types
+export const insertApprovalRequestSchema = createInsertSchema(approvalRequests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type ApprovalRequest = typeof approvalRequests.$inferSelect;
+export type InsertApprovalRequest = z.infer<typeof insertApprovalRequestSchema>;
+
 // Extended schemas for frontend forms
 export const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -257,6 +322,50 @@ export type BlogPostWithDetails = BlogPost & {
 export type BlogCommentWithUser = BlogComment & {
   user: User;
   replies?: BlogCommentWithUser[];
+};
+
+// Rating with user and session details
+export type RatingWithDetails = Rating & {
+  user: User;
+  session: SessionWithDetails;
+};
+
+// Trainer earning with details
+export type TrainerEarningWithDetails = TrainerEarning & {
+  trainer: User;
+  session?: SessionWithDetails;
+  course?: CourseWithDetails;
+};
+
+// Approval request with details
+export type ApprovalRequestWithDetails = ApprovalRequest & {
+  requester: User;
+  reviewer?: User;
+  course?: CourseWithDetails;
+  session?: SessionWithDetails;
+};
+
+// Extended types for admin dashboard
+export type UserWithStats = User & {
+  enrollmentCount: number;
+  lastActivity?: Date;
+  paymentStatus: string;
+};
+
+export type CourseWithStats = CourseWithDetails & {
+  sessionCount: number;
+  averageRating: number;
+  revenue: number;
+  studentCount: number;
+};
+
+export type TrainerWithStats = User & {
+  courseCount: number;
+  sessionCount: number;
+  studentCount: number;
+  averageRating: number;
+  totalRevenue: number;
+  pendingPayouts: number;
 };
 
 // Onboarding steps enum

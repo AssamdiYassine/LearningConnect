@@ -38,6 +38,7 @@ import { NotificationsProvider } from "./hooks/use-notifications";
 import OnboardingModal from "@/components/onboarding/onboarding-modal";
 import Layout from "@/components/layout";
 import AdminLayout from "@/components/admin-layout";
+import AdminDashboardLayout from "@/components/admin-dashboard-layout";
 import { ThemeProvider } from "@/components/theme-provider";
 
 // Admin pages
@@ -282,7 +283,8 @@ function Router() {
 
 function App() {
   const [location] = useLocation();
-  const isAdminRoute = location.startsWith("/admin") || location === "/admin-dashboard" || location === "/admin/dashboard-new";
+  const isAdminRoute = location.startsWith("/admin") || location === "/admin-dashboard";
+  const isAdvancedAdminDashboard = location === "/admin/dashboard-new" || location.startsWith("/admin/dashboard-new/");
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -291,7 +293,12 @@ function App() {
           <NotificationsProvider>
             <OnboardingProvider>
               <TooltipProvider>
-              {isAdminRoute ? (
+              {isAdvancedAdminDashboard ? (
+                <AdminDashboardLayout>
+                  <Router />
+                  <OnboardingModal />
+                </AdminDashboardLayout>
+              ) : isAdminRoute ? (
                 <AdminLayout>
                   <Router />
                   <OnboardingModal />
