@@ -1,9 +1,19 @@
+import { useEffect } from 'react';
+
 /**
- * Hook pour changer le titre de la page
- * @param title Le nouveau titre de la page
+ * Hook permettant de mettre à jour le titre de la page
+ * @param title Le titre à afficher dans l'onglet du navigateur
+ * @param appendSiteName Indique si le nom du site doit être ajouté au titre (par défaut à true)
  */
-export const useTitle = (title: string) => {
-  if (typeof document !== 'undefined') {
-    document.title = title;
-  }
-};
+export function useTitle(title: string, appendSiteName: boolean = true) {
+  useEffect(() => {
+    const siteName = 'Necform';
+    const newTitle = appendSiteName ? `${title} | ${siteName}` : title;
+    document.title = newTitle;
+
+    return () => {
+      // Restaure le titre par défaut quand le composant est démonté
+      document.title = siteName;
+    };
+  }, [title, appendSiteName]);
+}
