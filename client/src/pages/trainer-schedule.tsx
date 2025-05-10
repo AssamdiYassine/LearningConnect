@@ -582,8 +582,10 @@ export default function TrainerSchedule() {
                               <DropdownMenuItem onClick={() => showSession(session)}>
                                 Voir les détails
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                Modifier la session
+                              <DropdownMenuItem asChild>
+                                <Link href={`/edit-session/${session.id}`}>
+                                  Modifier la session
+                                </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem>
                                 Envoyer un rappel

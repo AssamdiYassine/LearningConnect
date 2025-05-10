@@ -327,8 +327,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const validatedData = updateSchema.parse(req.body);
       
+      // Convertir la date si elle existe
+      const updateData: Partial<Session> = {};
+      if (validatedData.date) {
+        updateData.date = new Date(validatedData.date);
+      }
+      if (validatedData.zoomLink) {
+        updateData.zoomLink = validatedData.zoomLink;
+      }
+      
       // Mettre à jour la session
-      const updatedSession = await storage.updateSession(sessionId, validatedData);
+      const updatedSession = await storage.updateSession(sessionId, updateData);
       
       // Notifier les étudiants en cas de modification
       const enrollments = await storage.getEnrollmentsBySession(sessionId);

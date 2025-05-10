@@ -594,6 +594,24 @@ export class MemStorage implements IStorage {
       enrollmentCount: enrollments.length
     };
   }
+  
+  async updateSession(id: number, data: Partial<Session>): Promise<Session> {
+    const existingSession = await this.getSession(id);
+    if (!existingSession) {
+      throw new Error("Session non trouvée");
+    }
+    
+    // Mise à jour de la session
+    const updatedSession: Session = {
+      ...existingSession,
+      ...data
+    };
+    
+    // Conserver la session mise à jour
+    this.sessions.set(id, updatedSession);
+    
+    return updatedSession;
+  }
 
   async getAllSessionsWithDetails(): Promise<SessionWithDetails[]> {
     const sessions = await this.getAllSessions();
