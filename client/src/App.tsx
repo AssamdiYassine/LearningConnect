@@ -11,6 +11,7 @@ import TrainerStudents from "@/pages/trainer-students";
 import TrainerCourses from "@/pages/trainer-courses";
 import TrainerSchedule from "@/pages/trainer-schedule";
 import TrainerRatings from "@/pages/trainer-ratings";
+import TrainerNotifications from "@/pages/trainer-notifications";
 import AdminDashboard from "@/pages/admin-dashboard";
 import Catalog from "@/pages/catalog";
 import Schedule from "@/pages/schedule";
@@ -145,6 +146,10 @@ function Router() {
         <ProtectedRoute component={TrainerRatings} allowedRoles={["trainer", "admin"]} />
       </Route>
       
+      <Route path="/trainer/notifications">
+        <ProtectedRoute component={TrainerNotifications} allowedRoles={["trainer", "admin"]} />
+      </Route>
+      
       <Route path="/create-course">
         <ProtectedRoute component={CreateCourse} allowedRoles={["trainer", "admin"]} />
       </Route>
@@ -273,6 +278,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="light">
         <AuthProvider>
+          <NotificationsProvider>
             <OnboardingProvider>
               <TooltipProvider>
               {isAdminRoute ? (
@@ -289,6 +295,7 @@ function App() {
               <Toaster />
             </TooltipProvider>
           </OnboardingProvider>
+        </NotificationsProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

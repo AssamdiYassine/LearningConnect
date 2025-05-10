@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Loader2, ChevronRight, Users, Calendar, Book, Star, Plus } from "lucide-react";
+import { Loader2, ChevronRight, Users, Calendar, Book, Star, Plus, Bell } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import CreateCourseForm from "@/components/create-course-form";
 import { useState } from "react";

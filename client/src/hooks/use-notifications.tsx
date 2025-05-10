@@ -34,7 +34,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: number) => {
-      const res = await apiRequest("PATCH", `/api/notifications/${notificationId}`, { isRead: true });
+      const res = await apiRequest("PATCH", `/api/notifications/${notificationId}/read`);
       if (!res.ok) {
         throw new Error("Erreur lors du marquage de la notification comme lue");
       }
