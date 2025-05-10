@@ -7,7 +7,10 @@ import {
   insertCourseSchema, 
   insertSessionSchema, 
   insertEnrollmentSchema, 
-  insertNotificationSchema 
+  insertNotificationSchema,
+  insertBlogPostSchema,
+  insertBlogCategorySchema,
+  insertBlogCommentSchema
 } from "@shared/schema";
 import nodemailer from "nodemailer";
 

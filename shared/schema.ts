@@ -14,6 +14,9 @@ export const courseLevelEnum = pgEnum("course_level", ["beginner", "intermediate
 // Settings table enum
 export const settingTypeEnum = pgEnum("setting_type", ["api", "system", "email"]);
 
+// Blog post status enum
+export const postStatusEnum = pgEnum("post_status", ["draft", "published", "archived"]);
+
 // Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -83,6 +86,47 @@ export const settings = pgTable("settings", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Blog categories table
+export const blogCategories = pgTable("blog_categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  slug: text("slug").notNull().unique(),
+  description: text("description"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Blog posts table
+export const blogPosts = pgTable("blog_posts", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  excerpt: text("excerpt").notNull(),
+  content: text("content").notNull(),
+  featuredImage: text("featured_image"),
+  categoryId: integer("category_id").notNull(),
+  authorId: integer("author_id").notNull(),
+  status: postStatusEnum("status").notNull().default("draft"),
+  publishedAt: timestamp("published_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  readTime: integer("read_time"), // in minutes
+  tags: text("tags").array(),
+  viewCount: integer("view_count").default(0),
+});
+
+// Blog comments table
+export const blogComments = pgTable("blog_comments", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull(),
+  userId: integer("user_id").notNull(),
+  parentId: integer("parent_id"), // For reply comments
+  content: text("content").notNull(),
+  isApproved: boolean("is_approved").default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Schemas for validation and insertion
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -112,6 +156,26 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   createdAt: true,
 });
 
+// Blog schemas
+export const insertBlogCategorySchema = createInsertSchema(blogCategories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  viewCount: true,
+});
+
+export const insertBlogCommentSchema = createInsertSchema(blogComments).omit({
+  id: true,
+  createdAt: true, 
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -137,6 +201,16 @@ export const insertSettingSchema = createInsertSchema(settings).omit({
 });
 export type Setting = typeof settings.$inferSelect;
 export type InsertSetting = z.infer<typeof insertSettingSchema>;
+
+// Blog types
+export type BlogCategory = typeof blogCategories.$inferSelect;
+export type InsertBlogCategory = z.infer<typeof insertBlogCategorySchema>;
+
+export type BlogPost = typeof blogPosts.$inferSelect;
+export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
+
+export type BlogComment = typeof blogComments.$inferSelect;
+export type InsertBlogComment = z.infer<typeof insertBlogCommentSchema>;
 
 // Extended schemas for frontend forms
 export const loginSchema = z.object({
@@ -170,6 +244,19 @@ export type SessionWithDetails = Session & {
 // Session with enrollment status for a user
 export type SessionWithEnrollment = SessionWithDetails & {
   isEnrolled: boolean;
+};
+
+// Blog post with author and category
+export type BlogPostWithDetails = BlogPost & {
+  author: User;
+  category: BlogCategory;
+  commentCount: number;
+};
+
+// Blog comment with user
+export type BlogCommentWithUser = BlogComment & {
+  user: User;
+  replies?: BlogCommentWithUser[];
 };
 
 // Onboarding steps enum
