@@ -1,349 +1,321 @@
-import { useAuth } from "@/hooks/use-auth";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { SessionWithDetails } from "@shared/schema";
-import { Loader2, Save, ArrowLeft, Info, Calendar, Clock, Users } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { format, parse } from "date-fns";
-import { fr } from "date-fns/locale";
-import { cn, formatDate, formatTime } from "@/lib/utils";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
+import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Link, useLocation, useParams } from "wouter";
-import { useState, useEffect } from "react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useTitle } from "@/hooks/use-title";
+import { formatDate } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-export default function EditSession() {
-  const { user } = useAuth();
+const updateSessionSchema = z.object({
+  date: z.date(),
+  zoomLink: z.string().url("Veuillez entrer un lien Zoom valide"),
+  time: z.object({
+    hour: z.string(),
+    minute: z.string(),
+  }),
+});
+
+type UpdateSessionFormValues = z.infer<typeof updateSessionSchema>;
+
+export default function EditSession({ id }: { id: number }) {
+  useTitle("Modifier la session | Necform");
+  const [location, navigate] = useLocation();
   const { toast } = useToast();
-  const [location, setLocation] = useLocation();
-  const params = useParams();
-  const sessionId = params?.id ? parseInt(params.id) : null;
-  
-  // États pour gérer la date et l'heure
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [selectedHour, setSelectedHour] = useState("09");
-  const [selectedMinute, setSelectedMinute] = useState("00");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Récupérer les détails de la session
-  const { data: session, isLoading: isSessionLoading, isError } = useQuery<SessionWithDetails>({
-    queryKey: [`/api/sessions/${sessionId}`],
-    enabled: !!sessionId,
+  const { data: session, isLoading } = useQuery({
+    queryKey: [`/api/sessions/${id}`],
+    queryFn: async () => {
+      const res = await fetch(`/api/sessions/${id}`);
+      if (!res.ok) {
+        throw new Error("Erreur lors du chargement de la session");
+      }
+      return res.json();
+    },
   });
 
-  // Options pour les heures et minutes
-  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
-  const minutes = ["00", "15", "30", "45"];
-
-  // Schema de validation pour la mise à jour de session
-  const updateSessionSchema = z.object({
-    date: z.string().refine(val => !isNaN(Date.parse(val)), {
-      message: "Date et heure invalides",
-    }),
-    zoomLink: z.string().min(1, "Le lien Zoom est requis pour les sessions en ligne"),
-  });
-
-  // Initialiser le formulaire
-  const form = useForm<z.infer<typeof updateSessionSchema>>({
+  const form = useForm<UpdateSessionFormValues>({
     resolver: zodResolver(updateSessionSchema),
     defaultValues: {
-      date: "",
+      date: new Date(),
       zoomLink: "",
-    }
+      time: {
+        hour: "09",
+        minute: "00",
+      },
+    },
   });
 
-  // Mettre à jour les valeurs par défaut lorsque les données de session sont chargées
   useEffect(() => {
     if (session) {
       const sessionDate = new Date(session.date);
-      setSelectedDate(sessionDate);
-      setSelectedHour(sessionDate.getHours().toString().padStart(2, '0'));
-      setSelectedMinute(sessionDate.getMinutes().toString().padStart(2, '0'));
       
       form.reset({
-        date: sessionDate.toISOString(),
-        zoomLink: session.zoomLink || "",
+        date: sessionDate,
+        zoomLink: session.zoomLink,
+        time: {
+          hour: sessionDate.getHours().toString().padStart(2, "0"),
+          minute: sessionDate.getMinutes().toString().padStart(2, "0"),
+        },
       });
     }
   }, [session, form]);
 
-  // Mise à jour de la date dans le formulaire lorsque date, heure ou minute changent
   const updateDateField = (date: Date, hour: string, minute: string) => {
     const newDate = new Date(date);
-    newDate.setHours(parseInt(hour), parseInt(minute));
-    form.setValue('date', newDate.toISOString());
+    newDate.setHours(parseInt(hour));
+    newDate.setMinutes(parseInt(minute));
+    return newDate;
   };
 
-  // Mettre à jour les composants de date et heure
   const onDateChange = (date: Date) => {
-    setSelectedDate(date);
-    updateDateField(date, selectedHour, selectedMinute);
+    form.setValue("date", date);
   };
 
-  const onHourChange = (hour: string) => {
-    setSelectedHour(hour);
-    updateDateField(selectedDate, hour, selectedMinute);
-  };
+  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0"));
+  const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0"));
 
-  const onMinuteChange = (minute: string) => {
-    setSelectedMinute(minute);
-    updateDateField(selectedDate, selectedHour, minute);
-  };
+  const updateSessionMutation = useMutation({
+    mutationFn: async (values: UpdateSessionFormValues) => {
+      const dateWithTime = updateDateField(
+        values.date,
+        values.time.hour,
+        values.time.minute
+      );
 
-  // Mutation pour mettre à jour une session
-  const updateMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof updateSessionSchema>) => {
-      const res = await apiRequest("PATCH", `/api/sessions/${sessionId}`, values);
-      return res.json();
+      const response = await apiRequest("PATCH", `/api/sessions/${id}`, {
+        date: dateWithTime.toISOString(),
+        zoomLink: values.zoomLink,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Erreur lors de la mise à jour de la session");
+      }
+
+      return response.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/sessions/${id}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/sessions"] });
+      
       toast({
         title: "Session mise à jour",
-        description: "La session a été mise à jour avec succès",
-        variant: "default",
+        description: "Les modifications ont été enregistrées avec succès.",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/sessions/${sessionId}`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/sessions"] });
-      queryClient.invalidateQueries({ queryKey: [`/api/sessions/trainer/${user?.id}`] });
-      setLocation("/trainer/schedule");
+      
+      // Rediriger vers la page du planning
+      setTimeout(() => {
+        navigate("/trainer/schedule");
+      }, 1500);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Erreur",
-        description: error.message || "Une erreur est survenue lors de la mise à jour de la session",
-        variant: "destructive"
+        description: error.message,
+        variant: "destructive",
       });
-    }
+      setIsSubmitting(false);
+    },
   });
 
-  // Fonction de soumission du formulaire
-  const onSubmit = (values: z.infer<typeof updateSessionSchema>) => {
-    updateMutation.mutate(values);
+  const onSubmit = (values: UpdateSessionFormValues) => {
+    setIsSubmitting(true);
+    updateSessionMutation.mutate(values);
   };
 
-  if (isSessionLoading) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex justify-center items-center min-h-[60vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (isError || !session) {
-    return (
-      <div className="py-8">
-        <Alert variant="destructive">
-          <AlertTitle>Erreur</AlertTitle>
-          <AlertDescription>
-            Impossible de charger les détails de la session. Veuillez vérifier l'ID de la session ou réessayer plus tard.
-          </AlertDescription>
-        </Alert>
-        <div className="mt-4 flex justify-center">
-          <Button onClick={() => setLocation("/trainer/schedule")}>
-            Retour au planning
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl font-heading">
-            Modifier la Session
-          </h2>
-          <p className="mt-2 text-gray-500">
-            Mettez à jour les détails de la session pour votre cours.
-          </p>
-        </div>
-        <Link href="/trainer/schedule">
-          <Button variant="outline" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Retour au planning
-          </Button>
-        </Link>
-      </div>
+    <div className="container mx-auto py-6">
+      <div className="max-w-2xl mx-auto">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold">
+              Modifier la session
+            </CardTitle>
+            <CardDescription>
+              Mettez à jour la date, l'heure ou le lien Zoom pour cette session de formation.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {session && (
+              <div className="mb-6 bg-muted/50 p-4 rounded-lg">
+                <h3 className="font-semibold text-lg mb-2">{session.course.title}</h3>
+                <p className="text-sm text-muted-foreground">
+                  Formateur: {session.course.trainer.displayName}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Durée: {session.course.duration} minutes
+                </p>
+              </div>
+            )}
 
-      {/* Aperçu rapide du cours */}
-      <Card className="bg-primary-50 border-primary-100">
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-4 items-start">
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-primary-900">{session.course.title}</h3>
-              <div className="flex flex-wrap gap-2 mt-2">
-                <Badge className={
-                  session.course.level === "beginner" 
-                    ? "bg-green-100 text-green-800 border-green-200" 
-                    : session.course.level === "intermediate"
-                    ? "bg-blue-100 text-blue-800 border-blue-200"
-                    : "bg-purple-100 text-purple-800 border-purple-200"
-                }>
-                  {session.course.level === "beginner" ? "Débutant" : 
-                  session.course.level === "intermediate" ? "Intermédiaire" : "Avancé"}
-                </Badge>
-                <Badge variant="outline" className="bg-gray-100">
-                  {Math.floor(session.course.duration / 60)} heure{Math.floor(session.course.duration / 60) > 1 ? 's' : ''}
-                </Badge>
-              </div>
-              <p className="mt-3 text-sm text-gray-600 line-clamp-2">{session.course.description}</p>
-            </div>
-            <div className="flex flex-col gap-2 items-end">
-              <div className="flex items-center text-gray-700">
-                <Calendar className="h-4 w-4 mr-2" />
-                <span>Actuellement: {formatDate(session.date)}</span>
-              </div>
-              <div className="flex items-center text-gray-700">
-                <Clock className="h-4 w-4 mr-2" />
-                <span>à {formatTime(session.date)}</span>
-              </div>
-              <div className="flex items-center text-gray-700">
-                <Users className="h-4 w-4 mr-2" />
-                <span>{session.enrollmentCount} inscrit{session.enrollmentCount > 1 ? 's' : ''}</span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="flex flex-col md:flex-row gap-6">
+                  <div className="md:w-1/2">
+                    <FormField
+                      control={form.control}
+                      name="date"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Date de la session</FormLabel>
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={(date) => date && onDateChange(date)}
+                            className="rounded-md border"
+                          />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Détails de la session</CardTitle>
-          <CardDescription>
-            Modifiez la date, l'heure et le lien Zoom de votre session.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <FormField
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Date</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {selectedDate ? (
-                                  format(selectedDate, "dd MMMM yyyy", { locale: fr })
-                                ) : (
-                                  <span>Sélectionner une date</span>
-                                )}
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <CalendarComponent
-                              mode="single"
-                              selected={selectedDate}
-                              onSelect={(date) => date && onDateChange(date)}
-                              initialFocus
-                              locale={fr}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                  <div className="md:w-1/2 space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="time.hour"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Heure</FormLabel>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="HH" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {hours.map((hour) => (
+                                  <SelectItem key={hour} value={hour}>
+                                    {hour}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                <div className="space-y-4">
-                  <FormLabel>Heure</FormLabel>
-                  <div className="flex items-center gap-2">
-                    <Select value={selectedHour} onValueChange={onHourChange}>
-                      <SelectTrigger className="w-24">
-                        <SelectValue placeholder="Heure" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {hours.map((hour) => (
-                          <SelectItem key={hour} value={hour}>
-                            {hour}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <span>:</span>
-                    <Select value={selectedMinute} onValueChange={onMinuteChange}>
-                      <SelectTrigger className="w-24">
-                        <SelectValue placeholder="Minute" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {minutes.map((minute) => (
-                          <SelectItem key={minute} value={minute}>
-                            {minute}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <FormField
+                        control={form.control}
+                        name="time.minute"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Minute</FormLabel>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="MM" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {minutes.map((minute) => (
+                                  <SelectItem key={minute} value={minute}>
+                                    {minute}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="zoomLink"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Lien Zoom</FormLabel>
+                          <FormControl>
+                            <Input placeholder="https://zoom.us/..." {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            Entrez le lien de réunion Zoom complet pour cette session
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </div>
-              </div>
 
-              <FormField
-                control={form.control}
-                name="zoomLink"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Lien Zoom</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="https://zoom.us/j/1234567890?pwd=abcdef" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormDescription className="flex items-center gap-2 mt-1">
-                      <Info className="h-4 w-4 text-muted-foreground" />
-                      Lien vers la réunion Zoom où la session aura lieu. Les apprenants inscrits y accéderont directement.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end mt-4">
-                <Button 
-                  type="submit" 
-                  className="flex items-center gap-2 bg-primary hover:bg-primary/90"
-                  disabled={updateMutation.isPending}
-                >
-                  {updateMutation.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Mise à jour en cours...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4" />
-                      Enregistrer les modifications
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate("/trainer/schedule")}
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="bg-gradient-to-r from-primary to-[#7A6CFF] hover:from-primary-dark hover:to-[#5F4CDD]"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Enregistrement...
+                      </>
+                    ) : (
+                      "Enregistrer les modifications"
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

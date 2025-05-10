@@ -328,7 +328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = updateSchema.parse(req.body);
       
       // Convertir la date si elle existe
-      const updateData: Partial<Session> = {};
+      const updateData: { date?: Date; zoomLink?: string } = {};
       if (validatedData.date) {
         updateData.date = new Date(validatedData.date);
       }

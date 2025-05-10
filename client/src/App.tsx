@@ -25,6 +25,7 @@ import TrainerProfilePage from "./pages/trainer-profile";
 import CreateCourse from "@/pages/create-course";
 import CreateSession from "@/pages/create-session";
 import EditCourse from "@/pages/edit-course";
+import EditSession from "@/pages/edit-session";
 import CourseEnrollments from "@/pages/course-enrollments";
 import Achievements from "@/pages/achievements";
 import { ProtectedRoute } from "./lib/protected-route";
@@ -164,6 +165,15 @@ function Router() {
         {params => (
           <ProtectedRoute 
             component={() => <CourseEnrollments />} 
+            allowedRoles={["trainer", "admin"]} 
+          />
+        )}
+      </Route>
+      
+      <Route path="/edit-session/:id">
+        {params => (
+          <ProtectedRoute 
+            component={() => <EditSession id={Number(params.id)} />} 
             allowedRoles={["trainer", "admin"]} 
           />
         )}
