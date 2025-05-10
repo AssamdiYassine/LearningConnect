@@ -619,6 +619,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/notifications", hasRole(["admin", "trainer"]), async (req, res) => {
+    try {
+      const notificationData = insertNotificationSchema.parse(req.body);
+      
+      // Create notification
+      const notification = await storage.createNotification(notificationData);
+      res.status(201).json(notification);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create notification" });
+    }
+  });
+
+  app.post("/api/notifications/broadcast", hasRole(["admin", "trainer"]), async (req, res) => {
+    try {
+      // Validate request body
+      const data = z.object({
+        message: z.string(),
+        type: z.string(),
+        sessionId: z.number().optional(),
+        courseId: z.number().optional(),
+      }).parse(req.body);
+      
+      const { message, type, sessionId, courseId } = data;
+      
+      // Get users who should receive the notification
+      let userIds: number[] = [];
+      
+      if (sessionId) {
+        // Send to users enrolled in the session
+        const enrollments = await storage.getEnrollmentsBySession(sessionId);
+        userIds = enrollments.map(e => e.userId);
+      } else if (courseId) {
+        // Get all sessions for this course
+        const sessions = await storage.getSessionsByCourse(courseId);
+        
+        // Get all enrollments for these sessions
+        const userIdSet = new Set<number>();
+        for (const session of sessions) {
+          const enrollments = await storage.getEnrollmentsBySession(session.id);
+          enrollments.forEach(e => userIdSet.add(e.userId));
+        }
+        
+        userIds = Array.from(userIdSet);
+      } else {
+        // Send to all students if no specific targeting
+        const users = await storage.getAllUsers();
+        userIds = users.filter(u => u.role === "student").map(u => u.id);
+      }
+      
+      // Create notifications for each user
+      const notifications = [];
+      for (const userId of userIds) {
+        const notification = await storage.createNotification({
+          userId,
+          message,
+          type,
+          isRead: false,
+        });
+        notifications.push(notification);
+      }
+      
+      res.status(201).json({
+        success: true,
+        count: notifications.length,
+        message: `${notifications.length} notification(s) envoyée(s)`,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to broadcast notifications" });
+    }
+  });
+
   // Subscription routes
   app.post("/api/subscription", isAuthenticated, async (req, res) => {
     try {

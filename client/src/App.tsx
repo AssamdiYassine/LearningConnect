@@ -31,6 +31,7 @@ import Achievements from "@/pages/achievements";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { OnboardingProvider } from "./hooks/onboarding-provider";
+import { NotificationsProvider } from "./hooks/use-notifications";
 import OnboardingModal from "@/components/onboarding/onboarding-modal";
 import Layout from "@/components/layout";
 import AdminLayout from "@/components/admin-layout";
@@ -272,8 +273,8 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="light">
         <AuthProvider>
-          <OnboardingProvider>
-            <TooltipProvider>
+            <OnboardingProvider>
+              <TooltipProvider>
               {isAdminRoute ? (
                 <AdminLayout>
                   <Router />

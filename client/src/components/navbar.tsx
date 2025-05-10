@@ -119,6 +119,8 @@ export default function Navbar() {
               )}
             </Button>
 
+            {user && <NotificationBell />}
+
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
