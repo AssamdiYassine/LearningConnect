@@ -56,7 +56,7 @@ export default function CreateSession() {
     courseId: z.number({
       required_error: "Veuillez sélectionner un cours",
     }),
-    zoomLink: z.string().url("Lien Zoom invalide").min(1, "Le lien Zoom est requis"),
+    zoomLink: z.string().min(1, "Le lien Zoom est requis"),
   });
 
   // Initialiser le formulaire
