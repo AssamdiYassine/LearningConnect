@@ -24,6 +24,8 @@ import ProfilePage from "./pages/profile";
 import TrainerProfilePage from "./pages/trainer-profile";
 import CreateCourse from "@/pages/create-course";
 import CreateSession from "@/pages/create-session";
+import EditCourse from "@/pages/edit-course";
+import CourseEnrollments from "@/pages/course-enrollments";
 import Achievements from "@/pages/achievements";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
@@ -130,6 +132,24 @@ function Router() {
       
       <Route path="/create-session">
         <ProtectedRoute component={CreateSession} allowedRoles={["trainer", "admin"]} />
+      </Route>
+
+      <Route path="/edit-course/:id">
+        {params => (
+          <ProtectedRoute 
+            component={() => <EditCourse />} 
+            allowedRoles={["trainer", "admin"]} 
+          />
+        )}
+      </Route>
+
+      <Route path="/course-enrollments/:id">
+        {params => (
+          <ProtectedRoute 
+            component={() => <CourseEnrollments />} 
+            allowedRoles={["trainer", "admin"]} 
+          />
+        )}
       </Route>
       
       {/* Admin routes */}

@@ -316,15 +316,15 @@ export default function TrainerCourses() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-[200px]">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => window.location.href = `/edit-course/${course.id}`}>
                           <PenSquare className="mr-2 h-4 w-4" />
                           Modifier le cours
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => window.location.href = `/create-session?courseId=${course.id}`}>
                           <Calendar className="mr-2 h-4 w-4" />
                           Créer une session
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => window.location.href = `/course-enrollments/${course.id}`}>
                           <Users className="mr-2 h-4 w-4" />
                           Gérer les inscrits
                         </DropdownMenuItem>
@@ -391,15 +391,15 @@ export default function TrainerCourses() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => window.location.href = `/edit-course/${course.id}`}>
                               <PenSquare className="mr-2 h-4 w-4" />
                               Modifier le cours
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => window.location.href = `/create-session?courseId=${course.id}`}>
                               <Calendar className="mr-2 h-4 w-4" />
                               Créer une session
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => window.location.href = `/course-enrollments/${course.id}`}>
                               <Users className="mr-2 h-4 w-4" />
                               Gérer les inscrits
                             </DropdownMenuItem>
@@ -478,7 +478,11 @@ export default function TrainerCourses() {
                           <p className="text-sm text-gray-500 line-clamp-2">{course.description}</p>
                         </CardContent>
                         <CardFooter className="pt-2">
-                          <Button variant="outline" className="w-full flex items-center justify-center">
+                          <Button 
+                            variant="outline" 
+                            className="w-full flex items-center justify-center"
+                            onClick={() => window.location.href = `/edit-course/${course.id}`}
+                          >
                             Gérer <ChevronRight className="ml-1 h-4 w-4" />
                           </Button>
                         </CardFooter>
