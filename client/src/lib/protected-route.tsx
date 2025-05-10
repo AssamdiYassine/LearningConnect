@@ -32,5 +32,5 @@ export function ProtectedRoute({ component: Component, allowedRoles }: Protected
   }
 
   // User is authenticated and has appropriate role
-  return <Component />;
+  return <Component user={user} />;
 }

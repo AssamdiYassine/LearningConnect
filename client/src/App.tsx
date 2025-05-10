@@ -35,6 +35,15 @@ import Layout from "@/components/layout";
 import AdminLayout from "@/components/admin-layout";
 import { ThemeProvider } from "@/components/theme-provider";
 
+// Admin pages
+import AdminUsers from "@/pages/admin/admin-users";
+import AdminCourses from "@/pages/admin/admin-courses";
+import AdminSessions from "@/pages/admin/admin-sessions";
+import AdminPendingCourses from "@/pages/admin/admin-pending-courses";
+import AdminAnalytics from "@/pages/admin/admin-analytics";
+import AdminRevenue from "@/pages/admin/admin-revenue";
+import AdminSettings from "@/pages/admin/admin-settings";
+
 function Router() {
   return (
     <Switch>
@@ -164,31 +173,31 @@ function Router() {
       
       {/* Nouvelles routes admin avec leurs composants spécifiques */}
       <Route path="/admin/users">
-        <ProtectedRoute component={() => import("./pages/admin/admin-users").then(m => m.default())} allowedRoles={["admin"]} />
+        <ProtectedRoute component={AdminUsers} allowedRoles={["admin"]} />
       </Route>
       
       <Route path="/admin/courses">
-        <ProtectedRoute component={() => import("./pages/admin/admin-courses").then(m => m.default())} allowedRoles={["admin"]} />
+        <ProtectedRoute component={AdminCourses} allowedRoles={["admin"]} />
       </Route>
       
       <Route path="/admin/sessions">
-        <ProtectedRoute component={() => import("./pages/admin/admin-sessions").then(m => m.default())} allowedRoles={["admin"]} />
+        <ProtectedRoute component={AdminSessions} allowedRoles={["admin"]} />
       </Route>
       
       <Route path="/admin/pending-courses">
-        <ProtectedRoute component={() => import("./pages/admin/admin-pending-courses").then(m => m.default())} allowedRoles={["admin"]} />
+        <ProtectedRoute component={AdminPendingCourses} allowedRoles={["admin"]} />
       </Route>
       
       <Route path="/admin/analytics">
-        <ProtectedRoute component={() => import("./pages/admin/admin-analytics").then(m => m.default())} allowedRoles={["admin"]} />
+        <ProtectedRoute component={AdminAnalytics} allowedRoles={["admin"]} />
       </Route>
       
       <Route path="/admin/revenue">
-        <ProtectedRoute component={() => import("./pages/admin/admin-revenue").then(m => m.default())} allowedRoles={["admin"]} />
+        <ProtectedRoute component={AdminRevenue} allowedRoles={["admin"]} />
       </Route>
       
       <Route path="/admin/settings">
-        <ProtectedRoute component={() => import("./pages/admin/admin-settings").then(m => m.default())} allowedRoles={["admin"]} />
+        <ProtectedRoute component={AdminSettings} allowedRoles={["admin"]} />
       </Route>
       
       {/* Fallback to 404 */}
