@@ -654,7 +654,7 @@ export default function TrainerDashboardNew() {
                 <Skeleton className="h-48 w-full rounded-md" />
               ) : (
                 <div className="h-48">
-                  <NivoPieChart
+                  <ResponsivePie
                     data={stats?.studentDistribution || []}
                     margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
                     innerRadius={0.4}

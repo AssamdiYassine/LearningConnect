@@ -138,6 +138,17 @@ export default function Navbar() {
                       Mon tableau de bord
                     </div>
                   </DropdownMenuItem>
+                  
+                  {user.role === "trainer" && (
+                    <DropdownMenuItem asChild>
+                      <div 
+                        className="w-full cursor-pointer"
+                        onClick={() => window.location.href = "/trainer/dashboard-new"}
+                      >
+                        Tableau de bord avancé
+                      </div>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild>
                     <div 
                       className="w-full cursor-pointer"
@@ -229,6 +240,15 @@ export default function Navbar() {
                     >
                       Mon tableau de bord
                     </div>
+                    
+                    {user.role === "trainer" && (
+                      <div
+                        onClick={() => window.location.href = "/trainer/dashboard-new"}
+                        className="block px-4 py-3 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                      >
+                        Tableau de bord avancé
+                      </div>
+                    )}
                     <div
                       onClick={() => window.location.href = "/profile"}
                       className="block px-4 py-3 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
