@@ -301,6 +301,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to create session" });
     }
   });
+  
+  // Route pour la mise à jour d'une session
+  app.patch("/api/sessions/:id", hasRole(["trainer", "admin"]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const sessionId = parseInt(id);
+      
+      // Vérifier si la session existe
+      const existingSession = await storage.getSessionWithDetails(sessionId);
+      if (!existingSession) {
+        return res.status(404).json({ message: "Session introuvable" });
+      }
+      
+      // Vérifier que le formateur possède bien ce cours
+      if (existingSession.course.trainerId !== req.user.id && req.user.role !== "admin") {
+        return res.status(403).json({ message: "Vous ne pouvez modifier que vos propres sessions" });
+      }
+      
+      // Valider le schéma des données de mise à jour
+      const updateSchema = z.object({
+        date: z.string().optional(),
+        zoomLink: z.string().min(1, "Le lien Zoom est requis").optional(),
+      });
+      
+      const validatedData = updateSchema.parse(req.body);
+      
+      // Mettre à jour la session
+      const updatedSession = await storage.updateSession(sessionId, validatedData);
+      
+      // Notifier les étudiants en cas de modification
+      const enrollments = await storage.getEnrollmentsBySession(sessionId);
+      
+      // Si la date a été modifiée, envoyer des notifications aux étudiants inscrits
+      if (validatedData.date && enrollments.length > 0) {
+        const formattedDate = new Date(validatedData.date).toLocaleDateString('fr-FR');
+        const formattedTime = new Date(validatedData.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        
+        // Envoyer une notification à chaque étudiant inscrit
+        for (const enrollment of enrollments) {
+          await storage.createNotification({
+            userId: enrollment.userId,
+            message: `La session "${existingSession.course.title}" a été reprogrammée pour le ${formattedDate} à ${formattedTime}`,
+            type: "update",
+            isRead: false
+          });
+        }
+      }
+      
+      res.json(updatedSession);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Erreur de validation", errors: error.errors });
+      }
+      console.error("Erreur lors de la mise à jour de la session:", error);
+      res.status(500).json({ message: "Échec de la mise à jour de la session" });
+    }
+  });
 
   app.get("/api/sessions/trainer/:trainerId", async (req, res) => {
     try {
