@@ -735,6 +735,306 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to complete onboarding" });
     }
   });
+  
+  // Blog category routes
+  app.get("/api/blog/categories", async (req, res) => {
+    try {
+      const categories = await storage.getAllBlogCategories();
+      res.json(categories);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch blog categories" });
+    }
+  });
+  
+  app.get("/api/blog/categories/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const category = await storage.getBlogCategory(id);
+      
+      if (!category) {
+        return res.status(404).json({ message: "Blog category not found" });
+      }
+      
+      res.json(category);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch blog category" });
+    }
+  });
+  
+  app.get("/api/blog/categories/slug/:slug", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const category = await storage.getBlogCategoryBySlug(slug);
+      
+      if (!category) {
+        return res.status(404).json({ message: "Blog category not found" });
+      }
+      
+      res.json(category);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch blog category" });
+    }
+  });
+  
+  app.post("/api/blog/categories", hasRole(["admin"]), async (req, res) => {
+    try {
+      const categoryData = insertBlogCategorySchema.parse(req.body);
+      const category = await storage.createBlogCategory(categoryData);
+      res.status(201).json(category);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create blog category" });
+    }
+  });
+  
+  app.put("/api/blog/categories/:id", hasRole(["admin"]), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const category = await storage.updateBlogCategory(id, req.body);
+      res.json(category);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update blog category" });
+    }
+  });
+  
+  app.delete("/api/blog/categories/:id", hasRole(["admin"]), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteBlogCategory(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete blog category" });
+    }
+  });
+  
+  // Blog post routes
+  app.get("/api/blog/posts", async (req, res) => {
+    try {
+      const { status, limit, offset, categoryId } = req.query;
+      
+      const params: any = {};
+      
+      if (status) params.status = status as string;
+      if (limit) params.limit = parseInt(limit as string);
+      if (offset) params.offset = parseInt(offset as string);
+      if (categoryId) params.categoryId = parseInt(categoryId as string);
+      
+      const posts = await storage.getAllBlogPostsWithDetails(params);
+      
+      // If not admin or author, only return published posts
+      if (!req.isAuthenticated() || req.user.role !== "admin") {
+        const publishedPosts = posts.filter(post => post.status === "published");
+        return res.json(publishedPosts);
+      }
+      
+      res.json(posts);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch blog posts" });
+    }
+  });
+  
+  app.get("/api/blog/posts/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const post = await storage.getBlogPostWithDetails(id);
+      
+      if (!post) {
+        return res.status(404).json({ message: "Blog post not found" });
+      }
+      
+      // If post is not published and user is not admin or author, return 404
+      if (
+        post.status !== "published" && 
+        (!req.isAuthenticated() || 
+          (req.user.id !== post.authorId && req.user.role !== "admin"))
+      ) {
+        return res.status(404).json({ message: "Blog post not found" });
+      }
+      
+      // Increment view count if post is published
+      if (post.status === "published") {
+        await storage.incrementBlogPostViewCount(id);
+      }
+      
+      res.json(post);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch blog post" });
+    }
+  });
+  
+  app.get("/api/blog/posts/slug/:slug", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const post = await storage.getBlogPostBySlugWithDetails(slug);
+      
+      if (!post) {
+        return res.status(404).json({ message: "Blog post not found" });
+      }
+      
+      // If post is not published and user is not admin or author, return 404
+      if (
+        post.status !== "published" && 
+        (!req.isAuthenticated() || 
+          (req.user.id !== post.authorId && req.user.role !== "admin"))
+      ) {
+        return res.status(404).json({ message: "Blog post not found" });
+      }
+      
+      // Increment view count if post is published
+      if (post.status === "published") {
+        await storage.incrementBlogPostViewCount(post.id);
+      }
+      
+      res.json(post);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch blog post" });
+    }
+  });
+  
+  app.post("/api/blog/posts", isAuthenticated, async (req, res) => {
+    try {
+      const postData = insertBlogPostSchema.parse(req.body);
+      
+      // Set author ID to current user if not provided
+      if (!postData.authorId) {
+        postData.authorId = req.user!.id;
+      }
+      
+      // Only admins can create posts for other users
+      if (postData.authorId !== req.user!.id && req.user!.role !== "admin") {
+        return res.status(403).json({ message: "You can only create posts for yourself" });
+      }
+      
+      const post = await storage.createBlogPost(postData);
+      res.status(201).json(post);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create blog post" });
+    }
+  });
+  
+  app.put("/api/blog/posts/:id", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const post = await storage.getBlogPost(id);
+      
+      if (!post) {
+        return res.status(404).json({ message: "Blog post not found" });
+      }
+      
+      // Only post author and admins can update
+      if (post.authorId !== req.user!.id && req.user!.role !== "admin") {
+        return res.status(403).json({ message: "You can only update your own posts" });
+      }
+      
+      const updatedPost = await storage.updateBlogPost(id, req.body);
+      res.json(updatedPost);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update blog post" });
+    }
+  });
+  
+  app.delete("/api/blog/posts/:id", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const post = await storage.getBlogPost(id);
+      
+      if (!post) {
+        return res.status(404).json({ message: "Blog post not found" });
+      }
+      
+      // Only post author and admins can delete
+      if (post.authorId !== req.user!.id && req.user!.role !== "admin") {
+        return res.status(403).json({ message: "You can only delete your own posts" });
+      }
+      
+      await storage.deleteBlogPost(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete blog post" });
+    }
+  });
+  
+  // Blog comment routes
+  app.get("/api/blog/posts/:postId/comments", async (req, res) => {
+    try {
+      const postId = parseInt(req.params.postId);
+      const comments = await storage.getBlogPostComments(postId);
+      res.json(comments);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch blog comments" });
+    }
+  });
+  
+  app.post("/api/blog/comments", isAuthenticated, async (req, res) => {
+    try {
+      const commentData = insertBlogCommentSchema.parse(req.body);
+      
+      // Set user ID to current user
+      commentData.userId = req.user!.id;
+      
+      const comment = await storage.createBlogComment(commentData);
+      
+      // If user is admin, auto-approve the comment
+      if (req.user!.role === "admin") {
+        await storage.approveBlogComment(comment.id);
+      }
+      
+      // Create a notification for the post author
+      const post = await storage.getBlogPost(commentData.postId);
+      if (post && post.authorId !== req.user!.id) {
+        await storage.createNotification({
+          userId: post.authorId,
+          type: "comment",
+          message: `Nouveau commentaire sur votre article "${post.title}"`,
+          isRead: false,
+          link: `/blog/${post.slug}#comment-${comment.id}`
+        });
+      }
+      
+      res.status(201).json(comment);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create blog comment" });
+    }
+  });
+  
+  app.post("/api/blog/comments/:id/approve", hasRole(["admin"]), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const comment = await storage.approveBlogComment(id);
+      res.json(comment);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to approve blog comment" });
+    }
+  });
+  
+  app.delete("/api/blog/comments/:id", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const comment = await storage.getBlogComment(id);
+      
+      if (!comment) {
+        return res.status(404).json({ message: "Comment not found" });
+      }
+      
+      // Only comment author and admins can delete
+      if (comment.userId !== req.user!.id && req.user!.role !== "admin") {
+        return res.status(403).json({ message: "You can only delete your own comments" });
+      }
+      
+      await storage.deleteBlogComment(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete blog comment" });
+    }
+  });
 
   // Create HTTP server
   const httpServer = createServer(app);

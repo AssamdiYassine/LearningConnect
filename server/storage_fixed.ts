@@ -779,6 +779,266 @@ export class MemStorage implements IStorage {
     this.userOnboardings.set(onboarding.id, updatedOnboarding);
     return updatedOnboarding;
   }
+
+  // Blog category operations
+  async createBlogCategory(category: InsertBlogCategory): Promise<BlogCategory> {
+    const id = this.blogCategoryIdCounter++;
+    const newCategory: BlogCategory = { ...category, id };
+    this.blogCategories.set(id, newCategory);
+    return newCategory;
+  }
+
+  async getAllBlogCategories(): Promise<BlogCategory[]> {
+    return Array.from(this.blogCategories.values());
+  }
+
+  async getBlogCategory(id: number): Promise<BlogCategory | undefined> {
+    return this.blogCategories.get(id);
+  }
+
+  async getBlogCategoryBySlug(slug: string): Promise<BlogCategory | undefined> {
+    return Array.from(this.blogCategories.values()).find(
+      (category) => category.slug === slug
+    );
+  }
+
+  async updateBlogCategory(id: number, data: Partial<InsertBlogCategory>): Promise<BlogCategory> {
+    const category = await this.getBlogCategory(id);
+    if (!category) throw new Error("Blog category not found");
+    
+    const updatedCategory = { ...category, ...data };
+    this.blogCategories.set(id, updatedCategory);
+    return updatedCategory;
+  }
+
+  async deleteBlogCategory(id: number): Promise<void> {
+    this.blogCategories.delete(id);
+  }
+
+  // Blog post operations
+  async createBlogPost(post: InsertBlogPost): Promise<BlogPost> {
+    const id = this.blogPostIdCounter++;
+    const newPost: BlogPost = { 
+      ...post, 
+      id, 
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      viewCount: 0 
+    };
+    this.blogPosts.set(id, newPost);
+    return newPost;
+  }
+
+  async getBlogPost(id: number): Promise<BlogPost | undefined> {
+    return this.blogPosts.get(id);
+  }
+
+  async getBlogPostWithDetails(id: number): Promise<BlogPostWithDetails | undefined> {
+    const post = await this.getBlogPost(id);
+    if (!post) return undefined;
+    
+    const author = await this.getUser(post.authorId);
+    const category = await this.getBlogCategory(post.categoryId);
+    
+    if (!author || !category) return undefined;
+    
+    const comments = await this.getBlogPostComments(id);
+    
+    return {
+      ...post,
+      author,
+      category,
+      commentCount: comments.length
+    };
+  }
+
+  async getBlogPostBySlugWithDetails(slug: string): Promise<BlogPostWithDetails | undefined> {
+    const post = Array.from(this.blogPosts.values()).find(p => p.slug === slug);
+    if (!post) return undefined;
+    
+    return this.getBlogPostWithDetails(post.id);
+  }
+
+  async getAllBlogPostsWithDetails(params?: {
+    status?: string;
+    limit?: number;
+    offset?: number;
+    categoryId?: number;
+  }): Promise<BlogPostWithDetails[]> {
+    let posts = Array.from(this.blogPosts.values());
+    
+    // Apply filters
+    if (params?.status) {
+      posts = posts.filter(post => post.status === params.status);
+    }
+    
+    if (params?.categoryId) {
+      posts = posts.filter(post => post.categoryId === params.categoryId);
+    }
+    
+    // Sort by date (newest first)
+    posts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    
+    // Apply pagination
+    if (params?.offset !== undefined && params?.limit !== undefined) {
+      posts = posts.slice(params.offset, params.offset + params.limit);
+    } else if (params?.limit !== undefined) {
+      posts = posts.slice(0, params.limit);
+    }
+    
+    // Get details for each post
+    const detailedPosts: BlogPostWithDetails[] = [];
+    for (const post of posts) {
+      const postWithDetails = await this.getBlogPostWithDetails(post.id);
+      if (postWithDetails) {
+        detailedPosts.push(postWithDetails);
+      }
+    }
+    
+    return detailedPosts;
+  }
+
+  async getBlogPostsByAuthor(authorId: number): Promise<BlogPost[]> {
+    return Array.from(this.blogPosts.values()).filter(
+      post => post.authorId === authorId
+    );
+  }
+
+  async getBlogPostsByCategory(categoryId: number): Promise<BlogPost[]> {
+    return Array.from(this.blogPosts.values()).filter(
+      post => post.categoryId === categoryId
+    );
+  }
+
+  async updateBlogPost(id: number, data: Partial<InsertBlogPost>): Promise<BlogPost> {
+    const post = await this.getBlogPost(id);
+    if (!post) throw new Error("Blog post not found");
+    
+    const updatedPost = { 
+      ...post, 
+      ...data,
+      updatedAt: new Date()
+    };
+    
+    this.blogPosts.set(id, updatedPost);
+    return updatedPost;
+  }
+
+  async deleteBlogPost(id: number): Promise<void> {
+    this.blogPosts.delete(id);
+    
+    // Delete associated comments
+    const commentsToDelete = Array.from(this.blogComments.values())
+      .filter(comment => comment.postId === id)
+      .map(comment => comment.id);
+    
+    commentsToDelete.forEach(commentId => {
+      this.blogComments.delete(commentId);
+    });
+  }
+
+  async incrementBlogPostViewCount(id: number): Promise<void> {
+    const post = await this.getBlogPost(id);
+    if (!post) return;
+    
+    const updatedPost = { 
+      ...post,
+      viewCount: post.viewCount + 1
+    };
+    
+    this.blogPosts.set(id, updatedPost);
+  }
+
+  // Blog comment operations
+  async createBlogComment(comment: InsertBlogComment): Promise<BlogComment> {
+    const id = this.blogCommentIdCounter++;
+    const newComment: BlogComment = { 
+      ...comment, 
+      id,
+      createdAt: new Date(),
+      isApproved: false
+    };
+    this.blogComments.set(id, newComment);
+    return newComment;
+  }
+
+  async getBlogComment(id: number): Promise<BlogComment | undefined> {
+    return this.blogComments.get(id);
+  }
+
+  async getBlogPostComments(postId: number): Promise<BlogCommentWithUser[]> {
+    const comments = Array.from(this.blogComments.values())
+      .filter(comment => comment.postId === postId && comment.isApproved);
+    
+    const commentsWithUsers: BlogCommentWithUser[] = [];
+    
+    for (const comment of comments) {
+      const user = await this.getUser(comment.userId);
+      if (user) {
+        // Get replies
+        const replies = await this.getBlogCommentReplies(comment.id);
+        
+        commentsWithUsers.push({
+          ...comment,
+          user,
+          replies: replies.length > 0 ? replies : undefined
+        });
+      }
+    }
+    
+    // Sort by date (newest first)
+    commentsWithUsers.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    
+    return commentsWithUsers;
+  }
+  
+  private async getBlogCommentReplies(parentCommentId: number): Promise<BlogCommentWithUser[]> {
+    const replies = Array.from(this.blogComments.values())
+      .filter(comment => comment.parentId === parentCommentId && comment.isApproved);
+    
+    const repliesWithUsers: BlogCommentWithUser[] = [];
+    
+    for (const reply of replies) {
+      const user = await this.getUser(reply.userId);
+      if (user) {
+        repliesWithUsers.push({
+          ...reply,
+          user
+        });
+      }
+    }
+    
+    // Sort by date (oldest first for replies)
+    repliesWithUsers.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    
+    return repliesWithUsers;
+  }
+
+  async approveBlogComment(id: number): Promise<BlogComment> {
+    const comment = await this.getBlogComment(id);
+    if (!comment) throw new Error("Blog comment not found");
+    
+    const updatedComment = { 
+      ...comment,
+      isApproved: true
+    };
+    
+    this.blogComments.set(id, updatedComment);
+    return updatedComment;
+  }
+
+  async deleteBlogComment(id: number): Promise<void> {
+    this.blogComments.delete(id);
+    
+    // Delete replies
+    const repliesToDelete = Array.from(this.blogComments.values())
+      .filter(comment => comment.parentCommentId === id)
+      .map(comment => comment.id);
+    
+    repliesToDelete.forEach(replyId => {
+      this.blogComments.delete(replyId);
+    });
+  }
 }
 
 export const storage = new MemStorage();
