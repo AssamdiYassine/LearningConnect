@@ -45,13 +45,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F7F9FC]">
+    <div className="flex flex-col min-h-screen bg-[#F7F9FC] dark:bg-[#161b2d]">
       <Navbar />
       <div className="flex flex-1">
         {/* Sidebar de navigation admin */}
-        <aside className="hidden md:flex w-64 flex-col bg-white border-r border-gray-200 shadow-sm">
+        <aside className="hidden md:flex w-64 flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shadow-sm">
           <div className="p-6">
-            <h2 className="text-xl font-bold text-primary">Administration</h2>
+            <h2 className="text-xl font-bold text-primary dark:text-white">Administration</h2>
           </div>
           <nav className="flex-1 px-4 pb-6 space-y-1">
             {adminNavLinks.map((link) => {
@@ -65,11 +65,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   className={cn(
                     "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors",
                     isActive
-                      ? "bg-primary text-white" 
-                      : "text-gray-700 hover:bg-gray-100"
+                      ? "bg-primary text-white dark:bg-primary/80" 
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                   )}
                 >
-                  <Icon className={cn("h-5 w-5 mr-3", isActive ? "text-white" : "text-gray-500")} />
+                  <Icon className={cn("h-5 w-5 mr-3", isActive ? "text-white" : "text-gray-500 dark:text-gray-400")} />
                   {link.label}
                 </Link>
               );
