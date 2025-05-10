@@ -14,6 +14,7 @@ import TrainerSchedule from "@/pages/trainer-schedule";
 import TrainerRatings from "@/pages/trainer-ratings";
 import TrainerNotifications from "@/pages/trainer-notifications";
 import AdminDashboard from "@/pages/admin-dashboard";
+import AdminDashboardNew from "@/pages/admin-dashboard-new";
 import Catalog from "@/pages/catalog";
 import Schedule from "@/pages/schedule";
 import Subscription from "@/pages/subscription";
@@ -228,6 +229,10 @@ function Router() {
         <ProtectedRoute component={AdminSettings} allowedRoles={["admin"]} />
       </Route>
       
+      <Route path="/admin/dashboard-new">
+        <ProtectedRoute component={AdminDashboardNew} allowedRoles={["admin"]} />
+      </Route>
+      
       {/* Blog routes */}
       <Route path="/blog">
         <Route path="/">
@@ -277,7 +282,7 @@ function Router() {
 
 function App() {
   const [location] = useLocation();
-  const isAdminRoute = location.startsWith("/admin") || location === "/admin-dashboard";
+  const isAdminRoute = location.startsWith("/admin") || location === "/admin-dashboard" || location === "/admin/dashboard-new";
 
   return (
     <QueryClientProvider client={queryClient}>

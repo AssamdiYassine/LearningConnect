@@ -149,6 +149,17 @@ export default function Navbar() {
                       </div>
                     </DropdownMenuItem>
                   )}
+                  
+                  {user.role === "admin" && (
+                    <DropdownMenuItem asChild>
+                      <div 
+                        className="w-full cursor-pointer"
+                        onClick={() => window.location.href = "/admin/dashboard-new"}
+                      >
+                        Console d'administration
+                      </div>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild>
                     <div 
                       className="w-full cursor-pointer"
@@ -247,6 +258,15 @@ export default function Navbar() {
                         className="block px-4 py-3 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
                       >
                         Tableau de bord avancé
+                      </div>
+                    )}
+                    
+                    {user.role === "admin" && (
+                      <div
+                        onClick={() => window.location.href = "/admin/dashboard-new"}
+                        className="block px-4 py-3 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                      >
+                        Console d'administration
                       </div>
                     )}
                     <div
