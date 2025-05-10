@@ -35,7 +35,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 
 export default function AdminSettings() {
@@ -78,48 +78,52 @@ export default function AdminSettings() {
   // Fetch API settings
   const { data: apiSettings, isLoading: isApiSettingsLoading } = useQuery({
     queryKey: ["/api/settings/api"],
-    enabled: !!user && user.role === "admin",
-    onSuccess: (data) => {
-      if (data) {
-        setStripePublicKey(data.stripePublicKey || "");
-        setStripeSecretKey(data.stripeSecretKey || "");
-        setZoomApiKey(data.zoomApiKey || "");
-        setZoomApiSecret(data.zoomApiSecret || "");
-        setZoomAccountEmail(data.zoomAccountEmail || "");
-      }
-    }
+    enabled: !!user && user.role === "admin"
   });
+  
+  // Mettre à jour les états quand les données API sont chargées
+  useEffect(() => {
+    if (apiSettings) {
+      setStripePublicKey(apiSettings.stripePublicKey || "");
+      setStripeSecretKey(apiSettings.stripeSecretKey || "");
+      setZoomApiKey(apiSettings.zoomApiKey || "");
+      setZoomApiSecret(apiSettings.zoomApiSecret || "");
+      setZoomAccountEmail(apiSettings.zoomAccountEmail || "");
+    }
+  }, [apiSettings]);
   
   // Fetch system settings
   const { data: systemSettings, isLoading: isSystemSettingsLoading } = useQuery({
     queryKey: ["/api/settings/system"],
-    enabled: !!user && user.role === "admin",
-    onSuccess: (data) => {
-      if (data) {
-        setSiteName(data.siteName || "Necform");
-        setSiteDescription(data.siteDescription || "");
-        setContactEmail(data.contactEmail || "");
-        setAllowRegistrations(data.allowRegistrations !== false);
-        setMaintenanceMode(data.maintenanceMode === true);
-        
-        // Email settings
-        setEmailFromName(data.emailFromName || "");
-        setEmailFromAddress(data.emailFromAddress || "");
-        setSmtpServer(data.smtpServer || "");
-        setSmtpPort(data.smtpPort || "587");
-        setSmtpUsername(data.smtpUsername || "");
-        setSmtpPassword(data.smtpPassword || "");
-        setSmtpSecure(data.smtpSecure !== false);
-        
-        // Notification settings
-        setEnableEmailNotifications(data.enableEmailNotifications !== false);
-        setEmailNewUser(data.emailNewUser !== false);
-        setEmailNewCourse(data.emailNewCourse !== false);
-        setEmailNewSession(data.emailNewSession !== false);
-        setEmailNewSubscription(data.emailNewSubscription !== false);
-      }
-    }
+    enabled: !!user && user.role === "admin"
   });
+  
+  // Mettre à jour les états quand les données système sont chargées
+  useEffect(() => {
+    if (systemSettings) {
+      setSiteName(systemSettings.siteName || "Necform");
+      setSiteDescription(systemSettings.siteDescription || "");
+      setContactEmail(systemSettings.contactEmail || "");
+      setAllowRegistrations(systemSettings.allowRegistrations !== false);
+      setMaintenanceMode(systemSettings.maintenanceMode === true);
+      
+      // Email settings
+      setEmailFromName(systemSettings.emailFromName || "");
+      setEmailFromAddress(systemSettings.emailFromAddress || "");
+      setSmtpServer(systemSettings.smtpServer || "");
+      setSmtpPort(systemSettings.smtpPort || "587");
+      setSmtpUsername(systemSettings.smtpUsername || "");
+      setSmtpPassword(systemSettings.smtpPassword || "");
+      setSmtpSecure(systemSettings.smtpSecure !== false);
+      
+      // Notification settings
+      setEnableEmailNotifications(systemSettings.enableEmailNotifications !== false);
+      setEmailNewUser(systemSettings.emailNewUser !== false);
+      setEmailNewCourse(systemSettings.emailNewCourse !== false);
+      setEmailNewSession(systemSettings.emailNewSession !== false);
+      setEmailNewSubscription(systemSettings.emailNewSubscription !== false);
+    }
+  }, [systemSettings]);
   
   // Mutation to save API settings
   const saveApiSettingsMutation = useMutation({
