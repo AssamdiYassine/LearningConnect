@@ -462,6 +462,7 @@ export class DatabaseStorage implements IStorage {
     stripeSecretKey?: string;
     zoomApiKey?: string;
     zoomApiSecret?: string;
+    zoomAccountEmail?: string;
   }> {
     const apiSettings = await this.getSettingsByType("api");
     const result: Record<string, string> = {};
@@ -475,6 +476,7 @@ export class DatabaseStorage implements IStorage {
       stripeSecretKey: result["stripeSecretKey"],
       zoomApiKey: result["zoomApiKey"],
       zoomApiSecret: result["zoomApiSecret"],
+      zoomAccountEmail: result["zoomAccountEmail"],
     };
   }
 
@@ -483,10 +485,11 @@ export class DatabaseStorage implements IStorage {
     stripeSecretKey?: string;
     zoomApiKey?: string;
     zoomApiSecret?: string;
+    zoomAccountEmail?: string;
   }): Promise<void> {
     const entries = Object.entries(settings);
     for (const [key, value] of entries) {
-      if (value) {
+      if (value !== undefined) {
         await this.upsertSetting(key, value, "api");
       }
     }

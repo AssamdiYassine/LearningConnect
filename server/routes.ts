@@ -610,18 +610,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/settings/api", hasRole(["admin"]), async (req, res) => {
     try {
-      const { stripePublicKey, stripeSecretKey, zoomApiKey, zoomApiSecret } = req.body;
+      const { stripePublicKey, stripeSecretKey, zoomApiKey, zoomApiSecret, zoomAccountEmail } = req.body;
       
       await storage.saveApiSettings({
         stripePublicKey,
         stripeSecretKey,
         zoomApiKey,
-        zoomApiSecret
+        zoomApiSecret,
+        zoomAccountEmail
       });
       
       res.json({ message: "API settings saved successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to save API settings" });
+    }
+  });
+  
+  // System settings routes
+  app.get("/api/settings/system", hasRole(["admin"]), async (req, res) => {
+    try {
+      const systemSettings = await storage.getSettingsByType("system");
+      
+      // Transform array of settings into a key-value object
+      const settings: Record<string, any> = {};
+      systemSettings.forEach(setting => {
+        // Handle boolean values
+        if (setting.value === 'true') {
+          settings[setting.key] = true;
+        } else if (setting.value === 'false') {
+          settings[setting.key] = false;
+        } else {
+          settings[setting.key] = setting.value;
+        }
+      });
+      
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch system settings" });
+    }
+  });
+  
+  app.post("/api/settings/system", hasRole(["admin"]), async (req, res) => {
+    try {
+      // Save all system settings
+      for (const [key, value] of Object.entries(req.body)) {
+        // Convert booleans and objects to strings
+        let stringValue = typeof value === 'object' 
+          ? JSON.stringify(value) 
+          : String(value);
+          
+        await storage.upsertSetting(key, stringValue, "system");
+      }
+      
+      res.json({ message: "System settings saved successfully" });
+    } catch (error) {
+      console.error("Error saving system settings:", error);
+      res.status(500).json({ message: "Failed to save system settings" });
     }
   });
 
