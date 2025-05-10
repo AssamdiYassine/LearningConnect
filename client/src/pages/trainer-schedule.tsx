@@ -151,7 +151,7 @@ export default function TrainerSchedule() {
       session.course.title.toLowerCase().includes(searchQuery.toLowerCase());
     
     // Filtre de cours
-    const matchesCourse = !courseFilter || session.courseId.toString() === courseFilter;
+    const matchesCourse = !courseFilter || courseFilter === "all" || session.courseId.toString() === courseFilter;
     
     return matchesSearch && matchesCourse;
   });
@@ -260,7 +260,7 @@ export default function TrainerSchedule() {
               <SelectValue placeholder="Tous les cours" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Tous les cours</SelectItem>
+              <SelectItem value="all">Tous les cours</SelectItem>
               {courses?.map(course => (
                 <SelectItem key={course.id} value={course.id.toString()}>
                   {course.title}
