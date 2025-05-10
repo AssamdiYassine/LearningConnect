@@ -952,10 +952,12 @@ export class MemStorage implements IStorage {
   // Blog comment operations
   async createBlogComment(comment: InsertBlogComment): Promise<BlogComment> {
     const id = this.blogCommentIdCounter++;
+    const now = new Date();
     const newComment: BlogComment = { 
       ...comment, 
       id,
-      createdAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
       isApproved: false
     };
     this.blogComments.set(id, newComment);
@@ -1020,7 +1022,8 @@ export class MemStorage implements IStorage {
     
     const updatedComment = { 
       ...comment,
-      isApproved: true
+      isApproved: true,
+      updatedAt: new Date()
     };
     
     this.blogComments.set(id, updatedComment);
@@ -1032,7 +1035,7 @@ export class MemStorage implements IStorage {
     
     // Delete replies
     const repliesToDelete = Array.from(this.blogComments.values())
-      .filter(comment => comment.parentCommentId === id)
+      .filter(comment => comment.parentId === id)
       .map(comment => comment.id);
     
     repliesToDelete.forEach(replyId => {
