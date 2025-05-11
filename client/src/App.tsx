@@ -48,6 +48,7 @@ import AdminPendingCourses from "@/pages/admin/admin-pending-courses";
 import AdminAnalytics from "@/pages/admin/admin-analytics";
 import AdminRevenue from "@/pages/admin/admin-revenue";
 import AdminSettings from "@/pages/admin/admin-settings";
+import AdminSubscriptions from "@/pages/admin/admin-subscriptions";
 
 // Blog pages
 import BlogPage from "@/pages/blog";
@@ -229,6 +230,10 @@ function Router() {
       
       <Route path="/admin/settings">
         <ProtectedRoute component={AdminSettings} allowedRoles={["admin"]} />
+      </Route>
+      
+      <Route path="/admin/subscriptions">
+        <ProtectedRoute component={AdminSubscriptions} allowedRoles={["admin"]} />
       </Route>
       
 

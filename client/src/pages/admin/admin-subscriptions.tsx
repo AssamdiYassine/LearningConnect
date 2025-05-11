@@ -31,7 +31,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Cross2Icon, CheckCircledIcon, InfoCircledIcon, ReloadIcon } from "@radix-ui/react-icons";
+import { X, CheckCircle, Info, RotateCw } from "lucide-react";
 import { BarChart, PieChart, Pie, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartTooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 
 // Types pour les abonnements
@@ -416,8 +416,8 @@ export default function AdminSubscriptions() {
                           </TableCell>
                           <TableCell>
                             <Badge 
-                              variant={subscription.status === "active" ? "success" : 
-                                      subscription.status === "cancelled" ? "destructive" : "secondary"}
+                              className={subscription.status === "active" ? "bg-green-100 text-green-800" : 
+                                        subscription.status === "cancelled" ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"}
                             >
                               {subscription.status === "active" ? "Actif" : 
                                subscription.status === "cancelled" ? "Annulé" : "Expiré"}
@@ -542,7 +542,7 @@ export default function AdminSubscriptions() {
             >
               {updateSubscriptionMutation.isPending ? (
                 <>
-                  <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+                  <RotateCw className="mr-2 h-4 w-4 animate-spin" />
                   Mise à jour...
                 </>
               ) : "Enregistrer"}
