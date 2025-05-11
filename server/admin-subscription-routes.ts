@@ -10,30 +10,9 @@ const updateSubscriptionSchema = z.object({
   status: z.enum(["active", "cancelled", "expired"]).optional(),
 });
 
-// Données mockées pour les statistiques (à remplacer par de vraies données)
-const mockSubscriptionStats = {
-  totalActive: 256,
-  totalMonthly: 176,
-  totalAnnual: 80,
-  newThisMonth: 24,
-  cancelledThisMonth: 8,
-  renewalRate: 0.92,
-  monthlyRevenue: 5104,  // 176 * 29
-  annualRevenue: 22320,  // 80 * 279
-  totalRevenue: 27424,
-  distributionByType: [
-    { name: "Mensuel", value: 176 },
-    { name: "Annuel", value: 80 },
-  ],
-  revenueLastSixMonths: [
-    { month: "Décembre", monthly: 4640, annual: 19530, total: 24170 },
-    { month: "Janvier", monthly: 4756, annual: 20076, total: 24832 },
-    { month: "Février", monthly: 4872, annual: 20355, total: 25227 },
-    { month: "Mars", monthly: 4988, annual: 21073, total: 26061 },
-    { month: "Avril", monthly: 5046, annual: 21352, total: 26398 },
-    { month: "Mai", monthly: 5104, annual: 22320, total: 27424 },
-  ],
-};
+// Prix constants pour les abonnements
+const MONTHLY_PRICE = 29;  // Prix mensuel en euros
+const ANNUAL_PRICE = 279;  // Prix annuel en euros
 
 export function registerAdminSubscriptionRoutes(app: Express) {
   // Récupérer tous les abonnements
@@ -107,12 +86,9 @@ export function registerAdminSubscriptionRoutes(app: Express) {
         ? 1 - (cancelledThisMonth / (activeSubscriptions.length + totalExpiredOrCancelled))
         : 1;
       
-      // Calculer les revenus
-      const monthlyPrice = 29; // Prix mensuel en euros
-      const annualPrice = 279; // Prix annuel en euros
-      
-      const monthlyRevenue = monthlySubscriptions.length * monthlyPrice;
-      const annualRevenue = annualSubscriptions.length * annualPrice;
+      // Calculer les revenus      
+      const monthlyRevenue = monthlySubscriptions.length * MONTHLY_PRICE;
+      const annualRevenue = annualSubscriptions.length * ANNUAL_PRICE;
       const totalRevenue = monthlyRevenue + annualRevenue;
       
       // Répartition par type
@@ -201,14 +177,23 @@ export function registerAdminSubscriptionRoutes(app: Express) {
       const { id } = req.params;
       const subscriptionId = parseInt(id);
       
-      // Simuler l'annulation (à implémenter réellement)
-      // Dans la vraie implémentation, nous mettrions à jour le statut de l'abonnement
+      // Récupérer l'abonnement existant
+      const subscription = await storage.getSubscription(subscriptionId);
+      if (!subscription) {
+        return res.status(404).json({ message: "Abonnement non trouvé" });
+      }
+      
+      // Annuler l'abonnement
+      const now = new Date();
+      const updatedSubscription = await storage.updateSubscription(subscriptionId, {
+        status: "cancelled",
+        cancelledAt: now
+      });
       
       res.status(200).json({ 
         id: subscriptionId,
         message: "Abonnement annulé avec succès",
-        status: "cancelled",
-        cancelledAt: new Date().toISOString()
+        subscription: updatedSubscription
       });
     } catch (error: any) {
       res.status(500).json({ message: `Erreur lors de l'annulation de l'abonnement: ${error.message}` });
@@ -221,14 +206,37 @@ export function registerAdminSubscriptionRoutes(app: Express) {
       const { id } = req.params;
       const subscriptionId = parseInt(id);
       
-      // Simuler la réactivation (à implémenter réellement)
-      // Dans la vraie implémentation, nous mettrions à jour le statut de l'abonnement
+      // Récupérer l'abonnement existant
+      const subscription = await storage.getSubscription(subscriptionId);
+      if (!subscription) {
+        return res.status(404).json({ message: "Abonnement non trouvé" });
+      }
+      
+      // Vérifier si l'abonnement est annulé
+      if (subscription.status !== "cancelled") {
+        return res.status(400).json({ message: "Seuls les abonnements annulés peuvent être réactivés" });
+      }
+      
+      // Calculer une nouvelle date de fin selon le type d'abonnement
+      const now = new Date();
+      let endDate = new Date(now);
+      if (subscription.type === "monthly") {
+        endDate.setMonth(endDate.getMonth() + 1); // +1 mois
+      } else if (subscription.type === "annual") {
+        endDate.setFullYear(endDate.getFullYear() + 1); // +1 an
+      }
+      
+      // Réactiver l'abonnement
+      const updatedSubscription = await storage.updateSubscription(subscriptionId, {
+        status: "active",
+        cancelledAt: null,
+        endDate: endDate
+      });
       
       res.status(200).json({ 
         id: subscriptionId,
         message: "Abonnement réactivé avec succès",
-        status: "active",
-        reactivatedAt: new Date().toISOString()
+        subscription: updatedSubscription
       });
     } catch (error: any) {
       res.status(500).json({ message: `Erreur lors de la réactivation de l'abonnement: ${error.message}` });
