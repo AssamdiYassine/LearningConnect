@@ -9,4 +9,5 @@ const dbStorage = new DatabaseStorage();
 const extendedStorage = extendDatabaseStorage(dbStorage);
 
 // Export the extended storage as IStorage
-export const storage: IStorage = extendedStorage as IStorage;
+// Use type assertion with unknown first to avoid TypeScript error
+export const storage: IStorage = extendedStorage as unknown as IStorage;

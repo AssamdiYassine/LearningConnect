@@ -451,7 +451,7 @@ export default function FixedAdminCourses() {
               <SelectValue placeholder="Niveau" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Tous les niveaux</SelectItem>
+              <SelectItem value="all">Tous les niveaux</SelectItem>
               <SelectItem value="beginner">Débutant</SelectItem>
               <SelectItem value="intermediate">Intermédiaire</SelectItem>
               <SelectItem value="advanced">Avancé</SelectItem>
@@ -693,7 +693,8 @@ export default function FixedAdminCourses() {
                           step="0.01"
                           placeholder="0.00"
                           {...field}
-                          onChange={(e) => field.onChange(e.target.value === "" ? null : parseFloat(e.target.value))}
+                          value={field.value === null ? "" : field.value}
+                          onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />

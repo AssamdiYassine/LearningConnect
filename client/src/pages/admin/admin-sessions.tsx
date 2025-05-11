@@ -298,10 +298,10 @@ export default function AdminSessions() {
   const filteredSessions = sessions.filter(session => {
     // Filter by search query
     const matchesSearch = 
-      session.courseTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      session.trainerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      session.courseCategoryName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      session.zoomLink.toLowerCase().includes(searchQuery.toLowerCase());
+      (session.courseTitle?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (session.trainerName?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (session.courseCategoryName?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (session.zoomLink?.toLowerCase() || "").includes(searchQuery.toLowerCase());
     
     const now = new Date();
     const sessionDate = new Date(session.date);
