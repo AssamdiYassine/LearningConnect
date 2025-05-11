@@ -96,14 +96,7 @@ export default function AdminUsers() {
 
   // Fetch users
   const { data: users = [], isLoading } = useQuery<User[]>({
-    queryKey: ['/api/admin/users'],
-    onError: (error) => {
-      toast({
-        title: "Erreur",
-        description: "Impossible de récupérer les utilisateurs: " + error.message,
-        variant: "destructive",
-      });
-    }
+    queryKey: ['/api/admin/users']
   });
 
   // Create user mutation
