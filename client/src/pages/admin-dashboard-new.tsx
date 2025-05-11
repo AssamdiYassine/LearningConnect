@@ -429,6 +429,8 @@ export default function AdminDashboardNew() {
                     <div className="h-80">
                       <Line
                         data={lineData}
+                        width={500}
+                        height={300}
                         margin={{ top: 20, right: 20, bottom: 40, left: 40 }}
                         xScale={{ type: 'point' }}
                         yScale={{ type: 'linear', min: 0, max: 'auto' }}
