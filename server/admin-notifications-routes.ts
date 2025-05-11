@@ -1,4 +1,4 @@
-import { Express } from "express";
+import { Express, Request, Response } from "express";
 import { storage } from "./storage";
 import { isAuthenticated, isAdmin } from "./middleware";
 import { Notification } from "@shared/schema";

@@ -70,6 +70,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register new admin API endpoints
   registerAdminUserRoutes(app);
   registerAdminCourseRoutes(app);
+  registerAdminNotificationRoutes(app);
 
   // User routes
   app.get("/api/users", hasRole(["admin"]), async (req, res) => {
