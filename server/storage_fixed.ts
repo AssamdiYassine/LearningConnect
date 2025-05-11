@@ -145,6 +145,11 @@ export interface IStorage {
   getApprovalRequestsByType(type: string, status?: string): Promise<ApprovalRequestWithDetails[]>;
   getApprovalRequestsByRequester(requesterId: number): Promise<ApprovalRequestWithDetails[]>;
   
+  // Subscription operations
+  getAllSubscriptions(): Promise<any[]>; // Retourne tous les abonnements
+  getSubscription(id: number): Promise<any | undefined>; // Récupère un abonnement spécifique
+  updateSubscription(id: number, data: any): Promise<any>; // Met à jour un abonnement
+  
   // Extended user operations
   getUsersByRole(role: string): Promise<User[]>;
   updateUser(id: number, data: Partial<User>): Promise<User>;
@@ -378,55 +383,124 @@ export class MemStorage implements IStorage {
   async getAllUsers(): Promise<User[]> {
     return Array.from(this.users.values());
   }
+  
+  async getUsersByRole(role: string): Promise<User[]> {
+    return Array.from(this.users.values()).filter(user => user.role === role);
+  }
+  
+  async updateUser(id: number, data: Partial<User>): Promise<User> {
+    const user = await this.getUser(id);
+    if (!user) throw new Error("User not found");
+    
+    const updatedUser = { ...user, ...data };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+  
+  async deleteUser(id: number): Promise<void> {
+    if (!this.users.has(id)) throw new Error("User not found");
+    this.users.delete(id);
+  }
 
   async updateUserProfile(id: number, data: { displayName?: string, email?: string }): Promise<User> {
     const user = await this.getUser(id);
     if (!user) throw new Error("User not found");
     
-    const updatedUser = { 
-      ...user,
+    const updates: Partial<User> = {
       displayName: data.displayName || user.displayName,
       email: data.email || user.email
     };
     
-    this.users.set(id, updatedUser);
-    return updatedUser;
+    return this.updateUser(id, updates);
   }
   
   async updateUserPassword(id: number, newPassword: string): Promise<User> {
     const user = await this.getUser(id);
     if (!user) throw new Error("User not found");
     
-    const updatedUser = { 
-      ...user,
-      password: newPassword
-    };
-    
-    this.users.set(id, updatedUser);
-    return updatedUser;
+    return this.updateUser(id, { password: newPassword });
   }
   
   async updateUserRole(id: number, role: string): Promise<User> {
-    const user = await this.getUser(id);
-    if (!user) throw new Error("User not found");
-    
-    const updatedUser = { ...user, role: role as "student" | "trainer" | "admin" };
-    this.users.set(id, updatedUser);
-    return updatedUser;
+    return this.updateUser(id, { role: role as "student" | "trainer" | "admin" });
   }
 
   async updateSubscription(id: number, isSubscribed: boolean, type?: string, endDate?: Date): Promise<User> {
-    const user = await this.getUser(id);
-    if (!user) throw new Error("User not found");
-    
-    const updatedUser = { 
-      ...user, 
+    const updates: Partial<User> = { 
       isSubscribed, 
       subscriptionType: type as "monthly" | "annual" | null,
       subscriptionEndDate: endDate || null
     };
-    this.users.set(id, updatedUser);
-    return updatedUser;
+    
+    return this.updateUser(id, updates);
+  }
+  
+  async getAllSubscriptions(): Promise<any[]> {
+    // Pour notre cas d'utilisation actuel, nous allons simplement convertir les utilisateurs ayant des abonnements
+    // en objets d'abonnement, mais dans une vraie implémentation, nous aurions une table dédiée pour les abonnements
+    return Array.from(this.users.values())
+      .filter(user => user.isSubscribed)
+      .map(user => ({
+        id: user.id,
+        userId: user.id,
+        name: user.subscriptionType === 'monthly' ? 'Basic Mensuel' : 'Premium Annuel',
+        description: user.subscriptionType === 'monthly' 
+          ? 'Accès à toutes les formations pendant 1 mois' 
+          : 'Accès à toutes les formations pendant 1 an',
+        price: user.subscriptionType === 'monthly' ? 29 : 279,
+        duration: user.subscriptionType === 'monthly' ? 30 : 365,
+        status: new Date() > (user.subscriptionEndDate || new Date()) ? 'expired' : 'active',
+        startDate: user.subscriptionEndDate 
+          ? new Date(user.subscriptionEndDate.getTime() - (user.subscriptionType === 'monthly' ? 30 : 365) * 24 * 60 * 60 * 1000)
+          : new Date(),
+        endDate: user.subscriptionEndDate,
+        stripeSubscriptionId: user.stripeSubscriptionId,
+        type: user.subscriptionType
+      }));
+  }
+  
+  async getSubscription(id: number): Promise<any | undefined> {
+    const subscriptions = await this.getAllSubscriptions();
+    return subscriptions.find(sub => sub.id === id);
+  }
+  
+  async updateSubscription(id: number, data: any): Promise<any> {
+    const subscription = await this.getSubscription(id);
+    if (!subscription) throw new Error("Abonnement non trouvé");
+    
+    const user = await this.getUser(id);
+    if (!user) throw new Error("Utilisateur non trouvé");
+    
+    // Mettre à jour l'utilisateur avec les nouvelles données d'abonnement
+    const updates: any = {};
+    
+    if (data.type) {
+      updates.subscriptionType = data.type;
+    }
+    
+    if (data.endDate) {
+      updates.subscriptionEndDate = new Date(data.endDate);
+    }
+    
+    if (data.status === 'cancelled') {
+      updates.isSubscribed = false;
+    } else if (data.status === 'active') {
+      updates.isSubscribed = true;
+    }
+    
+    // Mettre à jour l'utilisateur
+    const updatedUser = await this.updateUser(id, updates);
+    
+    // Reconstruire l'objet abonnement à partir de l'utilisateur mis à jour
+    return {
+      ...subscription,
+      ...data,
+      type: updatedUser.subscriptionType,
+      status: updatedUser.isSubscribed 
+        ? (new Date() > (updatedUser.subscriptionEndDate || new Date()) ? 'expired' : 'active')
+        : 'cancelled',
+      endDate: updatedUser.subscriptionEndDate
+    };
   }
 
   async updateUserStripeInfo(id: number, stripeInfo: { customerId: string, subscriptionId: string }): Promise<User> {
