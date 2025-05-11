@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { withAdminDashboard } from "@/lib/with-admin-dashboard";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -83,7 +84,7 @@ interface Category {
   description: string | null;
 }
 
-export default function FixedAdminCourses() {
+function FixedAdminCourses() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -1204,3 +1205,7 @@ export default function FixedAdminCourses() {
     </div>
   );
 }
+
+// Exporter le composant avec le layout admin
+const AdminCoursesWithDashboard = withAdminDashboard(FixedAdminCourses);
+export default AdminCoursesWithDashboard;
