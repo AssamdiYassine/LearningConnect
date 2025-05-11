@@ -37,6 +37,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
+      
+      // Rediriger l'utilisateur en fonction de son rôle
+      if (user.role === "admin") {
+        window.location.href = "/admin-dashboard-new";
+      } else if (user.role === "trainer") {
+        window.location.href = "/trainer-dashboard";
+      } else {
+        window.location.href = "/";
+      }
+      
       toast({
         title: "Login successful",
         description: `Welcome back, ${user.displayName}!`,
@@ -58,6 +68,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
+      
+      // Rediriger l'utilisateur en fonction de son rôle
+      if (user.role === "admin") {
+        window.location.href = "/admin-dashboard-new";
+      } else if (user.role === "trainer") {
+        window.location.href = "/trainer-dashboard";
+      } else {
+        window.location.href = "/";
+      }
+      
       toast({
         title: "Registration successful",
         description: `Welcome to TechFormPro, ${user.displayName}!`,

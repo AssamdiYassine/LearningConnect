@@ -60,17 +60,15 @@ export default function AuthPage() {
     });
   }
 
-  // Redirect if already logged in
+  // Vérifie si l'utilisateur est déjà connecté
   if (user) {
-    // Redirect users to their appropriate dashboard based on role
-    switch (user.role) {
-      case "admin":
-        return <Redirect to="/admin-dashboard-new" />;
-      case "trainer":
-        return <Redirect to="/trainer-dashboard" />;
-      default:
-        return <Redirect to="/" />;
-    }
+    // La redirection sera gérée par les hooks d'authentification
+    return <div className="flex justify-center items-center h-screen">
+      <div className="flex flex-col items-center gap-4">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="text-muted-foreground">Redirection en cours...</p>
+      </div>
+    </div>;
   }
 
   return (
