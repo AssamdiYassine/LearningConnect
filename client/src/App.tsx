@@ -301,18 +301,12 @@ function App() {
           <NotificationsProvider>
             <OnboardingProvider>
               <TooltipProvider>
-              {isDarkDashboard ? (
-                // Tableau de bord administrateur sombre - pas de layout
-                <div className="min-h-screen bg-[#1E1E1E]">
+              {isAdminRoute ? (
+                // Pas de layout pour les pages admin - chaque page admin utilise directement AdminDashboardLayout
+                <>
                   <Router />
                   <OnboardingModal />
-                </div>
-              ) : isAdminRoute ? (
-                // Layout admin standard
-                <AdminLayout>
-                  <Router />
-                  <OnboardingModal />
-                </AdminLayout>
+                </>
               ) : (
                 // Layout standard pour les autres pages
                 <Layout>
