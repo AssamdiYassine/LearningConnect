@@ -1,6 +1,7 @@
 import { Express } from "express";
 import { storage } from "./storage";
 import { isAuthenticated, isAdmin } from "./middleware";
+import { Notification } from "@shared/schema";
 
 export function registerAdminNotificationRoutes(app: Express) {
   // Route pour récupérer toutes les notifications (admin uniquement)
@@ -8,7 +9,7 @@ export function registerAdminNotificationRoutes(app: Express) {
     try {
       // Récupérer toutes les notifications pour tous les utilisateurs
       const users = await storage.getAllUsers();
-      let allNotifications = [];
+      let allNotifications: Notification[] = [];
       
       // Pour chaque utilisateur, récupérer leurs notifications
       for (const user of users) {

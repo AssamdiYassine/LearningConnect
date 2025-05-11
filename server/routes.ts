@@ -1200,6 +1200,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enregistrement des routes admin pour les notifications
+  registerAdminNotificationRoutes(app);
+  
   // Create HTTP server
   const httpServer = createServer(app);
 
