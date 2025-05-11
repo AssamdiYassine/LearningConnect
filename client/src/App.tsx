@@ -43,7 +43,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 // Admin pages - Nouvelles implémentations
 import AdminUsers from "@/pages/admin/functional-admin-users";
 import AdminCourses from "@/pages/admin/fixed-admin-courses";
-import AdminSessions from "@/pages/admin/admin-sessions";
+import AdminSessionsWithDashboard from "@/pages/admin/admin-sessions";
 import AdminPendingCourses from "@/pages/admin/admin-pending-courses";
 import AdminAnalytics from "@/pages/admin/admin-analytics";
 import AdminRevenue from "@/pages/admin/admin-revenue";
@@ -213,7 +213,7 @@ function Router() {
       </Route>
       
       <Route path="/admin/sessions">
-        <ProtectedRoute component={AdminSessions} allowedRoles={["admin"]} />
+        <ProtectedRoute component={AdminSessionsWithDashboard} allowedRoles={["admin"]} />
       </Route>
       
       <Route path="/admin/pending-courses">
