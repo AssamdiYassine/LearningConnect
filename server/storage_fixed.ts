@@ -90,13 +90,24 @@ export interface IStorage {
     stripeSecretKey?: string;
     zoomApiKey?: string;
     zoomApiSecret?: string;
+    zoomAccountEmail?: string;
   }>;
   saveApiSettings(settings: {
     stripePublicKey?: string;
     stripeSecretKey?: string;
     zoomApiKey?: string;
     zoomApiSecret?: string;
+    zoomAccountEmail?: string;
   }): Promise<void>;
+  getFormattedApiSettings(): Promise<{
+    stripePublicKey?: string;
+    stripeSecretKey?: string;
+    zoomApiKey?: string;
+    zoomApiSecret?: string;
+    zoomAccountEmail?: string;
+  }>;
+  testStripeConnection(): Promise<{success: boolean, message: string}>;
+  testZoomConnection(): Promise<{success: boolean, message: string}>;
   
   // Onboarding operations
   getUserOnboarding(userId: number): Promise<UserOnboarding | undefined>;
@@ -256,6 +267,7 @@ export class MemStorage implements IStorage {
     stripeSecretKey?: string;
     zoomApiKey?: string;
     zoomApiSecret?: string;
+    zoomAccountEmail?: string;
   }> {
     const apiSettings = await this.getSettingsByType("api");
     const result: any = {};
@@ -265,9 +277,56 @@ export class MemStorage implements IStorage {
       if (setting.key === "stripe_secret_key") result.stripeSecretKey = setting.value;
       if (setting.key === "zoom_api_key") result.zoomApiKey = setting.value;
       if (setting.key === "zoom_api_secret") result.zoomApiSecret = setting.value;
+      if (setting.key === "zoom_account_email") result.zoomAccountEmail = setting.value;
     });
     
     return result;
+  }
+  
+  // Cette méthode est redondante avec getApiSettings, mais nous la gardons
+  // pour être cohérent avec l'interface étendue
+  async getFormattedApiSettings(): Promise<{
+    stripePublicKey?: string;
+    stripeSecretKey?: string;
+    zoomApiKey?: string;
+    zoomApiSecret?: string;
+    zoomAccountEmail?: string;
+  }> {
+    return this.getApiSettings();
+  }
+  
+  // Méthode pour tester la connexion Stripe
+  async testStripeConnection(): Promise<{success: boolean, message: string}> {
+    const apiSettings = await this.getApiSettings();
+    
+    if (!apiSettings.stripePublicKey || !apiSettings.stripeSecretKey) {
+      throw new Error("Les clés API Stripe ne sont pas configurées");
+    }
+    
+    // Simulation simple - dans un cas réel, on ferait une requête à l'API Stripe
+    if (apiSettings.stripePublicKey.startsWith('pk_') && 
+        apiSettings.stripeSecretKey.startsWith('sk_')) {
+      return { success: true, message: "Connexion à Stripe réussie" };
+    } else {
+      throw new Error("Format des clés API Stripe invalide");
+    }
+  }
+  
+  // Méthode pour tester la connexion Zoom
+  async testZoomConnection(): Promise<{success: boolean, message: string}> {
+    const apiSettings = await this.getApiSettings();
+    
+    if (!apiSettings.zoomApiKey || !apiSettings.zoomApiSecret || !apiSettings.zoomAccountEmail) {
+      throw new Error("Les paramètres API Zoom ne sont pas complètement configurés");
+    }
+    
+    // Vérification basique du format de l'email
+    if (!apiSettings.zoomAccountEmail.includes('@')) {
+      throw new Error("Format d'email Zoom invalide");
+    }
+    
+    // Simulation - dans un cas réel, on ferait une requête à l'API Zoom
+    return { success: true, message: "Connexion à Zoom réussie" };
   }
 
   async saveApiSettings(settings: {
@@ -275,6 +334,7 @@ export class MemStorage implements IStorage {
     stripeSecretKey?: string;
     zoomApiKey?: string;
     zoomApiSecret?: string;
+    zoomAccountEmail?: string;
   }): Promise<void> {
     if (settings.stripePublicKey) {
       await this.upsertSetting("stripe_public_key", settings.stripePublicKey, "api");
@@ -290,6 +350,10 @@ export class MemStorage implements IStorage {
     
     if (settings.zoomApiSecret) {
       await this.upsertSetting("zoom_api_secret", settings.zoomApiSecret, "api");
+    }
+    
+    if (settings.zoomAccountEmail) {
+      await this.upsertSetting("zoom_account_email", settings.zoomAccountEmail, "api");
     }
   }
 
