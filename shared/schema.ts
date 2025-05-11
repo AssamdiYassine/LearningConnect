@@ -168,11 +168,15 @@ export const approvalRequests = pgTable("approval_requests", {
 });
 
 // Schemas for validation and insertion
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  stripeCustomerId: true,
-  stripeSubscriptionId: true,
-});
+export const insertUserSchema = createInsertSchema(users)
+  .omit({
+    id: true,
+    stripeCustomerId: true,
+    stripeSubscriptionId: true,
+  })
+  .extend({
+    displayName: z.string().optional(),
+  });
 
 export const insertCategorySchema = createInsertSchema(categories).omit({
   id: true,
