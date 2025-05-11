@@ -69,8 +69,8 @@ export function NotificationBell() {
                           notification.isRead ? 'bg-gray-200' : 'bg-blue-500'
                         }`} />
                         <div className="flex-grow">
-                          <p className="text-sm font-medium">{notification.title}</p>
-                          <p className="text-xs text-gray-500 mt-1">{notification.body}</p>
+                          <p className="text-sm font-medium">{notification.type || "Notification"}</p>
+                          <p className="text-xs text-gray-500 mt-1">{notification.message}</p>
                           {!notification.isRead && (
                             <Button 
                               variant="link" 
@@ -106,8 +106,8 @@ export function NotificationBell() {
                         <div className="flex items-start gap-3 p-3 hover:bg-gray-50 transition-colors bg-blue-50/50">
                           <div className="w-2 h-2 mt-2 rounded-full flex-shrink-0 bg-blue-500" />
                           <div className="flex-grow">
-                            <p className="text-sm font-medium">{notification.title}</p>
-                            <p className="text-xs text-gray-500 mt-1">{notification.body}</p>
+                            <p className="text-sm font-medium">{notification.type || "Notification"}</p>
+                            <p className="text-xs text-gray-500 mt-1">{notification.message}</p>
                             <Button 
                               variant="link" 
                               size="sm" 
