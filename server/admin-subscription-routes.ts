@@ -78,8 +78,81 @@ export function registerAdminSubscriptionRoutes(app: Express) {
   // Récupérer les statistiques des abonnements
   app.get('/api/admin/subscriptions/stats', hasAdminRole, async (req: Request, res: Response) => {
     try {
-      // Statistiques mockées (à remplacer par de vraies données)
-      res.status(200).json(mockSubscriptionStats);
+      // Récupérer tous les abonnements
+      const subscriptions = await storage.getAllSubscriptions();
+      
+      // Filtrer les abonnements par statut et type
+      const activeSubscriptions = subscriptions.filter(sub => sub.status === "active");
+      const monthlySubscriptions = subscriptions.filter(sub => sub.type === "monthly" && sub.status === "active");
+      const annualSubscriptions = subscriptions.filter(sub => sub.type === "annual" && sub.status === "active");
+      
+      // Calculer le nombre d'abonnements créés ce mois-ci
+      const now = new Date();
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const newThisMonth = subscriptions.filter(
+        sub => new Date(sub.startDate) >= firstDayOfMonth
+      ).length;
+      
+      // Calculer le nombre d'abonnements annulés ce mois-ci
+      const cancelledThisMonth = subscriptions.filter(
+        sub => sub.status === "cancelled" && sub.cancelledAt && new Date(sub.cancelledAt) >= firstDayOfMonth
+      ).length;
+      
+      // Calculer le taux de renouvellement (si possible)
+      const totalExpiredOrCancelled = subscriptions.filter(
+        sub => sub.status === "expired" || sub.status === "cancelled"
+      ).length;
+      
+      const renewalRate = totalExpiredOrCancelled > 0 
+        ? 1 - (cancelledThisMonth / (activeSubscriptions.length + totalExpiredOrCancelled))
+        : 1;
+      
+      // Calculer les revenus
+      const monthlyPrice = 29; // Prix mensuel en euros
+      const annualPrice = 279; // Prix annuel en euros
+      
+      const monthlyRevenue = monthlySubscriptions.length * monthlyPrice;
+      const annualRevenue = annualSubscriptions.length * annualPrice;
+      const totalRevenue = monthlyRevenue + annualRevenue;
+      
+      // Répartition par type
+      const distributionByType = [
+        { name: "Mensuel", value: monthlySubscriptions.length },
+        { name: "Annuel", value: annualSubscriptions.length },
+      ];
+      
+      // Calculer les revenus des 6 derniers mois (simulation basée sur les abonnements actuels)
+      // Dans une vraie implémentation, nous utiliserions des données historiques
+      const months = ["Décembre", "Janvier", "Février", "Mars", "Avril", "Mai"];
+      const growthRate = 0.03; // 3% de croissance mensuelle
+      
+      const revenueLastSixMonths = months.map((month, index) => {
+        const factor = Math.pow(1 - growthRate, 5 - index);
+        const monthlyRev = Math.round(monthlyRevenue * factor);
+        const annualRev = Math.round(annualRevenue * factor);
+        return {
+          month,
+          monthly: monthlyRev,
+          annual: annualRev,
+          total: monthlyRev + annualRev
+        };
+      });
+      
+      const stats = {
+        totalActive: activeSubscriptions.length,
+        totalMonthly: monthlySubscriptions.length,
+        totalAnnual: annualSubscriptions.length,
+        newThisMonth,
+        cancelledThisMonth,
+        renewalRate,
+        monthlyRevenue,
+        annualRevenue,
+        totalRevenue,
+        distributionByType,
+        revenueLastSixMonths
+      };
+      
+      res.status(200).json(stats);
     } catch (error: any) {
       res.status(500).json({ message: `Erreur lors de la récupération des statistiques: ${error.message}` });
     }
@@ -99,13 +172,23 @@ export function registerAdminSubscriptionRoutes(app: Express) {
       
       const { type, endDate, status } = validationResult.data;
       
-      // Simuler la mise à jour (à implémenter réellement)
-      // Dans la vraie implémentation, nous mettrions à jour l'abonnement dans la base de données
+      // Récupérer l'abonnement existant
+      const subscription = await storage.getSubscription(subscriptionId);
+      if (!subscription) {
+        return res.status(404).json({ message: "Abonnement non trouvé" });
+      }
+      
+      // Mettre à jour l'abonnement
+      const updatedSubscription = await storage.updateSubscription(subscriptionId, {
+        type: type || subscription.type,
+        endDate: endDate ? new Date(endDate) : subscription.endDate,
+        status: status || subscription.status
+      });
       
       res.status(200).json({ 
         id: subscriptionId,
         message: "Abonnement mis à jour avec succès",
-        updated: { type, endDate, status }
+        subscription: updatedSubscription
       });
     } catch (error: any) {
       res.status(500).json({ message: `Erreur lors de la mise à jour de l'abonnement: ${error.message}` });

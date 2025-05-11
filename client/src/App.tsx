@@ -49,6 +49,8 @@ import AdminAnalyticsWithDashboard from "@/pages/admin/admin-analytics";
 import AdminRevenueWithDashboard from "@/pages/admin/admin-revenue";
 import AdminSettingsWithDashboard from "@/pages/admin/admin-settings";
 import SubscriptionsWithAdminDashboard from "@/pages/admin/admin-subscriptions";
+import AdminCategoriesWithDashboard from "@/pages/admin/admin-categories";
+import AdminApprovalsWithDashboard from "@/pages/admin/admin-approvals";
 
 // Blog pages
 import BlogPage from "@/pages/blog";
@@ -234,6 +236,14 @@ function Router() {
       
       <Route path="/admin/subscriptions">
         <ProtectedRoute component={SubscriptionsWithAdminDashboard} allowedRoles={["admin"]} />
+      </Route>
+      
+      <Route path="/admin/categories">
+        <ProtectedRoute component={AdminCategoriesWithDashboard} allowedRoles={["admin"]} />
+      </Route>
+      
+      <Route path="/admin/approvals">
+        <ProtectedRoute component={AdminApprovalsWithDashboard} allowedRoles={["admin"]} />
       </Route>
       
 
