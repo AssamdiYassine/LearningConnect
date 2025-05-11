@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   PlusCircle, 
@@ -40,7 +40,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 // Types
 type User = {
@@ -80,7 +80,6 @@ export default function AdminUsers() {
 
   // Hooks
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   // Reset form
   const resetForm = () => {
@@ -126,8 +125,8 @@ export default function AdminUsers() {
 
   // Update user mutation
   const updateUserMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number, data: any }) => {
-      console.log(`Mise à jour de l'utilisateur ${id}:`, data);
+    mutationFn: async ({ id, data }: { id: number; data: Partial<UserFormData> }) => {
+      console.log("Mise à jour utilisateur:", id, data);
       const res = await apiRequest('PATCH', `/api/admin/users/${id}`, data);
       return await res.json();
     },
@@ -138,7 +137,6 @@ export default function AdminUsers() {
         description: "Utilisateur mis à jour avec succès!",
       });
       setEditDialogOpen(false);
-      resetForm();
     },
     onError: (error: Error) => {
       toast({
@@ -152,7 +150,7 @@ export default function AdminUsers() {
   // Delete user mutation
   const deleteUserMutation = useMutation({
     mutationFn: async (id: number) => {
-      console.log(`Suppression de l'utilisateur ${id}`);
+      console.log("Suppression utilisateur:", id);
       await apiRequest('DELETE', `/api/admin/users/${id}`);
     },
     onSuccess: () => {
@@ -177,23 +175,14 @@ export default function AdminUsers() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Handle role select change
+  // Handle role change
   const handleRoleChange = (value: string) => {
     setFormData(prev => ({ ...prev, role: value }));
   };
 
-  // Handle add user
+  // Add user
   const handleAddUser = () => {
     // Validation
-    if (!formData.username || !formData.email || !formData.password) {
-      toast({
-        title: "Erreur de validation",
-        description: "Tous les champs obligatoires doivent être remplis",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (formData.password !== formData.confirmPassword) {
       toast({
         title: "Erreur de validation",
@@ -203,16 +192,15 @@ export default function AdminUsers() {
       return;
     }
 
-    // Create user
     const { confirmPassword, ...userData } = formData;
     createUserMutation.mutate(userData);
   };
 
-  // Handle edit user
+  // Edit user
   const handleEditUser = () => {
     if (!selectedUser) return;
 
-    // Validation for password match if provided
+    // Validate passwords match if provided
     if (formData.password && formData.password !== formData.confirmPassword) {
       toast({
         title: "Erreur de validation",
@@ -278,8 +266,8 @@ export default function AdminUsers() {
 
   // Filter users based on search
   const filteredUsers = users.filter(user => 
-    user.username.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.username?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (user.displayName && user.displayName.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
@@ -386,14 +374,14 @@ export default function AdminUsers() {
               </TableBody>
             </Table>
           ) : (
-            <div className="text-center py-10">
-              <UserX className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium mb-2">Aucun utilisateur trouvé</h3>
-              <p className="text-muted-foreground mb-4">
-                {searchQuery 
-                  ? "Aucun utilisateur ne correspond à votre recherche." 
-                  : "Il n'y a encore aucun utilisateur."}
-              </p>
+            <div className="flex flex-col items-center justify-center h-64 text-center">
+              <UserX className="h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground mb-2">Aucun utilisateur trouvé</p>
+              {searchQuery && (
+                <p className="text-sm text-muted-foreground mb-4">
+                  Essayez de modifier votre recherche ou créez un nouvel utilisateur
+                </p>
+              )}
               <Button 
                 onClick={() => {
                   resetForm();
@@ -451,7 +439,7 @@ export default function AdminUsers() {
             
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="displayName" className="text-right">
-                Nom affiché
+                Nom affiché*
               </label>
               <Input
                 id="displayName"
@@ -459,6 +447,7 @@ export default function AdminUsers() {
                 value={formData.displayName}
                 onChange={handleInputChange}
                 className="col-span-3"
+                required
               />
             </div>
             

@@ -5,14 +5,11 @@ import {
   Search, 
   Edit, 
   Trash, 
-  Eye, 
+  Check, 
+  X,
   BookOpen,
-  Clock,
-  Users,
-  CheckCircle,
-  XCircle,
-  Calendar,
-  Tag
+  FileEdit,
+  Calendar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,7 +40,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 // Types
 type Course = {
@@ -118,7 +115,6 @@ export default function AdminCourses() {
 
   // Hooks
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   // Reset form
   const resetForm = () => {
@@ -136,45 +132,25 @@ export default function AdminCourses() {
   };
 
   // Fetch courses
-  const { data: courses = [], isLoading: isLoadingCourses } = useQuery<Course[]>({
-    queryKey: ['/api/admin/courses'],
-    onError: (error) => {
-      toast({
-        title: "Erreur",
-        description: "Impossible de récupérer les formations: " + error.message,
-        variant: "destructive",
-      });
-    }
+  const { data: courses = [], isLoading } = useQuery<Course[]>({
+    queryKey: ['/api/admin/courses']
   });
 
   // Fetch categories
   const { data: categories = [] } = useQuery<Category[]>({
-    queryKey: ['/api/categories'],
-    onError: (error) => {
-      toast({
-        title: "Erreur",
-        description: "Impossible de récupérer les catégories: " + error.message,
-        variant: "destructive",
-      });
-    }
+    queryKey: ['/api/admin/categories']
   });
 
   // Fetch trainers
   const { data: trainers = [] } = useQuery<Trainer[]>({
-    queryKey: ['/api/trainers'],
-    onError: (error) => {
-      toast({
-        title: "Erreur",
-        description: "Impossible de récupérer les formateurs: " + error.message,
-        variant: "destructive",
-      });
-    }
+    queryKey: ['/api/admin/users'],
+    select: (users) => users.filter(user => user.role === 'trainer')
   });
 
   // Create course mutation
   const createCourseMutation = useMutation({
     mutationFn: async (courseData: any) => {
-      console.log("Création d'une formation:", courseData);
+      console.log("Création de formation:", courseData);
       const res = await apiRequest('POST', '/api/admin/courses', courseData);
       return await res.json();
     },
@@ -198,8 +174,8 @@ export default function AdminCourses() {
 
   // Update course mutation
   const updateCourseMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number, data: any }) => {
-      console.log(`Mise à jour de la formation ${id}:`, data);
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      console.log("Mise à jour formation:", id, data);
       const res = await apiRequest('PATCH', `/api/admin/courses/${id}`, data);
       return await res.json();
     },
@@ -210,7 +186,6 @@ export default function AdminCourses() {
         description: "Formation mise à jour avec succès!",
       });
       setEditDialogOpen(false);
-      resetForm();
     },
     onError: (error: Error) => {
       toast({
@@ -224,7 +199,7 @@ export default function AdminCourses() {
   // Delete course mutation
   const deleteCourseMutation = useMutation({
     mutationFn: async (id: number) => {
-      console.log(`Suppression de la formation ${id}`);
+      console.log("Suppression formation:", id);
       await apiRequest('DELETE', `/api/admin/courses/${id}`);
     },
     onSuccess: () => {
@@ -245,9 +220,9 @@ export default function AdminCourses() {
 
   // Toggle approval mutation
   const toggleApprovalMutation = useMutation({
-    mutationFn: async ({ id, approved }: { id: number, approved: boolean }) => {
-      console.log(`Changement du statut d'approbation de la formation ${id}:`, approved);
-      const res = await apiRequest('PATCH', `/api/admin/courses/${id}/approval`, { approved });
+    mutationFn: async ({ id, isApproved }: { id: number; isApproved: boolean }) => {
+      console.log("Changement statut approbation:", id, isApproved);
+      const res = await apiRequest('PATCH', `/api/admin/courses/${id}/approval`, { isApproved });
       return await res.json();
     },
     onSuccess: () => {
@@ -277,19 +252,9 @@ export default function AdminCourses() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Handle add course
+  // Add course
   const handleAddCourse = () => {
-    // Validation
-    if (!formData.title || !formData.description || !formData.categoryId || !formData.trainerId) {
-      toast({
-        title: "Erreur de validation",
-        description: "Tous les champs obligatoires doivent être remplis",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Create course
+    // Prepare data
     const courseData = {
       title: formData.title,
       description: formData.description,
@@ -298,19 +263,18 @@ export default function AdminCourses() {
       trainerId: parseInt(formData.trainerId),
       duration: parseInt(formData.duration),
       maxStudents: parseInt(formData.maxStudents),
-      price: parseInt(formData.price),
-      thumbnail: formData.thumbnail || null,
-      isApproved: true // Courses added by admin are approved by default
+      price: formData.price ? parseFloat(formData.price) : 0,
+      thumbnail: formData.thumbnail || null
     };
 
     createCourseMutation.mutate(courseData);
   };
 
-  // Handle edit course
+  // Edit course
   const handleEditCourse = () => {
     if (!selectedCourse) return;
 
-    // Prepare data
+    // Prepare data (only include fields that have changed)
     const updateData: any = {};
     
     if (formData.title !== selectedCourse.title) 
@@ -334,8 +298,8 @@ export default function AdminCourses() {
     if (formData.maxStudents !== selectedCourse.maxStudents.toString()) 
       updateData.maxStudents = parseInt(formData.maxStudents);
     
-    if (formData.price !== (selectedCourse.price || 0).toString()) 
-      updateData.price = parseInt(formData.price);
+    if (formData.price !== (selectedCourse.price?.toString() || '0')) 
+      updateData.price = parseFloat(formData.price) || 0;
     
     if (formData.thumbnail !== (selectedCourse.thumbnail || '')) 
       updateData.thumbnail = formData.thumbnail || null;
@@ -360,11 +324,11 @@ export default function AdminCourses() {
       title: course.title,
       description: course.description,
       level: course.level,
-      categoryId: course.categoryId?.toString() || '',
-      trainerId: course.trainerId?.toString() || '',
-      duration: course.duration?.toString() || '60',
-      maxStudents: course.maxStudents?.toString() || '20',
-      price: (course.price || 0)?.toString() || '0',
+      categoryId: course.categoryId.toString(),
+      trainerId: course.trainerId.toString(),
+      duration: course.duration.toString(),
+      maxStudents: course.maxStudents.toString(),
+      price: course.price?.toString() || '0',
       thumbnail: course.thumbnail || ''
     });
     
@@ -383,44 +347,45 @@ export default function AdminCourses() {
   const handleToggleApproval = (course: Course) => {
     toggleApprovalMutation.mutate({ 
       id: course.id, 
-      approved: !(course.isApproved === true)
+      isApproved: course.isApproved === null || course.isApproved === false 
     });
   };
 
   // Filter courses based on search
   const filteredCourses = courses.filter(course => 
-    course.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    course.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (course.trainer?.displayName && course.trainer.displayName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (course.category?.name && course.category.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    course.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    course.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    course.trainer?.displayName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    course.category?.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Get level badge
   const getLevelBadge = (level: string) => {
     switch (level) {
       case 'advanced':
-        return <Badge className="bg-red-500">Avancé</Badge>;
+        return <Badge className="bg-red-500">avancé</Badge>;
       case 'intermediate':
-        return <Badge className="bg-orange-500">Intermédiaire</Badge>;
+        return <Badge className="bg-orange-500">intermédiaire</Badge>;
       default:
-        return <Badge className="bg-green-500">Débutant</Badge>;
+        return <Badge className="bg-green-500">débutant</Badge>;
+    }
+  };
+
+  // Get approval badge
+  const getApprovalBadge = (isApproved: boolean | null) => {
+    if (isApproved === true) {
+      return <Badge className="bg-green-500">Approuvé</Badge>;
+    } else if (isApproved === false) {
+      return <Badge className="bg-red-500">Rejeté</Badge>;
+    } else {
+      return <Badge variant="outline">En attente</Badge>;
     }
   };
 
   // Format price
   const formatPrice = (price: number | null) => {
-    if (price === null) return 'Gratuit';
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(price / 100);
-  };
-
-  // Format duration
-  const formatDuration = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    
-    if (hours === 0) return `${mins} min`;
-    if (mins === 0) return `${hours}h`;
-    return `${hours}h ${mins}min`;
+    if (price === null || price === 0) return "Gratuit";
+    return `${price.toFixed(2)} €`;
   };
 
   return (
@@ -451,7 +416,7 @@ export default function AdminCourses() {
             />
           </div>
           
-          {isLoadingCourses ? (
+          {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full"></div>
             </div>
@@ -463,8 +428,9 @@ export default function AdminCourses() {
                   <TableHead>Catégorie</TableHead>
                   <TableHead>Formateur</TableHead>
                   <TableHead>Niveau</TableHead>
+                  <TableHead>Durée</TableHead>
                   <TableHead>Prix</TableHead>
-                  <TableHead>Statut</TableHead>
+                  <TableHead>Approbation</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -474,31 +440,27 @@ export default function AdminCourses() {
                     <TableCell>
                       <div>
                         <p className="font-medium">{course.title}</p>
-                        <p className="text-sm text-muted-foreground flex items-center mt-1">
-                          <Clock className="h-3 w-3 mr-1" /> {formatDuration(course.duration)}
-                          <Users className="h-3 w-3 ml-3 mr-1" /> {course.maxStudents} étudiants max
+                        <p className="text-sm text-muted-foreground truncate max-w-[200px]">
+                          {course.description}
                         </p>
                       </div>
                     </TableCell>
-                    <TableCell>{course.category?.name || 'N/A'}</TableCell>
-                    <TableCell>{course.trainer?.displayName || course.trainer?.username || 'N/A'}</TableCell>
+                    <TableCell>{course.category?.name || "Non catégorisé"}</TableCell>
+                    <TableCell>{course.trainer?.displayName || "Non assigné"}</TableCell>
                     <TableCell>{getLevelBadge(course.level)}</TableCell>
+                    <TableCell>{course.duration} min</TableCell>
                     <TableCell>{formatPrice(course.price)}</TableCell>
                     <TableCell>
-                      <Badge variant={course.isApproved ? "default" : "outline"} className={course.isApproved ? "bg-green-500" : ""}>
-                        {course.isApproved ? 'Approuvé' : 'Non approuvé'}
-                      </Badge>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleToggleApproval(course)}
+                      >
+                        {getApprovalBadge(course.isApproved)}
+                      </Button>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => handleToggleApproval(course)}
-                          className={course.isApproved ? "text-red-600" : "text-green-600"}
-                        >
-                          {course.isApproved ? <XCircle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
-                        </Button>
                         <Button 
                           variant="outline" 
                           size="sm" 
@@ -522,14 +484,14 @@ export default function AdminCourses() {
               </TableBody>
             </Table>
           ) : (
-            <div className="text-center py-10">
-              <BookOpen className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium mb-2">Aucune formation trouvée</h3>
-              <p className="text-muted-foreground mb-4">
-                {searchQuery 
-                  ? "Aucune formation ne correspond à votre recherche." 
-                  : "Il n'y a encore aucune formation."}
-              </p>
+            <div className="flex flex-col items-center justify-center h-64 text-center">
+              <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground mb-2">Aucune formation trouvée</p>
+              {searchQuery && (
+                <p className="text-sm text-muted-foreground mb-4">
+                  Essayez de modifier votre recherche ou créez une nouvelle formation
+                </p>
+              )}
               <Button 
                 onClick={() => {
                   resetForm();
@@ -547,7 +509,7 @@ export default function AdminCourses() {
       
       {/* Add Course Dialog */}
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[625px]">
           <DialogHeader>
             <DialogTitle>Ajouter une formation</DialogTitle>
             <DialogDescription>
@@ -570,8 +532,8 @@ export default function AdminCourses() {
               />
             </div>
             
-            <div className="grid grid-cols-4 items-start gap-4">
-              <label htmlFor="description" className="text-right pt-2">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="description" className="text-right">
                 Description*
               </label>
               <Textarea
@@ -579,7 +541,8 @@ export default function AdminCourses() {
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
-                className="col-span-3 min-h-[100px]"
+                className="col-span-3"
+                rows={4}
                 required
               />
             </div>
@@ -615,7 +578,7 @@ export default function AdminCourses() {
                   <SelectValue placeholder="Sélectionner une catégorie" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map(category => (
+                  {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}
                     </SelectItem>
@@ -636,7 +599,7 @@ export default function AdminCourses() {
                   <SelectValue placeholder="Sélectionner un formateur" />
                 </SelectTrigger>
                 <SelectContent>
-                  {trainers.map(trainer => (
+                  {trainers.map((trainer) => (
                     <SelectItem key={trainer.id} value={trainer.id.toString()}>
                       {trainer.displayName || trainer.username}
                     </SelectItem>
@@ -653,49 +616,49 @@ export default function AdminCourses() {
                 id="duration"
                 name="duration"
                 type="number"
+                min="30"
                 value={formData.duration}
                 onChange={handleInputChange}
                 className="col-span-3"
                 required
-                min="1"
               />
             </div>
             
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="maxStudents" className="text-right">
-                Étudiants max*
+                Max étudiants*
               </label>
               <Input
                 id="maxStudents"
                 name="maxStudents"
                 type="number"
+                min="1"
                 value={formData.maxStudents}
                 onChange={handleInputChange}
                 className="col-span-3"
                 required
-                min="1"
               />
             </div>
             
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="price" className="text-right">
-                Prix (€)*
+                Prix (€)
               </label>
               <Input
                 id="price"
                 name="price"
                 type="number"
+                min="0"
+                step="0.01"
                 value={formData.price}
                 onChange={handleInputChange}
                 className="col-span-3"
-                required
-                min="0"
               />
             </div>
             
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="thumbnail" className="text-right">
-                Image (URL)
+                URL image
               </label>
               <Input
                 id="thumbnail"
@@ -728,18 +691,18 @@ export default function AdminCourses() {
       
       {/* Edit Course Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[625px]">
           <DialogHeader>
             <DialogTitle>Modifier la formation</DialogTitle>
             <DialogDescription>
-              {selectedCourse && `Modifier les informations pour "${selectedCourse.title}"`}
+              {selectedCourse && `Modifier les informations pour ${selectedCourse.title}`}
             </DialogDescription>
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="edit-title" className="text-right">
-                Titre*
+                Titre
               </label>
               <Input
                 id="edit-title"
@@ -747,27 +710,26 @@ export default function AdminCourses() {
                 value={formData.title}
                 onChange={handleInputChange}
                 className="col-span-3"
-                required
               />
             </div>
             
-            <div className="grid grid-cols-4 items-start gap-4">
-              <label htmlFor="edit-description" className="text-right pt-2">
-                Description*
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="edit-description" className="text-right">
+                Description
               </label>
               <Textarea
                 id="edit-description"
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
-                className="col-span-3 min-h-[100px]"
-                required
+                className="col-span-3"
+                rows={4}
               />
             </div>
             
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="edit-level" className="text-right">
-                Niveau*
+                Niveau
               </label>
               <Select
                 value={formData.level}
@@ -786,7 +748,7 @@ export default function AdminCourses() {
             
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="edit-categoryId" className="text-right">
-                Catégorie*
+                Catégorie
               </label>
               <Select
                 value={formData.categoryId}
@@ -796,7 +758,7 @@ export default function AdminCourses() {
                   <SelectValue placeholder="Sélectionner une catégorie" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map(category => (
+                  {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}
                     </SelectItem>
@@ -807,7 +769,7 @@ export default function AdminCourses() {
             
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="edit-trainerId" className="text-right">
-                Formateur*
+                Formateur
               </label>
               <Select
                 value={formData.trainerId}
@@ -817,7 +779,7 @@ export default function AdminCourses() {
                   <SelectValue placeholder="Sélectionner un formateur" />
                 </SelectTrigger>
                 <SelectContent>
-                  {trainers.map(trainer => (
+                  {trainers.map((trainer) => (
                     <SelectItem key={trainer.id} value={trainer.id.toString()}>
                       {trainer.displayName || trainer.username}
                     </SelectItem>
@@ -828,55 +790,53 @@ export default function AdminCourses() {
             
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="edit-duration" className="text-right">
-                Durée (min)*
+                Durée (min)
               </label>
               <Input
                 id="edit-duration"
                 name="duration"
                 type="number"
+                min="30"
                 value={formData.duration}
                 onChange={handleInputChange}
                 className="col-span-3"
-                required
-                min="1"
               />
             </div>
             
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="edit-maxStudents" className="text-right">
-                Étudiants max*
+                Max étudiants
               </label>
               <Input
                 id="edit-maxStudents"
                 name="maxStudents"
                 type="number"
+                min="1"
                 value={formData.maxStudents}
                 onChange={handleInputChange}
                 className="col-span-3"
-                required
-                min="1"
               />
             </div>
             
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="edit-price" className="text-right">
-                Prix (€)*
+                Prix (€)
               </label>
               <Input
                 id="edit-price"
                 name="price"
                 type="number"
+                min="0"
+                step="0.01"
                 value={formData.price}
                 onChange={handleInputChange}
                 className="col-span-3"
-                required
-                min="0"
               />
             </div>
             
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="edit-thumbnail" className="text-right">
-                Image (URL)
+                URL image
               </label>
               <Input
                 id="edit-thumbnail"
