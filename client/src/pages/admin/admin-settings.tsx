@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { withAdminDashboard } from "@/lib/with-admin-dashboard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { 
@@ -38,7 +39,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useState, useEffect } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 
-export default function AdminSettings() {
+function AdminSettings() {
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -955,3 +956,7 @@ export default function AdminSettings() {
     </div>
   );
 }
+
+// Exporter le composant avec le HOC pour l'administration
+const AdminSettingsWithDashboard = withAdminDashboard(AdminSettings);
+export default AdminSettingsWithDashboard;

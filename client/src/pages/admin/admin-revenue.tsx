@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
+import { withAdminDashboard } from "@/lib/with-admin-dashboard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -51,7 +52,7 @@ import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
-export default function AdminRevenue() {
+function AdminRevenue() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [timeRange, setTimeRange] = useState("30d"); // 7d, 30d, 90d, 365d
@@ -546,6 +547,10 @@ export default function AdminRevenue() {
     </div>
   );
 }
+
+// Exporter le composant avec le HOC pour l'administration
+const AdminRevenueWithDashboard = withAdminDashboard(AdminRevenue);
+export default AdminRevenueWithDashboard;
 
 // Données fictives pour le graphique de croissance utilisateurs
 const userGrowthData = [

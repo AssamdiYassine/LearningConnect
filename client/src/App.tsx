@@ -45,8 +45,8 @@ import AdminUsers from "@/pages/admin/functional-admin-users";
 import AdminCourses from "@/pages/admin/fixed-admin-courses";
 import AdminSessionsWithDashboard from "@/pages/admin/admin-sessions";
 import AdminPendingCourses from "@/pages/admin/admin-pending-courses";
-import AdminAnalytics from "@/pages/admin/admin-analytics";
-import AdminRevenue from "@/pages/admin/admin-revenue";
+import AdminAnalyticsWithDashboard from "@/pages/admin/admin-analytics";
+import AdminRevenueWithDashboard from "@/pages/admin/admin-revenue";
 import AdminSettings from "@/pages/admin/admin-settings";
 import AdminSubscriptions from "@/pages/admin/admin-subscriptions";
 
@@ -221,11 +221,11 @@ function Router() {
       </Route>
       
       <Route path="/admin/analytics">
-        <ProtectedRoute component={AdminAnalytics} allowedRoles={["admin"]} />
+        <ProtectedRoute component={AdminAnalyticsWithDashboard} allowedRoles={["admin"]} />
       </Route>
       
       <Route path="/admin/revenue">
-        <ProtectedRoute component={AdminRevenue} allowedRoles={["admin"]} />
+        <ProtectedRoute component={AdminRevenueWithDashboard} allowedRoles={["admin"]} />
       </Route>
       
       <Route path="/admin/settings">

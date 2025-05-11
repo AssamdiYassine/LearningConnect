@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
+import { withAdminDashboard } from "@/lib/with-admin-dashboard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
   Loader2, 
@@ -40,7 +41,7 @@ import {
 import { format } from "date-fns";
 import { useState } from "react";
 
-export default function AdminAnalytics() {
+function AdminAnalytics() {
   const { user } = useAuth();
   const [timeRange, setTimeRange] = useState("30d");
   
@@ -478,3 +479,7 @@ export default function AdminAnalytics() {
     </div>
   );
 }
+
+// Exporter le composant avec le HOC pour l'administration
+const AdminAnalyticsWithDashboard = withAdminDashboard(AdminAnalytics);
+export default AdminAnalyticsWithDashboard;
