@@ -19,4 +19,5 @@ function AdminBlogsPage() {
   );
 }
 
-export default withAdminDashboard(AdminBlogsPage, "Gestion du Blog");
+// Utiliser le HOC withAdminDashboard
+export default withAdminDashboard(AdminBlogsPage);

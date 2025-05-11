@@ -41,16 +41,18 @@ function AdminApiSettingsPage() {
   // Récupération des paramètres
   const { data: settings, isLoading } = useQuery<ApiSettings>({
     queryKey: ["/api/admin/settings/api"],
-    onSuccess: (data) => {
-      if (data) {
-        setStripePublicKey(data.stripePublicKey || "");
-        setStripeSecretKey(data.stripeSecretKey || "");
-        setZoomApiKey(data.zoomApiKey || "");
-        setZoomApiSecret(data.zoomApiSecret || "");
-        setZoomAccountEmail(data.zoomAccountEmail || "");
-      }
-    },
   });
+  
+  // Mettre à jour les champs lorsque les paramètres sont chargés
+  useEffect(() => {
+    if (settings) {
+      setStripePublicKey(settings.stripePublicKey || "");
+      setStripeSecretKey(settings.stripeSecretKey || "");
+      setZoomApiKey(settings.zoomApiKey || "");
+      setZoomApiSecret(settings.zoomApiSecret || "");
+      setZoomAccountEmail(settings.zoomAccountEmail || "");
+    }
+  }, [settings]);
 
   // Mutation pour enregistrer les paramètres
   const saveMutation = useMutation({
@@ -303,4 +305,5 @@ function AdminApiSettingsPage() {
   );
 }
 
-export default withAdminDashboard(AdminApiSettingsPage, "Paramètres API");
+// HOC withAdminDashboard
+export default withAdminDashboard(AdminApiSettingsPage);
