@@ -287,10 +287,15 @@ function Router() {
 
 function App() {
   const [location] = useLocation();
-  const isAdminRoute = location.startsWith("/admin") || location === "/admin-dashboard" || location === "/admin-dashboard-new";
-  const isDarkDashboard = location === "/admin/dashboard-new" || 
-                       location === "/admin-dashboard-new" || 
-                       location.startsWith("/admin/dashboard-new/");
+  // Vérification améliorée des routes admin
+  const isAdminRoute = location.startsWith("/admin") || 
+                      location === "/admin-dashboard" || 
+                      location === "/admin-dashboard-new";
+  
+  // Vérification améliorée pour le thème sombre - s'applique à TOUTES les routes admin-dashboard-new
+  const isDarkDashboard = location === "/admin-dashboard-new" || 
+                       location.startsWith("/admin/dashboard-new") || 
+                       location.startsWith("/admin-dashboard-new/");
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -300,17 +305,19 @@ function App() {
             <OnboardingProvider>
               <TooltipProvider>
               {isDarkDashboard ? (
-                // Pas de layout pour le tableau de bord sombre, il est autonome
+                // Tableau de bord administrateur sombre - pas de layout
                 <div className="min-h-screen bg-[#1E1E1E]">
                   <Router />
                   <OnboardingModal />
                 </div>
               ) : isAdminRoute ? (
+                // Layout admin standard
                 <AdminLayout>
                   <Router />
                   <OnboardingModal />
                 </AdminLayout>
               ) : (
+                // Layout standard pour les autres pages
                 <Layout>
                   <Router />
                   <OnboardingModal />

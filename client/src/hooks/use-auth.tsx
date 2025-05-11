@@ -38,14 +38,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
       
-      // Rediriger l'utilisateur en fonction de son rôle
-      if (user.role === "admin") {
-        window.location.href = "/admin-dashboard-new";
-      } else if (user.role === "trainer") {
-        window.location.href = "/trainer-dashboard";
-      } else {
-        window.location.href = "/";
-      }
+      // Debug - afficher le rôle utilisateur
+      console.log("Utilisateur connecté avec succès:", user);
+      console.log("Rôle de l'utilisateur:", user.role);
+      
+      // Rediriger l'utilisateur en fonction de son rôle de manière forcée
+      setTimeout(() => {
+        if (user.role === "admin") {
+          console.log("Redirection vers le tableau de bord admin");
+          window.location.replace("/admin-dashboard-new");
+        } else if (user.role === "trainer") {
+          console.log("Redirection vers le tableau de bord formateur");
+          window.location.replace("/trainer-dashboard");
+        } else {
+          console.log("Redirection vers la page d'accueil");
+          window.location.replace("/");
+        }
+      }, 500);
       
       toast({
         title: "Login successful",
@@ -69,14 +78,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
       
-      // Rediriger l'utilisateur en fonction de son rôle
-      if (user.role === "admin") {
-        window.location.href = "/admin-dashboard-new";
-      } else if (user.role === "trainer") {
-        window.location.href = "/trainer-dashboard";
-      } else {
-        window.location.href = "/";
-      }
+      // Debug - afficher le rôle utilisateur lors de l'inscription
+      console.log("Utilisateur inscrit avec succès:", user);
+      console.log("Rôle de l'utilisateur:", user.role);
+      
+      // Rediriger l'utilisateur en fonction de son rôle de manière forcée
+      setTimeout(() => {
+        if (user.role === "admin") {
+          console.log("Redirection vers le tableau de bord admin");
+          window.location.replace("/admin-dashboard-new");
+        } else if (user.role === "trainer") {
+          console.log("Redirection vers le tableau de bord formateur");
+          window.location.replace("/trainer-dashboard");
+        } else {
+          console.log("Redirection vers la page d'accueil");
+          window.location.replace("/");
+        }
+      }, 500);
       
       toast({
         title: "Registration successful",
