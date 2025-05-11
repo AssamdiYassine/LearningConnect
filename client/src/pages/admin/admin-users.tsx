@@ -344,12 +344,17 @@ export default function AdminUsers() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Gestion des utilisateurs</CardTitle>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Ajouter un utilisateur
-              </Button>
-            </DialogTrigger>
+            <Button 
+              className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"
+              onClick={() => {
+                console.log("Ouverture de la boîte de dialogue d'ajout");
+                resetForm();
+                setIsAddDialogOpen(true);
+              }}
+            >
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Ajouter un utilisateur
+            </Button>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle>Ajouter un nouvel utilisateur</DialogTitle>
@@ -552,7 +557,11 @@ export default function AdminUsers() {
                       : "Vous n'avez encore aucun utilisateur."}
                   </p>
                   <Button 
-                    onClick={() => setIsAddDialogOpen(true)}
+                    onClick={() => {
+                      console.log("Ouverture de la boîte de dialogue d'ajout (cas vide)");
+                      resetForm();
+                      setIsAddDialogOpen(true);
+                    }}
                     className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"
                   >
                     <PlusCircle className="mr-2 h-4 w-4" />
