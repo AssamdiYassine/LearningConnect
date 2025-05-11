@@ -4,7 +4,7 @@ import { z } from "zod";
 import { insertNotificationSchema } from "@shared/schema";
 
 // Middleware to check if user has admin role
-function hasAdminRole(req: any, res: any, next: any) {
+export function hasAdminRole(req: any, res: any, next: any) {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Unauthorized" });
   }

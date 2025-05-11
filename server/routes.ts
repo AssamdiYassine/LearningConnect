@@ -2,7 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { z } from "zod";
+import { z } from "zod"; 
+import { registerAdminDashboard } from "./admin-dashboard";
+import { pool } from "./db";
 import { 
   insertCourseSchema, 
   insertSessionSchema, 
