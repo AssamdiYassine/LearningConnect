@@ -13,7 +13,9 @@ import {
   BlogPost, InsertBlogPost, 
   BlogComment, InsertBlogComment,
   BlogPostWithDetails,
-  BlogCommentWithUser
+  BlogCommentWithUser,
+  ApprovalRequest, InsertApprovalRequest,
+  ApprovalRequestWithDetails
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -133,6 +135,14 @@ export interface IStorage {
   getBlogPostComments(postId: number): Promise<BlogCommentWithUser[]>;
   approveBlogComment(id: number): Promise<BlogComment>;
   deleteBlogComment(id: number): Promise<void>;
+  
+  // Approval operations
+  createApprovalRequest(request: InsertApprovalRequest): Promise<ApprovalRequest>;
+  getApprovalRequest(id: number): Promise<ApprovalRequest | undefined>;
+  getPendingApprovals(): Promise<ApprovalRequestWithDetails[]>;
+  updateApprovalStatus(id: number, status: 'approved' | 'rejected', reviewerId: number, notes?: string): Promise<ApprovalRequest>;
+  getApprovalRequestsByType(type: string, status?: string): Promise<ApprovalRequestWithDetails[]>;
+  getApprovalRequestsByRequester(requesterId: number): Promise<ApprovalRequestWithDetails[]>;
 }
 
 // In-memory storage implementation
