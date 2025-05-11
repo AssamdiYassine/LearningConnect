@@ -1,106 +1,144 @@
-import { useState } from "react";
-import { Bell } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import React, { useState } from 'react';
+import { Bell } from 'lucide-react';
+import { useNotifications } from '@/hooks/use-notifications';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { useNotifications } from "@/hooks/use-notifications";
-import { formatDistanceToNow } from "date-fns";
-import { fr } from "date-fns/locale";
-import { X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Link } from "wouter";
+} from '@/components/ui/popover';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
-export default function NotificationBell() {
-  const [open, setOpen] = useState(false);
-  const { notifications, unreadCount, markAsRead, deleteNotification } = useNotifications();
+export function NotificationBell() {
+  const { notifications, unreadCount, markAsRead } = useNotifications();
+  const [isOpen, setIsOpen] = useState(false);
 
-  const handleNotificationClick = (notificationId: number) => {
-    markAsRead(notificationId);
-    setOpen(false);
+  const handleMarkAsRead = (id: number) => {
+    markAsRead.mutate(id);
   };
 
-  const handleDeleteNotification = (e: React.MouseEvent, notificationId: number) => {
-    e.stopPropagation();
-    deleteNotification(notificationId);
+  const handleClose = () => {
+    setIsOpen(false);
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
+          <Bell size={18} />
           {unreadCount > 0 && (
-            <span className="absolute top-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+            <Badge
+              variant="destructive"
+              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
+            >
               {unreadCount}
-            </span>
+            </Badge>
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <div className="flex items-center justify-between p-4 pb-2">
-          <h3 className="font-medium">Notifications</h3>
-          {unreadCount > 0 && (
-            <Badge className="bg-primary hover:bg-primary/90">
-              {unreadCount} nouvelle{unreadCount > 1 ? 's' : ''}
-            </Badge>
-          )}
-        </div>
-        <Separator />
-        <ScrollArea className="h-[300px]">
-          {notifications.length > 0 ? (
-            <div>
-              {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`group relative p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
-                    !notification.isRead ? "bg-blue-50 dark:bg-blue-950/20" : ""
-                  }`}
-                  onClick={() => handleNotificationClick(notification.id)}
-                >
-                  <div className="flex justify-between items-start">
-                    <p className={`text-sm ${!notification.isRead ? "font-medium" : ""}`}>
-                      {notification.message}
-                    </p>
-                    <button
-                      onClick={(e) => handleDeleteNotification(e, notification.id)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 text-gray-400 hover:text-gray-500"
-                      aria-label="Supprimer"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {notification.createdAt && formatDistanceToNow(new Date(notification.createdAt), {
-                      addSuffix: true,
-                      locale: fr,
-                    })}
-                  </p>
-                  {!notification.isRead && (
-                    <span className="absolute right-4 top-4 h-2 w-2 rounded-full bg-primary"></span>
-                  )}
+      <PopoverContent 
+        align="end" 
+        className="w-80 p-0"
+        sideOffset={8}
+      >
+        <Tabs defaultValue="all" className="w-full">
+          <div className="flex items-center justify-between px-4 py-2 border-b">
+            <h4 className="font-medium">Notifications</h4>
+            <TabsList className="grid w-auto grid-cols-2">
+              <TabsTrigger value="all" className="text-xs px-2">Toutes</TabsTrigger>
+              <TabsTrigger value="unread" className="text-xs px-2">Non lues</TabsTrigger>
+            </TabsList>
+          </div>
+          
+          <TabsContent value="all" className="mt-0">
+            <ScrollArea className="h-[300px]">
+              {notifications.length > 0 ? (
+                <div>
+                  {notifications.map((notification) => (
+                    <div key={notification.id}>
+                      <div 
+                        className={`flex items-start gap-3 p-3 hover:bg-gray-50 transition-colors ${
+                          !notification.isRead ? 'bg-blue-50/50' : ''
+                        }`}
+                      >
+                        <div className={`w-2 h-2 mt-2 rounded-full flex-shrink-0 ${
+                          notification.isRead ? 'bg-gray-200' : 'bg-blue-500'
+                        }`} />
+                        <div className="flex-grow">
+                          <p className="text-sm font-medium">{notification.title}</p>
+                          <p className="text-xs text-gray-500 mt-1">{notification.body}</p>
+                          {!notification.isRead && (
+                            <Button 
+                              variant="link" 
+                              size="sm" 
+                              className="h-auto p-0 text-xs text-blue-600"
+                              onClick={() => handleMarkAsRead(notification.id)}
+                            >
+                              Marquer comme lu
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      <Separator />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              Aucune notification à afficher
-            </div>
-          )}
-        </ScrollArea>
-        <Separator />
-        <div className="p-2">
-          <Link href="/notifications">
-            <Button variant="ghost" size="sm" className="w-full text-xs">
+              ) : (
+                <div className="p-8 text-center">
+                  <p className="text-sm text-gray-500">Vous n'avez pas de notifications</p>
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
+          
+          <TabsContent value="unread" className="mt-0">
+            <ScrollArea className="h-[300px]">
+              {notifications.filter(n => !n.isRead).length > 0 ? (
+                <div>
+                  {notifications
+                    .filter(notification => !notification.isRead)
+                    .map((notification) => (
+                      <div key={notification.id}>
+                        <div className="flex items-start gap-3 p-3 hover:bg-gray-50 transition-colors bg-blue-50/50">
+                          <div className="w-2 h-2 mt-2 rounded-full flex-shrink-0 bg-blue-500" />
+                          <div className="flex-grow">
+                            <p className="text-sm font-medium">{notification.title}</p>
+                            <p className="text-xs text-gray-500 mt-1">{notification.body}</p>
+                            <Button 
+                              variant="link" 
+                              size="sm" 
+                              className="h-auto p-0 text-xs text-blue-600"
+                              onClick={() => handleMarkAsRead(notification.id)}
+                            >
+                              Marquer comme lu
+                            </Button>
+                          </div>
+                        </div>
+                        <Separator />
+                      </div>
+                    ))}
+                </div>
+              ) : (
+                <div className="p-8 text-center">
+                  <p className="text-sm text-gray-500">Vous n'avez pas de notifications non lues</p>
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
+          
+          <div className="p-2 border-t">
+            <Button variant="outline" size="sm" className="w-full" onClick={handleClose}>
               Voir toutes les notifications
             </Button>
-          </Link>
-        </div>
+          </div>
+        </Tabs>
       </PopoverContent>
     </Popover>
   );
 }
+
+export default NotificationBell;

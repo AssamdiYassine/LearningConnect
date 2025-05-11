@@ -1,130 +1,99 @@
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Notification } from "@shared/schema";
+import { useState, createContext, useContext, ReactNode } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
-type NotificationsContextType = {
+// Types
+interface Notification {
+  id: number;
+  userId: number;
+  title: string;
+  body: string;
+  type: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+interface NotificationsContextType {
   notifications: Notification[];
   unreadCount: number;
+  markAsRead: ReturnType<typeof useMutation>;
+  markAllAsRead: ReturnType<typeof useMutation>;
+  deleteNotification: ReturnType<typeof useMutation>;
   isLoading: boolean;
   error: Error | null;
-  markAsRead: (id: number) => void;
-  deleteNotification: (id: number) => void;
-  fetchNotifications: () => void;
-};
+}
 
+// Création du contexte
 const NotificationsContext = createContext<NotificationsContextType | null>(null);
 
-export function NotificationsProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  const {
-    data: notifications,
-    error,
-    isLoading,
-    refetch
-  } = useQuery<Notification[]>({
-    queryKey: ["/api/notifications"],
-    enabled: !!user
+// Provider
+export const NotificationsProvider = ({ children }: { children: ReactNode }) => {
+  // Récupération des notifications
+  const queryClient = useQueryClient();
+  
+  const { data: notifications = [], isLoading, error } = useQuery({
+    queryKey: ['/api/notifications'],
+    staleTime: 1000 * 60, // 1 minute
   });
-
-  const markAsReadMutation = useMutation({
-    mutationFn: async (notificationId: number) => {
-      const res = await apiRequest("PATCH", `/api/notifications/${notificationId}/read`);
-      if (!res.ok) {
-        throw new Error("Erreur lors du marquage de la notification comme lue");
-      }
-      return res.json();
+  
+  // Calcul du nombre de notifications non lues
+  const unreadCount = notifications.filter((notification: Notification) => !notification.isRead).length;
+  
+  // Mutation pour marquer une notification comme lue
+  const markAsRead = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest('PATCH', `/api/notifications/${id}/read`);
+      return await response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Erreur",
-        description: error.message,
-        variant: "destructive",
-      });
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
     },
   });
-
-  const deleteNotificationMutation = useMutation({
-    mutationFn: async (notificationId: number) => {
-      const res = await apiRequest("DELETE", `/api/notifications/${notificationId}`);
-      if (!res.ok) {
-        throw new Error("Erreur lors de la suppression de la notification");
-      }
-      return true;
+  
+  // Mutation pour marquer toutes les notifications comme lues
+  const markAllAsRead = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/notifications/read-all');
+      return await response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Erreur",
-        description: error.message,
-        variant: "destructive",
-      });
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
     },
   });
-
-  const markAsRead = (id: number) => {
-    markAsReadMutation.mutate(id);
-  };
-
-  const deleteNotification = (id: number) => {
-    deleteNotificationMutation.mutate(id);
-  };
-
-  const fetchNotifications = () => {
-    if (user) {
-      refetch();
-    }
-  };
-
-  // Rafraîchir les notifications périodiquement
-  // Mettre à jour le nombre de notifications non lues quand les notifications changent
-  useEffect(() => {
-    if (notifications) {
-      setUnreadCount(notifications.filter(notification => !notification.isRead).length);
-    }
-  }, [notifications]);
-
-  useEffect(() => {
-    if (!user) return;
-    
-    const intervalId = setInterval(() => {
-      fetchNotifications();
-    }, 60000); // Toutes les minutes
-    
-    return () => clearInterval(intervalId);
-  }, [user]);
+  
+  // Mutation pour supprimer une notification
+  const deleteNotification = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest('DELETE', `/api/notifications/${id}`);
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+    },
+  });
 
   return (
     <NotificationsContext.Provider
       value={{
-        notifications: notifications || [],
+        notifications: notifications as Notification[],
         unreadCount,
-        isLoading,
-        error,
         markAsRead,
+        markAllAsRead,
         deleteNotification,
-        fetchNotifications
+        isLoading,
+        error: error as Error | null,
       }}
     >
       {children}
     </NotificationsContext.Provider>
   );
-}
+};
 
-export function useNotifications() {
+// Hook pour utiliser le contexte
+export const useNotifications = () => {
   const context = useContext(NotificationsContext);
-  if (!context) {
-    throw new Error("useNotifications doit être utilisé à l'intérieur d'un NotificationsProvider");
+  if (context === null) {
+    throw new Error('useNotifications doit être utilisé à l\'intérieur d\'un NotificationsProvider');
   }
   return context;
-}
+};
