@@ -1,7 +1,7 @@
 import { Request, Response, Router } from 'express';
 import { storage } from './storage';
 import { z } from 'zod';
-import { hasAdminRole } from './middleware';
+import { hasAdminRole } from './admin-routes';
 
 // Créer un routeur Express pour les routes d'approbation
 const approvalRouter = Router();

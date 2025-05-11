@@ -5,6 +5,7 @@ import { storage } from "./storage";
 import { z } from "zod"; 
 import { registerAdminDashboard } from "./admin-dashboard";
 import { registerAdminRoutes } from "./admin-routes";
+import { registerApprovalRoutes } from "./admin-approval-routes";
 import { pool } from "./db";
 import { 
   insertCourseSchema, 
@@ -58,6 +59,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register admin API routes
   registerAdminRoutes(app);
+  
+  // Register approval routes
+  registerApprovalRoutes(app);
 
   // User routes
   app.get("/api/users", hasRole(["admin"]), async (req, res) => {
