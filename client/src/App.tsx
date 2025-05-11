@@ -14,8 +14,6 @@ import TrainerSchedule from "@/pages/trainer-schedule";
 import TrainerRatings from "@/pages/trainer-ratings";
 import TrainerNotifications from "@/pages/trainer-notifications";
 import AdminDashboard from "@/pages/admin-dashboard";
-import AdminDashboardNew from "@/pages/admin-dashboard-new";
-import AdminDashboardRefactored from "@/pages/admin-dashboard-refactored";
 import Catalog from "@/pages/catalog";
 import Schedule from "@/pages/schedule";
 import Subscription from "@/pages/subscription";
@@ -43,7 +41,7 @@ import AdminDashboardLayout from "@/components/admin-dashboard-layout";
 import { ThemeProvider } from "@/components/theme-provider";
 
 // Admin pages - Nouvelles implémentations
-import AdminUsers from "@/pages/admin/fixed-admin-users";
+import AdminUsers from "@/pages/admin/functional-admin-users";
 import AdminCourses from "@/pages/admin/fixed-admin-courses";
 import AdminSessions from "@/pages/admin/admin-sessions";
 import AdminPendingCourses from "@/pages/admin/admin-pending-courses";
@@ -202,13 +200,7 @@ function Router() {
         <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
       </Route>
       
-      <Route path="/admin-dashboard-new">
-        <ProtectedRoute component={AdminDashboardNew} allowedRoles={["admin"]} />
-      </Route>
-      
-      <Route path="/admin-dashboard-refactored">
-        <ProtectedRoute component={AdminDashboardRefactored} allowedRoles={["admin"]} />
-      </Route>
+
       
       {/* Nouvelles routes admin avec leurs composants spécifiques */}
       <Route path="/admin/users">
@@ -239,9 +231,7 @@ function Router() {
         <ProtectedRoute component={AdminSettings} allowedRoles={["admin"]} />
       </Route>
       
-      <Route path="/admin/dashboard-new">
-        <ProtectedRoute component={AdminDashboardNew} allowedRoles={["admin"]} />
-      </Route>
+
       
       {/* Blog routes */}
       <Route path="/blog">
@@ -294,15 +284,10 @@ function App() {
   const [location] = useLocation();
   // Vérification améliorée des routes admin
   const isAdminRoute = location.startsWith("/admin") || 
-                      location === "/admin-dashboard" || 
-                      location === "/admin-dashboard-new";
+                      location === "/admin-dashboard";
   
-  // Vérification améliorée pour le thème sombre - s'applique aux routes dashboard
-  const isDarkDashboard = location === "/admin-dashboard-new" || 
-                       location === "/admin-dashboard-refactored" ||
-                       location.startsWith("/admin/dashboard-new") || 
-                       location.startsWith("/admin-dashboard-new/") ||
-                       location.startsWith("/admin-dashboard-refactored/");
+  // Thème sombre désactivé par défaut
+  const isDarkDashboard = false;
 
   return (
     <QueryClientProvider client={queryClient}>
