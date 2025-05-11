@@ -6,6 +6,10 @@ import { z } from "zod";
 import { registerAdminDashboard } from "./admin-dashboard";
 import { registerAdminRoutes } from "./admin-routes";
 import { registerApprovalRoutes } from "./admin-approval-routes";
+import { registerAdminUserRoutes } from "./admin-api-users";
+import { registerAdminCourseRoutes } from "./admin-api-courses";
+// Import des extensions pour les méthodes de stockage manquantes
+import "./db-storage-extensions";
 import { pool } from "./db";
 import { 
   insertCourseSchema, 
@@ -62,6 +66,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register approval routes
   registerApprovalRoutes(app);
+  
+  // Register new admin API endpoints
+  registerAdminUserRoutes(app);
+  registerAdminCourseRoutes(app);
 
   // User routes
   app.get("/api/users", hasRole(["admin"]), async (req, res) => {

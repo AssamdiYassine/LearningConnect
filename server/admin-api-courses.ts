@@ -1,145 +1,104 @@
-import { Request, Response, NextFunction, Express } from 'express';
-import { z } from 'zod';
-import { storage } from './storage';
-import { insertCourseSchema, courseLevelEnum } from '@shared/schema';
-import { hasAdminRole } from './admin-api-users';
+import { Express, Request, Response } from "express";
+import { storage } from "./storage";
+import { z } from "zod";
+import { hasAdminRole } from "./admin-api-users";
 
 export function registerAdminCourseRoutes(app: Express) {
-  // ========== FORMATIONS ==========
-  
-  // Récupérer toutes les formations
-  app.get('/api/admin/courses', hasAdminRole, async (req, res) => {
+  // Route pour récupérer toutes les formations (pour admin)
+  app.get("/api/admin/courses", hasAdminRole, async (req: Request, res: Response) => {
     try {
-      const courses = await storage.getAllCourses();
-      
-      // Enrichir les données avec les informations des formateurs et catégories
-      const enrichedCourses = await Promise.all(
-        courses.map(async (course) => {
-          const trainer = await storage.getUser(course.trainerId);
-          const category = await storage.getCategory(course.categoryId);
-          
-          return {
-            ...course,
-            trainer: trainer ? {
-              id: trainer.id,
-              username: trainer.username,
-              displayName: trainer.displayName
-            } : undefined,
-            category: category ? {
-              id: category.id,
-              name: category.name
-            } : undefined
-          };
-        })
-      );
-      
-      res.status(200).json(enrichedCourses);
-    } catch (error: any) {
+      const courses = await storage.getAllCoursesWithDetails();
+      res.json(courses);
+    } catch (error) {
       console.error("Erreur lors de la récupération des formations:", error);
-      res.status(500).json({ message: `Erreur lors de la récupération des formations: ${error.message}` });
+      res.status(500).json({ message: "Erreur lors de la récupération des formations" });
     }
   });
 
-  // Récupérer une formation par ID
-  app.get('/api/admin/courses/:id', hasAdminRole, async (req, res) => {
+  // Route pour récupérer une formation par ID
+  app.get("/api/admin/courses/:id", hasAdminRole, async (req: Request, res: Response) => {
     try {
-      const courseId = parseInt(req.params.id);
-      const course = await storage.getCourse(courseId);
+      const { id } = req.params;
+      const course = await storage.getCourseWithDetails(parseInt(id));
       
       if (!course) {
         return res.status(404).json({ message: "Formation non trouvée" });
       }
       
-      // Enrichir les données avec les informations du formateur et de la catégorie
-      const trainer = await storage.getUser(course.trainerId);
-      const category = await storage.getCategory(course.categoryId);
-      
-      const enrichedCourse = {
-        ...course,
-        trainer: trainer ? {
-          id: trainer.id,
-          username: trainer.username,
-          displayName: trainer.displayName
-        } : undefined,
-        category: category ? {
-          id: category.id,
-          name: category.name
-        } : undefined
-      };
-      
-      res.status(200).json(enrichedCourse);
-    } catch (error: any) {
-      console.error("Erreur lors de la récupération de la formation:", error);
-      res.status(500).json({ message: `Erreur lors de la récupération de la formation: ${error.message}` });
+      res.json(course);
+    } catch (error) {
+      console.error(`Erreur lors de la récupération de la formation avec l'ID ${req.params.id}:`, error);
+      res.status(500).json({ message: "Erreur lors de la récupération de la formation" });
     }
   });
 
-  // Créer une nouvelle formation
-  app.post('/api/admin/courses', hasAdminRole, async (req, res) => {
+  // Route pour récupérer les formations par formateur
+  app.get("/api/admin/courses/trainer/:trainerId", hasAdminRole, async (req: Request, res: Response) => {
     try {
-      console.log("Données reçues pour la création de formation:", req.body);
-      
-      // Validation du schema de formation
-      const courseSchema = z.object({
-        title: z.string().min(3),
-        description: z.string().min(10),
-        level: z.enum(['beginner', 'intermediate', 'advanced']),
+      const { trainerId } = req.params;
+      const courses = await storage.getCoursesByTrainer(parseInt(trainerId));
+      res.json(courses);
+    } catch (error) {
+      console.error(`Erreur lors de la récupération des formations du formateur avec l'ID ${req.params.trainerId}:`, error);
+      res.status(500).json({ message: "Erreur lors de la récupération des formations du formateur" });
+    }
+  });
+
+  // Route pour récupérer les formations par catégorie
+  app.get("/api/admin/courses/category/:categoryId", hasAdminRole, async (req: Request, res: Response) => {
+    try {
+      const { categoryId } = req.params;
+      const courses = await storage.getCoursesByCategory(parseInt(categoryId));
+      res.json(courses);
+    } catch (error) {
+      console.error(`Erreur lors de la récupération des formations de la catégorie avec l'ID ${req.params.categoryId}:`, error);
+      res.status(500).json({ message: "Erreur lors de la récupération des formations de la catégorie" });
+    }
+  });
+
+  // Route pour créer une nouvelle formation
+  app.post("/api/admin/courses", hasAdminRole, async (req: Request, res: Response) => {
+    try {
+      // Validation des données
+      const schema = z.object({
+        title: z.string().min(3, "Le titre doit contenir au moins 3 caractères"),
+        description: z.string().min(10, "La description doit contenir au moins 10 caractères"),
+        level: z.enum(["beginner", "intermediate", "advanced"]),
         categoryId: z.number().int().positive(),
         trainerId: z.number().int().positive(),
         duration: z.number().int().positive(),
         maxStudents: z.number().int().positive(),
-        price: z.number().nonnegative().nullable().default(0),
-        thumbnail: z.string().nullable().optional(),
-        isApproved: z.boolean().nullable().default(false)
+        price: z.number().nonnegative().nullable().optional(),
+        thumbnail: z.string().url().nullable().optional(),
+        isApproved: z.boolean().nullable().optional()
       });
-
-      const courseData = courseSchema.parse(req.body);
       
-      // Vérifier si la catégorie existe
-      const category = await storage.getCategory(courseData.categoryId);
-      if (!category) {
-        return res.status(400).json({ message: "Catégorie non trouvée" });
-      }
-      
-      // Vérifier si le formateur existe et a le rôle approprié
-      const trainer = await storage.getUser(courseData.trainerId);
-      if (!trainer) {
-        return res.status(400).json({ message: "Formateur non trouvé" });
-      }
-      
-      if (trainer.role !== 'trainer' && trainer.role !== 'admin') {
-        return res.status(400).json({ message: "L'utilisateur sélectionné n'est pas un formateur" });
-      }
-      
-      // Ajouter les timestamps
-      const now = new Date();
+      const validatedData = schema.parse(req.body);
       
       // Créer la formation
-      const newCourse = await storage.createCourse({
-        ...courseData,
-        createdAt: now,
-        updatedAt: now
+      const course = await storage.createCourse({
+        ...validatedData,
+        price: validatedData.price || null,
+        thumbnail: validatedData.thumbnail || null,
+        isApproved: validatedData.isApproved !== undefined ? validatedData.isApproved : null
       });
       
-      res.status(201).json(newCourse);
-    } catch (error: any) {
-      console.error("Erreur lors de la création de la formation:", error);
+      res.status(201).json(course);
+    } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          message: "Données de formation invalides", 
-          errors: error.errors 
-        });
+        return res.status(400).json({ message: "Données invalides", errors: error.errors });
       }
       
-      res.status(500).json({ message: `Erreur lors de la création de la formation: ${error.message}` });
+      console.error("Erreur lors de la création de la formation:", error);
+      res.status(500).json({ message: "Erreur lors de la création de la formation" });
     }
   });
 
-  // Mettre à jour une formation
-  app.patch('/api/admin/courses/:id', hasAdminRole, async (req, res) => {
+  // Route pour mettre à jour une formation
+  app.patch("/api/admin/courses/:id", hasAdminRole, async (req: Request, res: Response) => {
     try {
-      const courseId = parseInt(req.params.id);
-      console.log(`Mise à jour de la formation ${courseId}:`, req.body);
+      const { id } = req.params;
+      const courseId = parseInt(id);
       
       // Vérifier si la formation existe
       const existingCourse = await storage.getCourse(courseId);
@@ -147,67 +106,47 @@ export function registerAdminCourseRoutes(app: Express) {
         return res.status(404).json({ message: "Formation non trouvée" });
       }
       
-      // Schéma de validation pour la mise à jour
-      const updateCourseSchema = z.object({
+      // Validation des données
+      const schema = z.object({
         title: z.string().min(3).optional(),
         description: z.string().min(10).optional(),
-        level: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
+        level: z.enum(["beginner", "intermediate", "advanced"]).optional(),
         categoryId: z.number().int().positive().optional(),
         trainerId: z.number().int().positive().optional(),
         duration: z.number().int().positive().optional(),
         maxStudents: z.number().int().positive().optional(),
         price: z.number().nonnegative().nullable().optional(),
-        thumbnail: z.string().nullable().optional(),
+        thumbnail: z.string().url().nullable().optional(),
         isApproved: z.boolean().nullable().optional()
       });
-
-      const updateData = updateCourseSchema.parse(req.body);
       
-      // Vérifier la catégorie si elle est fournie
-      if (updateData.categoryId) {
-        const category = await storage.getCategory(updateData.categoryId);
-        if (!category) {
-          return res.status(400).json({ message: "Catégorie non trouvée" });
-        }
-      }
-      
-      // Vérifier le formateur s'il est fourni
-      if (updateData.trainerId) {
-        const trainer = await storage.getUser(updateData.trainerId);
-        if (!trainer) {
-          return res.status(400).json({ message: "Formateur non trouvé" });
-        }
-        
-        if (trainer.role !== 'trainer' && trainer.role !== 'admin') {
-          return res.status(400).json({ message: "L'utilisateur sélectionné n'est pas un formateur" });
-        }
-      }
-      
-      // Mettre à jour le timestamp de modification
-      updateData.updatedAt = new Date();
+      const validatedData = schema.parse(req.body);
       
       // Mettre à jour la formation
+      const now = new Date();
+      const updateData = {
+        ...validatedData,
+        updatedAt: now
+      };
+      
       const updatedCourse = await storage.updateCourse(courseId, updateData);
       
-      res.status(200).json(updatedCourse);
-    } catch (error: any) {
-      console.error("Erreur lors de la mise à jour de la formation:", error);
+      res.json(updatedCourse);
+    } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          message: "Données de mise à jour invalides", 
-          errors: error.errors 
-        });
+        return res.status(400).json({ message: "Données invalides", errors: error.errors });
       }
       
-      res.status(500).json({ message: `Erreur lors de la mise à jour de la formation: ${error.message}` });
+      console.error(`Erreur lors de la mise à jour de la formation avec l'ID ${req.params.id}:`, error);
+      res.status(500).json({ message: "Erreur lors de la mise à jour de la formation" });
     }
   });
 
-  // Supprimer une formation
-  app.delete('/api/admin/courses/:id', hasAdminRole, async (req, res) => {
+  // Route pour supprimer une formation
+  app.delete("/api/admin/courses/:id", hasAdminRole, async (req: Request, res: Response) => {
     try {
-      const courseId = parseInt(req.params.id);
-      console.log(`Suppression de la formation ${courseId}`);
+      const { id } = req.params;
+      const courseId = parseInt(id);
       
       // Vérifier si la formation existe
       const course = await storage.getCourse(courseId);
@@ -218,20 +157,18 @@ export function registerAdminCourseRoutes(app: Express) {
       // Supprimer la formation
       await storage.deleteCourse(courseId);
       
-      res.status(200).json({ message: "Formation supprimée avec succès" });
-    } catch (error: any) {
-      console.error("Erreur lors de la suppression de la formation:", error);
-      res.status(500).json({ message: `Erreur lors de la suppression de la formation: ${error.message}` });
+      res.status(204).send();
+    } catch (error) {
+      console.error(`Erreur lors de la suppression de la formation avec l'ID ${req.params.id}:`, error);
+      res.status(500).json({ message: "Erreur lors de la suppression de la formation" });
     }
   });
 
-  // Mettre à jour le statut d'approbation d'une formation
-  app.patch('/api/admin/courses/:id/approval', hasAdminRole, async (req, res) => {
+  // Route pour approuver une formation
+  app.patch("/api/admin/courses/:id/approve", hasAdminRole, async (req: Request, res: Response) => {
     try {
-      const courseId = parseInt(req.params.id);
-      const { isApproved } = req.body;
-      
-      console.log(`Mise à jour du statut d'approbation de la formation ${courseId} à ${isApproved}`);
+      const { id } = req.params;
+      const courseId = parseInt(id);
       
       // Vérifier si la formation existe
       const course = await storage.getCourse(courseId);
@@ -239,48 +176,113 @@ export function registerAdminCourseRoutes(app: Express) {
         return res.status(404).json({ message: "Formation non trouvée" });
       }
       
-      // Mettre à jour le statut d'approbation
-      const updatedCourse = await storage.updateCourse(courseId, { 
-        isApproved, 
-        updatedAt: new Date() 
+      // Approuver la formation
+      const updatedCourse = await storage.updateCourse(courseId, { isApproved: true });
+      
+      // Créer une notification pour le formateur
+      await storage.createNotification({
+        userId: course.trainerId,
+        message: `Votre formation "${course.title}" a été approuvée et est maintenant disponible pour les étudiants.`,
+        type: "approval",
+        isRead: false
       });
       
-      res.status(200).json(updatedCourse);
-    } catch (error: any) {
-      console.error("Erreur lors de la mise à jour du statut d'approbation:", error);
-      res.status(500).json({ message: `Erreur lors de la mise à jour du statut d'approbation: ${error.message}` });
+      res.json(updatedCourse);
+    } catch (error) {
+      console.error(`Erreur lors de l'approbation de la formation avec l'ID ${req.params.id}:`, error);
+      res.status(500).json({ message: "Erreur lors de l'approbation de la formation" });
     }
   });
 
-  // ========== CATÉGORIES ==========
-  
-  // Récupérer toutes les catégories
-  app.get('/api/admin/categories', hasAdminRole, async (req, res) => {
+  // Route pour rejeter une formation
+  app.patch("/api/admin/courses/:id/reject", hasAdminRole, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const courseId = parseInt(id);
+      const { reason } = req.body;
+      
+      // Vérifier si la formation existe
+      const course = await storage.getCourse(courseId);
+      if (!course) {
+        return res.status(404).json({ message: "Formation non trouvée" });
+      }
+      
+      // Rejeter la formation
+      const updatedCourse = await storage.updateCourse(courseId, { isApproved: false });
+      
+      // Créer une notification pour le formateur
+      await storage.createNotification({
+        userId: course.trainerId,
+        message: `Votre formation "${course.title}" a été rejetée. Raison: ${reason || "Non spécifiée"}.`,
+        type: "rejection",
+        isRead: false
+      });
+      
+      res.json(updatedCourse);
+    } catch (error) {
+      console.error(`Erreur lors du rejet de la formation avec l'ID ${req.params.id}:`, error);
+      res.status(500).json({ message: "Erreur lors du rejet de la formation" });
+    }
+  });
+
+  // Route pour récupérer tous les formateurs
+  app.get("/api/admin/trainers", hasAdminRole, async (req: Request, res: Response) => {
+    try {
+      const trainers = await storage.getUsersByRole("trainer");
+      
+      // Retirer les mots de passe avant d'envoyer les données
+      const safeTrainers = trainers.map(({ password, ...trainer }) => trainer);
+      
+      res.json(safeTrainers);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des formateurs:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des formateurs" });
+    }
+  });
+
+  // Route pour récupérer toutes les catégories
+  app.get("/api/admin/categories", hasAdminRole, async (req: Request, res: Response) => {
     try {
       const categories = await storage.getAllCategories();
-      res.status(200).json(categories);
-    } catch (error: any) {
+      res.json(categories);
+    } catch (error) {
       console.error("Erreur lors de la récupération des catégories:", error);
-      res.status(500).json({ message: `Erreur lors de la récupération des catégories: ${error.message}` });
+      res.status(500).json({ message: "Erreur lors de la récupération des catégories" });
     }
   });
 
-  // Récupérer les formateurs (pour les sélecteurs)
-  app.get('/api/admin/trainers', hasAdminRole, async (req, res) => {
+  // Route pour créer une nouvelle catégorie
+  app.post("/api/admin/categories", hasAdminRole, async (req: Request, res: Response) => {
     try {
-      const trainers = await storage.getUsersByRole('trainer');
+      // Validation des données
+      const schema = z.object({
+        name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
+        slug: z.string().min(2, "Le slug doit contenir au moins 2 caractères"),
+        description: z.string().nullable().optional()
+      });
       
-      // Ne renvoyer que les données nécessaires
-      const simplifiedTrainers = trainers.map(trainer => ({
-        id: trainer.id,
-        username: trainer.username,
-        displayName: trainer.displayName
-      }));
+      const validatedData = schema.parse(req.body);
       
-      res.status(200).json(simplifiedTrainers);
-    } catch (error: any) {
-      console.error("Erreur lors de la récupération des formateurs:", error);
-      res.status(500).json({ message: `Erreur lors de la récupération des formateurs: ${error.message}` });
+      // Vérifier si une catégorie avec le même slug existe déjà
+      const existingCategory = await storage.getCategoryBySlug(validatedData.slug);
+      if (existingCategory) {
+        return res.status(409).json({ message: "Une catégorie avec ce slug existe déjà" });
+      }
+      
+      // Créer la catégorie
+      const category = await storage.createCategory({
+        ...validatedData,
+        description: validatedData.description || null
+      });
+      
+      res.status(201).json(category);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Données invalides", errors: error.errors });
+      }
+      
+      console.error("Erreur lors de la création de la catégorie:", error);
+      res.status(500).json({ message: "Erreur lors de la création de la catégorie" });
     }
   });
 }

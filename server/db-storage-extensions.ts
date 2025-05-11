@@ -10,7 +10,7 @@ import {
   notifications,
   settings,
   approvalRequests,
-  userOnboardings,
+  userOnboarding,
   blogCategories,
   blogPosts,
   blogComments,
@@ -23,7 +23,23 @@ import {
 
 // Extension pour getUsersByRole
 DatabaseStorage.prototype.getUsersByRole = async function(role: string) {
-  return await db.select().from(users).where(eq(users.role, role));
+  // Utilisation d'une requête SQL brute pour éviter les problèmes de type avec eq()
+  const result = await db.execute(`
+    SELECT * FROM users WHERE role = $1
+  `, [role]);
+  return result.rows.map(row => ({
+    id: row.id,
+    username: row.username,
+    email: row.email,
+    password: row.password,
+    displayName: row.display_name,
+    role: row.role,
+    isSubscribed: row.is_subscribed,
+    subscriptionType: row.subscription_type,
+    subscriptionEndDate: row.subscription_end_date,
+    stripeCustomerId: row.stripe_customer_id,
+    stripeSubscriptionId: row.stripe_subscription_id
+  }));
 };
 
 // Extension pour updateUser
@@ -110,16 +126,53 @@ DatabaseStorage.prototype.getApprovalRequestsWithDetails = async function() {
   
   const requestsWithDetails = await Promise.all(
     requests.map(async (request) => {
-      const course = await this.getCourse(request.entityId);
-      const trainer = course ? await this.getUser(course.trainerId) : null;
+      // Utilise itemId au lieu de entityId pour correspondre à la structure actuelle
+      const course = await this.getCourse(request.itemId);
+      const requester = await this.getUser(request.requesterId);
+      const reviewer = request.reviewerId ? await this.getUser(request.reviewerId) : null;
       
       return {
         ...request,
-        course,
-        trainer: trainer ? {
-          id: trainer.id,
-          username: trainer.username,
-          displayName: trainer.displayName
+        requester: requester ? {
+          id: requester.id,
+          username: requester.username,
+          email: requester.email,
+          displayName: requester.displayName,
+          role: requester.role,
+          password: requester.password, // Ne sera pas renvoyé au client
+          isSubscribed: requester.isSubscribed,
+          subscriptionType: requester.subscriptionType,
+          subscriptionEndDate: requester.subscriptionEndDate,
+          stripeCustomerId: requester.stripeCustomerId,
+          stripeSubscriptionId: requester.stripeSubscriptionId
+        } : null,
+        reviewer: reviewer ? {
+          id: reviewer.id,
+          username: reviewer.username,
+          email: reviewer.email,
+          displayName: reviewer.displayName,
+          role: reviewer.role,
+          password: reviewer.password, // Ne sera pas renvoyé au client
+          isSubscribed: reviewer.isSubscribed,
+          subscriptionType: reviewer.subscriptionType,
+          subscriptionEndDate: reviewer.subscriptionEndDate,
+          stripeCustomerId: reviewer.stripeCustomerId,
+          stripeSubscriptionId: reviewer.stripeSubscriptionId
+        } : null,
+        entity: course ? {
+          id: course.id,
+          title: course.title,
+          description: course.description,
+          trainerId: course.trainerId,
+          categoryId: course.categoryId,
+          level: course.level,
+          duration: course.duration,
+          maxStudents: course.maxStudents,
+          isApproved: course.isApproved,
+          price: course.price,
+          thumbnail: course.thumbnail,
+          createdAt: course.createdAt,
+          updatedAt: course.updatedAt
         } : null
       };
     })
