@@ -1,264 +1,234 @@
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useLocation, useRoute } from "wouter";
-import { insertBlogCategorySchema } from "@shared/schema";
-import { z } from "zod";
-import AdminLayout from "@/components/admin-layout";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Loader2, Save, X } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { useTitle } from "@/hooks/use-title";
+import React, { useState, useEffect } from 'react';
+import { useParams, useLocation } from 'wouter';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { withAdminDashboard } from '@/lib/with-admin-dashboard';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChevronLeft, Save } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { BlogCategory } from '@shared/schema';
 
-// Extend the schema to make sure slug is valid
-const categorySchema = insertBlogCategorySchema.extend({
-  slug: z.string().min(1, "Le slug est requis").refine(
-    (val) => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(val),
-    {
-      message: "Le slug doit être en minuscules, sans caractères spéciaux ou espaces (utilisez des tirets)",
-    }
-  ),
+// Définir le schéma de validation
+const categoryFormSchema = z.object({
+  name: z.string().min(2, {
+    message: 'Le nom de la catégorie doit contenir au moins 2 caractères',
+  }),
+  description: z.string().optional(),
+  slug: z.string().min(2, {
+    message: 'Le slug doit contenir au moins 2 caractères',
+  }).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
+    message: 'Le slug ne doit contenir que des lettres minuscules, des chiffres et des tirets',
+  }),
 });
 
-type CategoryFormData = z.infer<typeof categorySchema>;
+type CategoryFormValues = z.infer<typeof categoryFormSchema>;
 
 const EditBlogCategoryPage = () => {
-  const [, params] = useRoute("/blog/admin/edit-category/:id");
-  const categoryId = params?.id ? parseInt(params.id) : undefined;
-  const isEditMode = !!categoryId;
-  
-  const [, setLocation] = useLocation();
+  const { id } = useParams<{ id: string }>();
+  const [, navigate] = useLocation();
   const { toast } = useToast();
-  
-  useTitle(isEditMode ? "Modifier la catégorie - Administration" : "Nouvelle catégorie - Administration");
+  const isEditing = !!id;
 
-  // Fetch category if in edit mode
-  const { data: category, isLoading: isCategoryLoading } = useQuery({
-    queryKey: [`/api/blog/categories/${categoryId}`],
-    enabled: isEditMode,
+  // Récupérer les données de la catégorie si on est en mode édition
+  const { data: category, isLoading } = useQuery<BlogCategory>({
+    queryKey: ['/api/admin/blog-categories', id],
+    enabled: isEditing,
+    retry: false,
   });
 
-  // Form definition
-  const form = useForm<CategoryFormData>({
-    resolver: zodResolver(categorySchema),
+  // Configurer le formulaire
+  const form = useForm<CategoryFormValues>({
+    resolver: zodResolver(categoryFormSchema),
     defaultValues: {
-      name: "",
-      slug: "",
+      name: '',
+      description: '',
+      slug: '',
     },
   });
 
-  // Set form values when category is loaded
+  // Remplir le formulaire avec les données existantes si on est en mode édition
   useEffect(() => {
-    if (category) {
+    if (isEditing && category) {
       form.reset({
         name: category.name,
+        description: category.description || '',
         slug: category.slug,
       });
     }
-  }, [category, form]);
+  }, [category, form, isEditing]);
 
-  // Auto-generate slug from name
-  const autoGenerateSlug = () => {
-    const name = form.getValues("name");
-    if (name) {
-      const slug = name
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, "") // Remove special chars
-        .replace(/\s+/g, "-") // Replace spaces with hyphens
-        .replace(/-+/g, "-"); // Replace multiple hyphens with single hyphen
-      
-      form.setValue("slug", slug);
+  // Fonction pour créer un slug à partir du nom
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
+  // Auto-générer le slug lorsque le nom change
+  const onNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.value;
+    form.setValue('name', name);
+    
+    // Ne pas écraser le slug si l'utilisateur l'a déjà modifié manuellement
+    const currentSlug = form.getValues('slug');
+    if (!currentSlug || currentSlug === generateSlug(form.getValues('name').slice(0, -1))) {
+      form.setValue('slug', generateSlug(name));
     }
   };
 
-  // Create mutation
-  const createMutation = useMutation({
-    mutationFn: async (data: CategoryFormData) => {
-      const res = await apiRequest("POST", "/api/blog/categories", data);
-      return res.json();
+  // Mutation pour créer/mettre à jour une catégorie
+  const mutation = useMutation({
+    mutationFn: async (values: CategoryFormValues) => {
+      const url = isEditing 
+        ? `/api/admin/blog-categories/${id}` 
+        : '/api/admin/blog-categories';
+      const method = isEditing ? 'PATCH' : 'POST';
+      
+      const response = await apiRequest(method, url, values);
+      if (!response.ok) {
+        throw new Error('Erreur lors de l\'enregistrement de la catégorie');
+      }
+      return await response.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/blog-categories'] });
       toast({
-        title: "Catégorie créée",
-        description: "La catégorie a été créée avec succès.",
+        title: 'Succès',
+        description: isEditing 
+          ? 'Catégorie mise à jour avec succès' 
+          : 'Catégorie créée avec succès',
       });
-      
-      queryClient.invalidateQueries({ queryKey: ["/api/blog/categories"] });
-      setLocation("/blog/admin");
+      navigate('/admin/blog');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
-        title: "Erreur",
-        description: error.message || "Une erreur est survenue lors de la création de la catégorie.",
-        variant: "destructive",
+        variant: 'destructive',
+        title: 'Erreur',
+        description: `Échec de l'opération : ${error.message}`,
       });
     },
   });
 
-  // Update mutation
-  const updateMutation = useMutation({
-    mutationFn: async (data: CategoryFormData) => {
-      const res = await apiRequest("PUT", `/api/blog/categories/${categoryId}`, data);
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Catégorie mise à jour",
-        description: "La catégorie a été mise à jour avec succès.",
-      });
-      
-      queryClient.invalidateQueries({ queryKey: ["/api/blog/categories"] });
-      queryClient.invalidateQueries({ queryKey: [`/api/blog/categories/${categoryId}`] });
-      setLocation("/blog/admin");
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Erreur",
-        description: error.message || "Une erreur est survenue lors de la mise à jour de la catégorie.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Form submission handler
-  const onSubmit = (data: CategoryFormData) => {
-    if (isEditMode) {
-      updateMutation.mutate(data);
-    } else {
-      createMutation.mutate(data);
-    }
+  // Soumission du formulaire
+  const onSubmit = (values: CategoryFormValues) => {
+    mutation.mutate(values);
   };
-
-  // Return to categories list
-  const handleCancel = () => {
-    setLocation("/blog/admin");
-  };
-
-  const isSubmitting = createMutation.isPending || updateMutation.isPending;
-  const isLoading = isCategoryLoading;
 
   return (
-    <AdminLayout>
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">
-            {isEditMode ? "Modifier la catégorie" : "Nouvelle catégorie"}
-          </h1>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Informations de la catégorie</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center items-center h-32">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nom de la catégorie</FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="Ex: Développement Web"
-                            onBlur={() => {
-                              if (!form.getValues("slug")) {
-                                autoGenerateSlug();
-                              }
-                            }}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Le nom qui sera affiché aux utilisateurs
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="slug"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Slug</FormLabel>
-                        <div className="flex gap-2">
-                          <FormControl>
-                            <Input 
-                              {...field} 
-                              placeholder="Ex: developpement-web"
-                            />
-                          </FormControl>
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            onClick={autoGenerateSlug}
-                          >
-                            Générer
-                          </Button>
-                        </div>
-                        <FormDescription>
-                          L'identifiant unique utilisé dans les URLs (minuscules, sans espaces ni caractères spéciaux)
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleCancel}
-                    >
-                      <X className="mr-2 h-4 w-4" />
-                      Annuler
-                    </Button>
-                    <Button 
-                      type="submit" 
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          {isEditMode ? "Mise à jour..." : "Création..."}
-                        </>
-                      ) : (
-                        <>
-                          <Save className="mr-2 h-4 w-4" />
-                          {isEditMode ? "Mettre à jour" : "Créer"}
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            )}
-          </CardContent>
-        </Card>
+    <div className="space-y-6 p-4 sm:p-6 md:p-8">
+      <div className="flex items-center">
+        <Button 
+          variant="ghost" 
+          size="sm"
+          className="mr-4"
+          onClick={() => navigate('/admin/blog')}
+        >
+          <ChevronLeft className="mr-2 h-4 w-4" />
+          Retour
+        </Button>
+        <h1 className="text-3xl font-bold">
+          {isEditing ? 'Modifier la catégorie' : 'Créer une catégorie'}
+        </h1>
       </div>
-    </AdminLayout>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Informations de la catégorie</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nom de la catégorie</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Ex: Développement Web" 
+                        {...field} 
+                        onChange={onNameChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="slug"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Slug (URL)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="ex: developpement-web" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description (optionnelle)</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Description de la catégorie" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex justify-end">
+                <Button 
+                  type="submit" 
+                  disabled={mutation.isPending}
+                  className="w-full sm:w-auto"
+                >
+                  {mutation.isPending ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Enregistrement...
+                    </span>
+                  ) : (
+                    <span className="flex items-center">
+                      <Save className="mr-2 h-4 w-4" />
+                      Enregistrer
+                    </span>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
-export default EditBlogCategoryPage;
+export default withAdminDashboard(EditBlogCategoryPage);

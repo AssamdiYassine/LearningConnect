@@ -1,199 +1,241 @@
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
-import { BlogPostWithDetails } from "@shared/schema";
-import { Link, useLocation } from "wouter";
-import { Calendar, Clock, Eye, User } from "lucide-react";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/use-auth";
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Link } from 'wouter';
 import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
-import { useTitle } from "@/hooks/use-title";
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { 
+  Search, 
+  Tag, 
+  Calendar, 
+  Clock, 
+  Eye,
+  ChevronLeft, 
+  ChevronRight 
+} from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { BlogPostWithDetails } from '@shared/schema';
+import { formatDate } from '@/lib/utils';
 
-const BlogPage = () => {
-  useTitle("Blog - Necform");
-  const [location, setLocation] = useLocation();
-  const { user } = useAuth();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
-  
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
-    queryKey: ["/api/blog/categories"],
+const BlogIndex = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Récupérer les articles de blog
+  const { data: blogPosts, isLoading, error } = useQuery<BlogPostWithDetails[]>({
+    queryKey: ['/api/blog-posts'],
+    retry: false,
   });
 
-  const { data: posts, isLoading: postsLoading } = useQuery<BlogPostWithDetails[]>({
-    queryKey: ["/api/blog/posts"],
+  // Récupérer les catégories uniques à partir des articles
+  const { data: categories } = useQuery({
+    queryKey: ['/api/blog-categories'],
+    retry: false,
   });
 
-  // Filter posts based on search query and category
-  const filteredPosts = posts?.filter(post => {
-    const matchesSearch = searchQuery 
-      ? post.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        post.content.toLowerCase().includes(searchQuery.toLowerCase())
-      : true;
-    
-    const matchesCategory = categoryFilter 
-      ? post.category.id.toString() === categoryFilter
-      : true;
-    
-    return matchesSearch && matchesCategory;
-  });
+  // Filtrer les articles en fonction des critères
+  const filteredPosts = blogPosts
+    ? blogPosts
+      .filter(post => post.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                     post.excerpt.toLowerCase().includes(searchTerm.toLowerCase()))
+      .filter(post => !selectedCategory || post.category.name === selectedCategory)
+    : [];
 
-  const readingTime = (content: string) => {
-    const wordsPerMinute = 200;
-    const words = content.split(/\s+/).length;
-    const minutes = Math.ceil(words / wordsPerMinute);
-    return minutes;
+  // Pagination
+  const postsPerPage = 6;
+  const totalPages = Math.ceil((filteredPosts?.length || 0) / postsPerPage);
+  const paginatedPosts = filteredPosts?.slice(
+    (currentPage - 1) * postsPerPage,
+    currentPage * postsPerPage
+  );
+
+  // Formatage de date en français
+  const formatReadingTime = (minutes: number | null | undefined) => {
+    if (!minutes) return '5 min de lecture';
+    return `${minutes} min de lecture`;
   };
 
   return (
-    <div className="container py-8 max-w-6xl">
-      <div className="text-center mb-12">
-        <h1 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-purple-600 text-transparent bg-clip-text">
-          Blog Necform
-        </h1>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          Découvrez nos derniers articles, tutoriels et actualités sur les technologies informatiques et la formation professionnelle.
+    <div className="container mx-auto py-8 px-4 md:px-6">
+      <h1 className="text-3xl md:text-4xl font-bold mb-6 text-center text-primary">Blog NecForm</h1>
+      <div className="text-center mb-8">
+        <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          Découvrez nos derniers articles sur les technologies de l'informatique, le développement web et les meilleures pratiques du secteur IT.
         </p>
       </div>
-
-      {/* Filters and search */}
-      <div className="mb-8 flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
+      
+      <div className="flex flex-col md:flex-row gap-6 mb-8">
+        <div className="relative flex-grow">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Rechercher des articles..."
-            className="w-full pr-10"
+            placeholder="Rechercher un article..."
+            className="pl-10"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
           />
-          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-          </span>
         </div>
         
-        <div className="w-full md:w-64">
-          <Select
-            value={categoryFilter || ""}
-            onValueChange={(value) => setCategoryFilter(value || null)}
+        <div className="flex gap-2 flex-wrap">
+          <Button 
+            variant={selectedCategory === null ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedCategory(null)}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Toutes les catégories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">Toutes les catégories</SelectItem>
-              {categories?.map((category) => (
-                <SelectItem key={category.id} value={category.id.toString()}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        {user?.role === "admin" && (
-          <Button onClick={() => setLocation("/blog/admin")}>
-            Gérer le blog
+            Tous
           </Button>
-        )}
+          {categories?.map(category => (
+            <Button
+              key={category.id}
+              variant={selectedCategory === category.name ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory(category.name)}
+            >
+              {category.name}
+            </Button>
+          ))}
+        </div>
       </div>
 
-      {postsLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map((n) => (
-            <Card key={n} className="overflow-hidden h-[440px]">
-              <div className="h-44 bg-muted">
-                <Skeleton className="h-full w-full" />
-              </div>
-              <CardHeader>
-                <Skeleton className="h-6 w-3/4 mb-2" />
-                <Skeleton className="h-4 w-1/2" />
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i} className="flex flex-col h-full">
+              <CardHeader className="pb-4">
+                <Skeleton className="h-4 w-3/4 mb-2" />
+                <Skeleton className="h-6 w-full" />
               </CardHeader>
-              <CardContent>
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-4 w-2/3" />
+              <CardContent className="flex-grow">
+                <Skeleton className="h-24 w-full mb-4" />
+                <div className="flex justify-between items-center">
+                  <Skeleton className="h-4 w-1/4" />
+                  <Skeleton className="h-4 w-1/4" />
+                </div>
               </CardContent>
-              <CardFooter>
-                <Skeleton className="h-4 w-1/3" />
-              </CardFooter>
             </Card>
           ))}
         </div>
-      ) : filteredPosts && filteredPosts.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPosts.map((post) => (
-            <Link key={post.id} href={`/blog/${post.slug}`}>
-              <a className="block h-full">
-                <Card className="overflow-hidden h-full transition-all duration-200 hover:shadow-md hover:-translate-y-1">
-                  {post.featuredImage && (
-                    <div className="h-44 overflow-hidden">
-                      <img 
-                        src={post.featuredImage} 
-                        alt={post.title} 
-                        className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                      />
-                    </div>
-                  )}
-                  <CardHeader>
-                    <Badge className="w-fit mb-2">{post.category.name}</Badge>
-                    <CardTitle>{post.title}</CardTitle>
-                    <CardDescription className="flex items-center gap-2 text-sm">
-                      <User size={14} />
-                      <span>{post.author.displayName}</span>
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground line-clamp-3">
-                      {post.excerpt}
-                    </p>
-                  </CardContent>
-                  <CardFooter className="flex justify-between text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Calendar size={14} />
-                      <span>
-                        {format(new Date(post.createdAt), "dd MMMM yyyy", { locale: fr })}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1">
-                        <Clock size={14} />
-                        <span>{readingTime(post.content)} min</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Eye size={14} />
-                        <span>{post.viewCount}</span>
-                      </div>
-                    </div>
-                  </CardFooter>
-                </Card>
-              </a>
-            </Link>
-          ))}
+      ) : error ? (
+        <div className="text-center py-10">
+          <p className="text-lg text-red-500">Une erreur est survenue lors du chargement des articles.</p>
+          <p className="text-sm text-muted-foreground">Veuillez réessayer ultérieurement.</p>
+        </div>
+      ) : filteredPosts.length === 0 ? (
+        <div className="text-center py-10">
+          <p className="text-lg">Aucun article trouvé.</p>
+          <p className="text-sm text-muted-foreground">Essayez de modifier vos critères de recherche.</p>
         </div>
       ) : (
-        <div className="text-center py-12">
-          <h3 className="text-lg font-medium mb-2">Aucun article trouvé</h3>
-          <p className="text-muted-foreground">
-            Aucun article ne correspond à votre recherche. Essayez de modifier vos filtres.
-          </p>
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+            {paginatedPosts.map(post => (
+              <Card key={post.id} className="flex flex-col h-full hover:shadow-lg transition-shadow duration-300">
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start mb-2">
+                    <Badge variant="outline" className="bg-primary/10 text-primary">
+                      {post.category.name}
+                    </Badge>
+                    <div className="flex items-center text-muted-foreground text-sm">
+                      <Eye className="h-3.5 w-3.5 mr-1" />
+                      <span>{post.viewCount || 0}</span>
+                    </div>
+                  </div>
+                  <CardTitle className="text-xl mb-2 line-clamp-2">
+                    <Link href={`/blog/${post.slug}`} className="hover:text-primary transition-colors">
+                      {post.title}
+                    </Link>
+                  </CardTitle>
+                  <CardDescription className="line-clamp-2">
+                    {post.excerpt}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pb-4 flex-grow">
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {post.tags && post.tags.slice(0, 3).map((tag, i) => (
+                      <Badge key={i} variant="secondary" className="font-normal">
+                        <Tag className="h-3 w-3 mr-1" /> {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-between items-center text-sm text-muted-foreground pt-0">
+                  <div className="flex items-center">
+                    <Calendar className="h-3.5 w-3.5 mr-1" />
+                    <span>
+                      {post.publishedAt
+                        ? formatDate(new Date(post.publishedAt))
+                        : 'Non publié'}
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <Clock className="h-3.5 w-3.5 mr-1" />
+                    <span>{formatReadingTime(post.readTime)}</span>
+                  </div>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+  
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2 mt-8">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCurrentPage(page)}
+                  className={currentPage === page ? "font-bold" : ""}
+                >
+                  {page}
+                </Button>
+              ))}
+              
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </>
       )}
+      
+      <Separator className="my-10" />
+      
+      <div className="text-center">
+        <h2 className="text-2xl font-bold mb-4">Vous souhaitez contribuer au blog ?</h2>
+        <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+          Partagez votre expertise et vos connaissances avec la communauté NecForm.
+          Contactez-nous pour proposer un sujet d'article.
+        </p>
+        <Button asChild>
+          <Link href="/contact">Nous contacter</Link>
+        </Button>
+      </div>
     </div>
   );
 };
 
-export default BlogPage;
+export default BlogIndex;

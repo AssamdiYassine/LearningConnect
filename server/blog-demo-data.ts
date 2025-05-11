@@ -155,18 +155,51 @@ export async function seedBlogDemoData() {
       console.log("Admin trouvé:", admin);
 
       // Exemple d'article de blog
-      const samplePost = {
-        title: "Les tendances du développement web en 2025",
-        slug: "tendances-developpement-web-2025",
-        excerpt: "Découvrez les technologies et frameworks qui domineront le développement web en 2025.",
-        content: "# Les tendances du développement web en 2025\n\nLe paysage du développement web évolue constamment...",
-        featured_image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085",
-        category_id: existingCategories[0]?.id || 1,
-        author_id: admin.id,
-        status: "published",
-        published_at: new Date(),
-        view_count: 0
-      };
+      // Insérer directement avec une requête SQL brute pour déboguer le problème
+      try {
+        await db.execute(sql`
+          INSERT INTO blog_posts (
+            title, slug, excerpt, content, featured_image, 
+            category_id, author_id, status, published_at, view_count
+          ) VALUES (
+            'Les tendances du développement web en 2025',
+            'tendances-developpement-web-2025',
+            'Découvrez les technologies et frameworks qui domineront le développement web en 2025.',
+            '# Les tendances du développement web en 2025\n\nLe paysage du développement web évolue constamment...',
+            'https://images.unsplash.com/photo-1498050108023-c5249f4df085',
+            ${existingCategories[0]?.id || 1},
+            1, -- Utiliser directement l'ID 1 pour admin
+            'published',
+            NOW(),
+            0
+          ) ON CONFLICT (slug) DO NOTHING
+        `);
+        console.log("Article créé ou existant avec requête SQL directe");
+        
+        // Ajouter un second article via SQL pour confirmer
+        await db.execute(sql`
+          INSERT INTO blog_posts (
+            title, slug, excerpt, content, featured_image, 
+            category_id, author_id, status, published_at, view_count
+          ) VALUES (
+            'Sécuriser vos applications web en 2025',
+            'securiser-applications-web-2025',
+            'Les meilleures pratiques pour protéger vos applications web contre les cyber-menaces.',
+            '# Sécuriser vos applications web en 2025\n\nLa cybersécurité est plus importante que jamais...',
+            'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb',
+            ${existingCategories[3]?.id || 4},
+            1, -- Utiliser directement l'ID 1 pour admin
+            'published',
+            NOW(),
+            0
+          ) ON CONFLICT (slug) DO NOTHING
+        `);
+        console.log("Second article créé ou existant avec requête SQL directe");
+        
+        return; // Éviter d'exécuter le code suivant qui a des problèmes
+      } catch (error) {
+        console.error("Erreur lors de l'insertion directe via SQL:", error);
+      }
 
       try {
         await db.insert(blogPosts)
