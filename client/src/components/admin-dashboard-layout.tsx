@@ -69,24 +69,24 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
   badgeVariant = "default",
   onClick
 }) => {
+  // Utilisez directement le Link de wouter sans balise <a> imbriquée
   return (
-    <Link href={path}>
-      <a
-        onClick={onClick}
-        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-          isActive 
-            ? "bg-primary/10 text-primary font-medium" 
-            : "text-gray-600 hover:bg-gray-100"
-        }`}
-      >
-        <div className="flex-shrink-0 w-5 h-5">{icon}</div>
-        <span className="flex-grow">{text}</span>
-        {badge && (
-          <Badge variant={badgeVariant} className="ml-auto">
-            {badge}
-          </Badge>
-        )}
-      </a>
+    <Link 
+      href={path}
+      onClick={onClick}
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+        isActive 
+          ? "bg-primary/10 text-primary font-medium" 
+          : "text-gray-600 hover:bg-gray-100"
+      }`}
+    >
+      <div className="flex-shrink-0 w-5 h-5">{icon}</div>
+      <span className="flex-grow">{text}</span>
+      {badge && (
+        <Badge variant={badgeVariant} className="ml-auto">
+          {badge}
+        </Badge>
+      )}
     </Link>
   );
 };

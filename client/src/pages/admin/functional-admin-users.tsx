@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { withAdminDashboard } from "@/lib/with-admin-dashboard";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -20,7 +21,7 @@ interface User {
   subscriptionEndDate: string | null;
 }
 
-export default function FunctionalAdminUsers() {
+function FunctionalAdminUsers() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -559,3 +560,7 @@ export default function FunctionalAdminUsers() {
     </div>
   );
 }
+
+// Exporter le composant avec le layout admin
+const AdminUsersWithDashboard = withAdminDashboard(FunctionalAdminUsers);
+export default AdminUsersWithDashboard;
