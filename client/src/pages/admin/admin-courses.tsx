@@ -1,25 +1,36 @@
-import { useAuth } from "@/hooks/use-auth";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
-  Loader2, 
-  BookOpen, 
-  Star, 
-  Calendar, 
-  Users, 
-  Filter, 
-  Search, 
   PlusCircle, 
-  MoreHorizontal,
-  Edit,
-  Trash2,
+  Search, 
+  Edit2, 
+  Trash2, 
+  Check, 
+  X,
   Eye,
-  FileCheck
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+  BookOpen,
+  Layers
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -29,338 +40,878 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useState } from "react";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Link } from "wouter";
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+
+type CourseWithDetails = {
+  id: number;
+  title: string;
+  description: string;
+  level: string;
+  price: number;
+  categoryId: number;
+  trainerId: number;
+  duration: number;
+  isApproved: boolean;
+  createdAt: string;
+  trainerName: string;
+  categoryName: string;
+  enrollmentCount: number;
+  imageUrl?: string;
+};
+
+type Category = {
+  id: number;
+  name: string;
+  slug: string;
+};
+
+type CourseFormData = {
+  title: string;
+  description: string;
+  level: string;
+  categoryId: number;
+  trainerId: number;
+  duration: number;
+  price: number;
+  imageUrl?: string;
+};
 
 export default function AdminCourses() {
-  const { user } = useAuth();
   const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [levelFilter, setLevelFilter] = useState("all");
+  const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState("all");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<CourseWithDetails | null>(null);
+  const [formData, setFormData] = useState<CourseFormData>({
+    title: '',
+    description: '',
+    level: 'beginner',
+    categoryId: 0,
+    trainerId: 0,
+    duration: 60,
+    price: 99
+  });
 
   // Fetch courses
-  const { data: courses, isLoading: isCoursesLoading } = useQuery({
-    queryKey: ["/api/courses"],
-    enabled: !!user && user.role === "admin"
+  const { data: courses = [], isLoading } = useQuery<CourseWithDetails[]>({
+    queryKey: ['/api/admin/courses'],
   });
 
-  // Fetch users for mapping trainer IDs to names
-  const { data: users } = useQuery({
-    queryKey: ["/api/users"],
-    enabled: !!user && user.role === "admin"
+  // Fetch categories for select dropdown
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ['/api/admin/categories'],
   });
 
-  // Fetch categories
-  const { data: categories } = useQuery({
-    queryKey: ["/api/categories"],
-    enabled: !!user && user.role === "admin"
+  // Create course mutation
+  const createCourseMutation = useMutation({
+    mutationFn: async (courseData: CourseFormData) => {
+      const res = await apiRequest('POST', '/api/admin/courses', courseData);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/courses'] });
+      toast({
+        title: "Formation creee",
+        description: "La formation a ete creee avec succes",
+      });
+      resetForm();
+      setIsAddDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: "Echec de creation de la formation: " + error.message,
+        variant: "destructive",
+      });
+    }
   });
 
-  // Filtrer les cours
-  const filteredCourses = courses?.filter((course: any) => {
-    const matchesSearch = searchQuery === "" ||
-      course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesCategory = categoryFilter === "all" || course.categoryId === parseInt(categoryFilter);
-    const matchesLevel = levelFilter === "all" || course.level === levelFilter;
-    
-    return matchesSearch && matchesCategory && matchesLevel;
-  }) || [];
+  // Update course mutation
+  const updateCourseMutation = useMutation({
+    mutationFn: async ({ 
+      id, 
+      courseData 
+    }: { 
+      id: number, 
+      courseData: Partial<CourseFormData>
+    }) => {
+      const res = await apiRequest('PATCH', `/api/admin/courses/${id}`, courseData);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/courses'] });
+      toast({
+        title: "Formation mise a jour",
+        description: "La formation a ete mise a jour avec succes",
+      });
+      resetForm();
+      setIsEditDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: "Echec de mise a jour de la formation: " + error.message,
+        variant: "destructive",
+      });
+    }
+  });
 
-  // Fonction de suppression de cours
-  const deleteCourse = (courseId: number) => {
-    toast({
-      title: "Cours supprimé",
-      description: "Le cours a été supprimé avec succès."
-    });
-    // Mutation pour supprimer un cours (à implementer)
+  // Delete course mutation
+  const deleteCourseMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest('DELETE', `/api/admin/courses/${id}`);
+      return res.ok;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/courses'] });
+      toast({
+        title: "Formation supprimee",
+        description: "La formation a ete supprimee avec succes",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: "Echec de suppression de la formation: " + error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Approve course mutation
+  const approveCourseMutation = useMutation({
+    mutationFn: async ({ 
+      id, 
+      approved 
+    }: { 
+      id: number, 
+      approved: boolean 
+    }) => {
+      const res = await apiRequest('PATCH', `/api/admin/courses/${id}/approval`, { approved });
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/courses'] });
+      toast({
+        title: "Statut mis a jour",
+        description: "Le statut de la formation a ete mis a jour avec succes",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: "Echec de mise a jour du statut: " + error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Obtenir les statistiques des cours
-  const totalCourses = courses?.length || 0;
-  const totalBeginnerCourses = courses?.filter((c: any) => c.level === "beginner").length || 0;
-  const totalIntermediateCourses = courses?.filter((c: any) => c.level === "intermediate").length || 0;
-  const totalAdvancedCourses = courses?.filter((c: any) => c.level === "advanced").length || 0;
+  const handleNumberInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: value === '' ? 0 : parseFloat(value) 
+    }));
+  };
 
-  // Nombre de cours par catégorie pour le graphique
-  const coursesByCategory = categories?.map((category: any) => {
-    const count = courses?.filter((course: any) => course.categoryId === category.id).length || 0;
-    return {
-      name: category.name,
-      count
-    };
-  }) || [];
+  const handleSelectChange = (name: string, value: string) => {
+    if (name === 'categoryId' || name === 'trainerId') {
+      setFormData(prev => ({ ...prev, [name]: parseInt(value) }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
 
-  // Fonction pour obtenir le nom du formateur
-  const getTrainerName = (trainerId: number) => {
-    const trainer = users?.find((u: any) => u.id === trainerId);
-    return trainer ? (trainer.displayName || trainer.username) : "Formateur inconnu";
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      description: '',
+      level: 'beginner',
+      categoryId: 0,
+      trainerId: 0,
+      duration: 60,
+      price: 99
+    });
+    setSelectedCourse(null);
+  };
+
+  const handleAddCourse = () => {
+    createCourseMutation.mutate(formData);
+  };
+
+  const handleEditCourse = () => {
+    if (!selectedCourse) return;
+    
+    // Only include fields that have been modified
+    const updatedFields: Partial<CourseFormData> = {};
+    
+    if (formData.title && formData.title !== selectedCourse.title) 
+      updatedFields.title = formData.title;
+    
+    if (formData.description && formData.description !== selectedCourse.description) 
+      updatedFields.description = formData.description;
+    
+    if (formData.level && formData.level !== selectedCourse.level) 
+      updatedFields.level = formData.level;
+    
+    if (formData.categoryId && formData.categoryId !== selectedCourse.categoryId) 
+      updatedFields.categoryId = formData.categoryId;
+
+    if (formData.trainerId && formData.trainerId !== selectedCourse.trainerId) 
+      updatedFields.trainerId = formData.trainerId;
+    
+    if (formData.duration && formData.duration !== selectedCourse.duration) 
+      updatedFields.duration = formData.duration;
+    
+    if (formData.price && formData.price !== selectedCourse.price) 
+      updatedFields.price = formData.price;
+    
+    // Only update if there are changes
+    if (Object.keys(updatedFields).length > 0) {
+      updateCourseMutation.mutate({ id: selectedCourse.id, courseData: updatedFields });
+    } else {
+      toast({
+        title: "Aucune modification",
+        description: "Aucune modification n'a ete apportee",
+      });
+      setIsEditDialogOpen(false);
+    }
+  };
+
+  const handleDeleteCourse = (course: CourseWithDetails) => {
+    if (window.confirm(`Etes-vous sur de vouloir supprimer la formation "${course.title}" ?`)) {
+      deleteCourseMutation.mutate(course.id);
+    }
+  };
+
+  const handleApproveCourse = (course: CourseWithDetails) => {
+    approveCourseMutation.mutate({ 
+      id: course.id, 
+      approved: !course.isApproved
+    });
+  };
+
+  const prepareEditCourse = (course: CourseWithDetails) => {
+    setSelectedCourse(course);
+    setFormData({
+      title: course.title,
+      description: course.description,
+      level: course.level,
+      categoryId: course.categoryId,
+      trainerId: course.trainerId,
+      duration: course.duration,
+      price: course.price,
+      imageUrl: course.imageUrl
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const viewCourseDetails = (course: CourseWithDetails) => {
+    setSelectedCourse(course);
+    setIsViewDialogOpen(true);
+  };
+
+  const filteredCourses = courses.filter(course => {
+    // Filter by search query
+    const matchesSearch = 
+      course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      course.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      course.trainerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      course.categoryName?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Filter by tab
+    if (activeTab === "all") return matchesSearch;
+    if (activeTab === "approved") return matchesSearch && course.isApproved;
+    if (activeTab === "pending") return matchesSearch && !course.isApproved;
+    
+    return matchesSearch;
+  });
+
+  const getApprovalBadge = (isApproved: boolean) => {
+    if (isApproved) {
+      return (
+        <Badge className="bg-green-100 text-green-800">
+          Approuvé
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge className="bg-yellow-100 text-yellow-800">
+          En attente
+        </Badge>
+      );
+    }
+  };
+
+  const getLevelBadge = (level: string) => {
+    switch (level) {
+      case 'beginner':
+        return (
+          <Badge className="bg-blue-100 text-blue-800">
+            Débutant
+          </Badge>
+        );
+      case 'intermediate':
+        return (
+          <Badge className="bg-purple-100 text-purple-800">
+            Intermédiaire
+          </Badge>
+        );
+      case 'advanced':
+        return (
+          <Badge className="bg-red-100 text-red-800">
+            Avancé
+          </Badge>
+        );
+      default:
+        return (
+          <Badge className="bg-gray-100 text-gray-800">
+            {level}
+          </Badge>
+        );
+    }
+  };
+
+  const formatPrice = (price: number) => {
+    return `${price}€`;
+  };
+
+  const formatDuration = (durationMinutes: number) => {
+    const hours = Math.floor(durationMinutes / 60);
+    const minutes = durationMinutes % 60;
+    
+    if (hours === 0) {
+      return `${minutes} min`;
+    } else if (minutes === 0) {
+      return `${hours}h`;
+    } else {
+      return `${hours}h ${minutes}min`;
+    }
   };
 
   return (
-    <div className="space-y-8">
-      {/* En-tête */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 font-heading">Gestion des formations</h1>
-        <p className="mt-2 text-gray-600">
-          Gérez les formations disponibles sur la plateforme.
-        </p>
-      </div>
-
-      {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Total Formations</p>
-              <p className="text-2xl font-bold">{totalCourses}</p>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-              <BookOpen className="h-5 w-5 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Niveau Débutant</p>
-              <p className="text-2xl font-bold">{totalBeginnerCourses}</p>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-              <Star className="h-5 w-5 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Niveau Intermédiaire</p>
-              <p className="text-2xl font-bold">{totalIntermediateCourses}</p>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
-              <Star className="h-5 w-5 text-amber-600" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Niveau Avancé</p>
-              <p className="text-2xl font-bold">{totalAdvancedCourses}</p>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
-              <Star className="h-5 w-5 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filtres et recherche */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
-        <div className="flex-1">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Rechercher par titre, description..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10"
-            />
-          </div>
-        </div>
-        <div className="w-full md:w-48">
-          <Select 
-            value={categoryFilter} 
-            onValueChange={setCategoryFilter}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Catégorie" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les catégories</SelectItem>
-              {categories?.map((category: any) => (
-                <SelectItem key={category.id} value={category.id.toString()}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="w-full md:w-48">
-          <Select 
-            value={levelFilter} 
-            onValueChange={setLevelFilter}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Niveau" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les niveaux</SelectItem>
-              <SelectItem value="beginner">Débutant</SelectItem>
-              <SelectItem value="intermediate">Intermédiaire</SelectItem>
-              <SelectItem value="advanced">Avancé</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <Button className="bg-primary">
-          <PlusCircle className="h-4 w-4 mr-2" />
-          Nouvelle formation
-        </Button>
-      </div>
-
-      {/* Liste des cours */}
+    <div className="p-6 space-y-6">
       <Card>
-        <CardHeader>
-          <CardTitle>Liste des formations</CardTitle>
-          <CardDescription>
-            {filteredCourses.length} formation{filteredCourses.length !== 1 ? 's' : ''} trouvée{filteredCourses.length !== 1 ? 's' : ''}
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Gestion des formations</CardTitle>
+          <div className="flex items-center space-x-2">
+            <Select>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Catégories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes les catégories</SelectItem>
+                {categories.map(category => (
+                  <SelectItem key={category.id} value={category.id.toString()}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Ajouter une formation
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                  <DialogTitle>Ajouter une nouvelle formation</DialogTitle>
+                  <DialogDescription>
+                    Creer une nouvelle formation avec les informations ci-dessous.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <label htmlFor="title" className="text-right">
+                      Titre
+                    </label>
+                    <Input
+                      id="title"
+                      name="title"
+                      className="col-span-3"
+                      value={formData.title}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <label htmlFor="description" className="text-right">
+                      Description
+                    </label>
+                    <Textarea
+                      id="description"
+                      name="description"
+                      className="col-span-3"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      rows={5}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <label htmlFor="level" className="text-right">
+                      Niveau
+                    </label>
+                    <Select 
+                      value={formData.level} 
+                      onValueChange={(value) => handleSelectChange('level', value)}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Selectionner un niveau" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="beginner">Débutant</SelectItem>
+                        <SelectItem value="intermediate">Intermédiaire</SelectItem>
+                        <SelectItem value="advanced">Avancé</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <label htmlFor="categoryId" className="text-right">
+                      Catégorie
+                    </label>
+                    <Select 
+                      value={formData.categoryId.toString()} 
+                      onValueChange={(value) => handleSelectChange('categoryId', value)}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Selectionner une catégorie" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map(category => (
+                          <SelectItem key={category.id} value={category.id.toString()}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <label htmlFor="duration" className="text-right">
+                      Durée (minutes)
+                    </label>
+                    <Input
+                      id="duration"
+                      name="duration"
+                      type="number"
+                      className="col-span-3"
+                      value={formData.duration}
+                      onChange={handleNumberInputChange}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <label htmlFor="price" className="text-right">
+                      Prix (€)
+                    </label>
+                    <Input
+                      id="price"
+                      name="price"
+                      type="number"
+                      className="col-span-3"
+                      value={formData.price}
+                      onChange={handleNumberInputChange}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <label htmlFor="imageUrl" className="text-right">
+                      Image URL
+                    </label>
+                    <Input
+                      id="imageUrl"
+                      name="imageUrl"
+                      className="col-span-3"
+                      value={formData.imageUrl || ''}
+                      onChange={handleInputChange}
+                      placeholder="http://example.com/image.jpg"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                    Annuler
+                  </Button>
+                  <Button 
+                    type="button" 
+                    onClick={handleAddCourse}
+                    disabled={createCourseMutation.isPending}
+                    className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"
+                  >
+                    {createCourseMutation.isPending ? "Creation en cours..." : "Creer la formation"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </CardHeader>
         <CardContent>
-          {isCoursesLoading ? (
-            <div className="flex justify-center items-center py-10">
-              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Tabs 
+                defaultValue="all" 
+                value={activeTab} 
+                onValueChange={setActiveTab} 
+                className="w-[400px]"
+              >
+                <TabsList>
+                  <TabsTrigger value="all">Toutes</TabsTrigger>
+                  <TabsTrigger value="approved">Approuvées</TabsTrigger>
+                  <TabsTrigger value="pending">En attente</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <div className="relative w-[300px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Rechercher une formation..." 
+                  className="pl-10" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
             </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Formation</TableHead>
-                  <TableHead>Formateur</TableHead>
-                  <TableHead>Niveau</TableHead>
-                  <TableHead>Sessions</TableHead>
-                  <TableHead>Max. étudiants</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCourses.map((course: any) => (
-                  <TableRow key={course.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-md bg-primary-50 flex items-center justify-center">
-                          <BookOpen className="h-5 w-5 text-primary-600" />
+            
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin w-10 h-10 border-4 border-[#1D2B6C] border-t-transparent rounded-full"></div>
+              </div>
+            ) : (
+              <>
+                {filteredCourses.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {filteredCourses.map((course) => (
+                      <div key={course.id} className="border rounded-lg overflow-hidden shadow-sm">
+                        <div className="relative h-40 bg-gray-100">
+                          {course.imageUrl ? (
+                            <img 
+                              src={course.imageUrl} 
+                              alt={course.title} 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                              <BookOpen className="h-12 w-12 text-gray-400" />
+                            </div>
+                          )}
+                          <div className="absolute top-2 left-2">
+                            <Badge className="bg-[#5F8BFF] hover:bg-[#5F8BFF]/90">
+                              {course.categoryName}
+                            </Badge>
+                          </div>
+                          <div className="absolute top-2 right-2">
+                            {getApprovalBadge(course.isApproved)}
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium">{course.title}</p>
-                          <p className="text-sm text-gray-500 truncate max-w-[250px]">
-                            {course.description ? course.description.substring(0, 60) + (course.description.length > 60 ? '...' : '') : 'Pas de description'}
-                          </p>
+                        <div className="p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <h3 className="font-semibold text-lg">{course.title}</h3>
+                            <span className="font-bold text-lg text-[#1D2B6C]">{formatPrice(course.price)}</span>
+                          </div>
+                          <p className="text-sm text-gray-600 line-clamp-2 mb-3">{course.description}</p>
+                          <div className="flex items-center justify-between">
+                            <div className="flex space-x-2">
+                              {getLevelBadge(course.level)}
+                              <Badge variant="outline">
+                                {formatDuration(course.duration)}
+                              </Badge>
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {course.enrollmentCount} inscrit(s)
+                            </div>
+                          </div>
+                          <div className="mt-4 flex justify-between">
+                            <p className="text-sm font-medium">
+                              Par {course.trainerName}
+                            </p>
+                            <div className="flex space-x-1">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleApproveCourse(course)}
+                                className={
+                                  course.isApproved 
+                                    ? "text-amber-600 border-amber-600 hover:bg-amber-50"
+                                    : "text-green-600 border-green-600 hover:bg-green-50"
+                                }
+                              >
+                                {course.isApproved ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => viewCourseDetails(course)}
+                                className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => prepareEditCourse(course)}
+                                className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleDeleteCourse(course)}
+                                className="text-red-600 border-red-600 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </TableCell>
-                    <TableCell>{getTrainerName(course.trainerId)}</TableCell>
-                    <TableCell>
-                      <Badge className={
-                        course.level === 'advanced' ? 'bg-red-100 text-red-800 border-red-200' :
-                        course.level === 'intermediate' ? 'bg-amber-100 text-amber-800 border-amber-200' :
-                        'bg-green-100 text-green-800 border-green-200'
-                      }>
-                        {course.level === 'advanced' ? 'Avancé' :
-                         course.level === 'intermediate' ? 'Intermédiaire' : 'Débutant'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {course.sessionCount || 0} sessions
-                    </TableCell>
-                    <TableCell>
-                      {course.maxStudents} places
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem>
-                            <Eye className="h-4 w-4 mr-2" />
-                            Voir les détails
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Modifier
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Calendar className="h-4 w-4 mr-2" />
-                            Gérer les sessions
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600">
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Supprimer
-                              </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Cette action supprimera définitivement la formation "{course.title}".
-                                  Cette action est irréversible.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                <AlertDialogAction 
-                                  onClick={() => deleteCourse(course.id)}
-                                  className="bg-red-600 hover:bg-red-700"
-                                >
-                                  Supprimer
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-
-                {filteredCourses.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      <div className="flex flex-col items-center justify-center text-gray-500">
-                        <BookOpen className="h-12 w-12 text-gray-300 mb-3" />
-                        <p className="text-lg font-medium">Aucune formation trouvée</p>
-                        <p className="text-sm max-w-md mt-1">
-                          Aucune formation ne correspond à vos critères de recherche. Essayez d'ajuster vos filtres.
-                        </p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-10">
+                    <Layers className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <h3 className="text-lg font-medium mb-2">Aucune formation trouvée</h3>
+                    <p className="text-muted-foreground mb-4">
+                      {searchQuery 
+                        ? "Aucune formation ne correspond à votre recherche." 
+                        : "Vous n'avez encore aucune formation."}
+                    </p>
+                    <Button 
+                      onClick={() => setIsAddDialogOpen(true)}
+                      className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"
+                    >
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Ajouter une formation
+                    </Button>
+                  </div>
                 )}
-              </TableBody>
-            </Table>
-          )}
+              </>
+            )}
+          </div>
         </CardContent>
       </Card>
+
+      {/* View Course Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="sm:max-w-[700px]">
+          {selectedCourse && (
+            <>
+              <DialogHeader>
+                <div className="flex justify-between items-center">
+                  <DialogTitle>{selectedCourse.title}</DialogTitle>
+                  {getApprovalBadge(selectedCourse.isApproved)}
+                </div>
+                <DialogDescription>
+                  Créé le {new Date(selectedCourse.createdAt).toLocaleDateString()}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-6">
+                {selectedCourse.imageUrl && (
+                  <div className="relative h-48 rounded-lg overflow-hidden">
+                    <img 
+                      src={selectedCourse.imageUrl} 
+                      alt={selectedCourse.title} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="text-sm font-semibold mb-1">Catégorie</h4>
+                    <p>{selectedCourse.categoryName}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold mb-1">Formateur</h4>
+                    <p>{selectedCourse.trainerName}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold mb-1">Niveau</h4>
+                    <p>{getLevelBadge(selectedCourse.level)}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold mb-1">Durée</h4>
+                    <p>{formatDuration(selectedCourse.duration)}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold mb-1">Prix</h4>
+                    <p className="font-bold text-[#1D2B6C]">{formatPrice(selectedCourse.price)}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold mb-1">Inscrits</h4>
+                    <p>{selectedCourse.enrollmentCount} étudiant(s)</p>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Description</h4>
+                  <p className="text-gray-700 whitespace-pre-line">
+                    {selectedCourse.description}
+                  </p>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsViewDialogOpen(false)}
+                >
+                  Fermer
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsViewDialogOpen(false);
+                    setIsEditDialogOpen(true);
+                  }}
+                  className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                >
+                  <Edit2 className="mr-2 h-4 w-4" />
+                  Modifier
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Course Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Modifier la formation</DialogTitle>
+            <DialogDescription>
+              Modifier les informations de {selectedCourse?.title}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="edit-title" className="text-right">
+                Titre
+              </label>
+              <Input
+                id="edit-title"
+                name="title"
+                className="col-span-3"
+                value={formData.title}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="edit-description" className="text-right">
+                Description
+              </label>
+              <Textarea
+                id="edit-description"
+                name="description"
+                className="col-span-3"
+                value={formData.description}
+                onChange={handleInputChange}
+                rows={5}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="edit-level" className="text-right">
+                Niveau
+              </label>
+              <Select 
+                value={formData.level} 
+                onValueChange={(value) => handleSelectChange('level', value)}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Selectionner un niveau" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="beginner">Débutant</SelectItem>
+                  <SelectItem value="intermediate">Intermédiaire</SelectItem>
+                  <SelectItem value="advanced">Avancé</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="edit-categoryId" className="text-right">
+                Catégorie
+              </label>
+              <Select 
+                value={formData.categoryId.toString()} 
+                onValueChange={(value) => handleSelectChange('categoryId', value)}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Selectionner une catégorie" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map(category => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="edit-duration" className="text-right">
+                Durée (minutes)
+              </label>
+              <Input
+                id="edit-duration"
+                name="duration"
+                type="number"
+                className="col-span-3"
+                value={formData.duration}
+                onChange={handleNumberInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="edit-price" className="text-right">
+                Prix (€)
+              </label>
+              <Input
+                id="edit-price"
+                name="price"
+                type="number"
+                className="col-span-3"
+                value={formData.price}
+                onChange={handleNumberInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="edit-imageUrl" className="text-right">
+                Image URL
+              </label>
+              <Input
+                id="edit-imageUrl"
+                name="imageUrl"
+                className="col-span-3"
+                value={formData.imageUrl || ''}
+                onChange={handleInputChange}
+                placeholder="http://example.com/image.jpg"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button 
+              type="button" 
+              onClick={handleEditCourse}
+              disabled={updateCourseMutation.isPending}
+              className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"
+            >
+              {updateCourseMutation.isPending ? "Mise a jour en cours..." : "Mettre a jour"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

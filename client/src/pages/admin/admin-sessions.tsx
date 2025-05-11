@@ -1,28 +1,39 @@
-import { useAuth } from "@/hooks/use-auth";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Loader2, 
-  CalendarDays, 
-  CalendarCheck, 
-  CalendarX, 
-  CalendarPlus,
-  Clock, 
-  Calendar, 
-  Users,
-  Search,
-  Filter,
-  MoreHorizontal,
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
   PlusCircle,
-  Eye,
-  ExternalLink,
-  Edit,
+  Search,
+  Edit2,
   Trash2,
-  VideoIcon
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+  Check,
+  X,
+  Eye,
+  Calendar,
+  Users,
+  Video,
+  Clock,
+  Link as LinkIcon
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -32,367 +43,889 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import { useState } from "react";
-import { queryClient, apiRequest } from "@/lib/queryClient";
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+
+type SessionWithDetails = {
+  id: number;
+  courseId: number;
+  date: string;
+  startTime: string;
+  endTime: string;
+  maxStudents: number;
+  zoomLink: string;
+  recordingLink?: string;
+  courseTitle: string;
+  trainerName: string;
+  enrollmentCount: number;
+  courseCategoryName: string;
+};
+
+type Course = {
+  id: number;
+  title: string;
+  categoryName: string;
+  trainerName: string;
+  trainerId: number;
+};
+
+type SessionFormData = {
+  courseId: number;
+  date: string;
+  startTime: string;
+  endTime: string;
+  maxStudents: number;
+  zoomLink: string;
+  recordingLink?: string;
+};
 
 export default function AdminSessions() {
-  const { user } = useAuth();
   const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [trainerFilter, setTrainerFilter] = useState("all");
+  const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState("upcoming");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [selectedSession, setSelectedSession] = useState<SessionWithDetails | null>(null);
+  const [formData, setFormData] = useState<SessionFormData>({
+    courseId: 0,
+    date: new Date().toISOString().split('T')[0],
+    startTime: '10:00',
+    endTime: '12:00',
+    maxStudents: 20,
+    zoomLink: '',
+  });
 
   // Fetch sessions
-  const { data: sessions, isLoading: isSessionsLoading } = useQuery({
-    queryKey: ["/api/sessions"],
-    enabled: !!user && user.role === "admin"
+  const { data: sessions = [], isLoading } = useQuery<SessionWithDetails[]>({
+    queryKey: ['/api/admin/sessions'],
   });
 
-  // Fetch courses for course details
-  const { data: courses } = useQuery({
-    queryKey: ["/api/courses"],
-    enabled: !!user && user.role === "admin"
+  // Fetch courses for select dropdown
+  const { data: courses = [] } = useQuery<Course[]>({
+    queryKey: ['/api/admin/courses'],
   });
 
-  // Fetch users for trainer names
-  const { data: users } = useQuery({
-    queryKey: ["/api/users"],
-    enabled: !!user && user.role === "admin"
+  // Create session mutation
+  const createSessionMutation = useMutation({
+    mutationFn: async (sessionData: SessionFormData) => {
+      const res = await apiRequest('POST', '/api/admin/sessions', sessionData);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/sessions'] });
+      toast({
+        title: "Session creee",
+        description: "La session a ete creee avec succes",
+      });
+      resetForm();
+      setIsAddDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: "Echec de creation de la session: " + error.message,
+        variant: "destructive",
+      });
+    }
   });
 
-  // Déterminer le statut d'une session basé sur sa date
-  const getSessionStatus = (sessionDate: Date) => {
-    const now = new Date();
-    if (sessionDate < now) {
-      return "completed";
-    } else if (sessionDate.getTime() - now.getTime() < 24 * 60 * 60 * 1000) {
-      return "soon";
+  // Update session mutation
+  const updateSessionMutation = useMutation({
+    mutationFn: async ({ 
+      id, 
+      sessionData 
+    }: { 
+      id: number, 
+      sessionData: Partial<SessionFormData>
+    }) => {
+      const res = await apiRequest('PATCH', `/api/admin/sessions/${id}`, sessionData);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/sessions'] });
+      toast({
+        title: "Session mise a jour",
+        description: "La session a ete mise a jour avec succes",
+      });
+      resetForm();
+      setIsEditDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: "Echec de mise a jour de la session: " + error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Delete session mutation
+  const deleteSessionMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest('DELETE', `/api/admin/sessions/${id}`);
+      return res.ok;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/sessions'] });
+      toast({
+        title: "Session supprimee",
+        description: "La session a ete supprimee avec succes",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: "Echec de suppression de la session: " + error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleNumberInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: value === '' ? 0 : parseInt(value) 
+    }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    if (name === 'courseId') {
+      setFormData(prev => ({ ...prev, [name]: parseInt(value) }));
     } else {
-      return "upcoming";
+      setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
-  // Fonction pour supprimer une session
-  const deleteSession = (sessionId: number) => {
-    toast({
-      title: "Session supprimée",
-      description: "La session a été supprimée avec succès."
+  const resetForm = () => {
+    setFormData({
+      courseId: 0,
+      date: new Date().toISOString().split('T')[0],
+      startTime: '10:00',
+      endTime: '12:00',
+      maxStudents: 20,
+      zoomLink: '',
     });
-    // Mutation pour supprimer une session (à implémenter)
+    setSelectedSession(null);
   };
 
-  // Fonction pour obtenir le nom complet du formateur
-  const getTrainerName = (trainerId: number) => {
-    const trainer = users?.find((u: any) => u.id === trainerId);
-    return trainer ? (trainer.displayName || trainer.username) : "Formateur inconnu";
+  const handleAddSession = () => {
+    createSessionMutation.mutate(formData);
   };
 
-  // Fonction pour obtenir le titre du cours
-  const getCourseTitle = (courseId: number) => {
-    const course = courses?.find((c: any) => c.id === courseId);
-    return course ? course.title : "Cours inconnu";
+  const handleEditSession = () => {
+    if (!selectedSession) return;
+    
+    // Only include fields that have been modified
+    const updatedFields: Partial<SessionFormData> = {};
+    
+    if (formData.courseId && formData.courseId !== selectedSession.courseId) 
+      updatedFields.courseId = formData.courseId;
+    
+    if (formData.date && formData.date !== selectedSession.date.split('T')[0]) 
+      updatedFields.date = formData.date;
+    
+    if (formData.startTime && formData.startTime !== selectedSession.startTime) 
+      updatedFields.startTime = formData.startTime;
+    
+    if (formData.endTime && formData.endTime !== selectedSession.endTime) 
+      updatedFields.endTime = formData.endTime;
+    
+    if (formData.maxStudents && formData.maxStudents !== selectedSession.maxStudents) 
+      updatedFields.maxStudents = formData.maxStudents;
+    
+    if (formData.zoomLink && formData.zoomLink !== selectedSession.zoomLink) 
+      updatedFields.zoomLink = formData.zoomLink;
+    
+    if (formData.recordingLink !== selectedSession.recordingLink) 
+      updatedFields.recordingLink = formData.recordingLink;
+    
+    // Only update if there are changes
+    if (Object.keys(updatedFields).length > 0) {
+      updateSessionMutation.mutate({ id: selectedSession.id, sessionData: updatedFields });
+    } else {
+      toast({
+        title: "Aucune modification",
+        description: "Aucune modification n'a ete apportee",
+      });
+      setIsEditDialogOpen(false);
+    }
   };
 
-  // Filtrer les sessions
-  const filteredSessions = sessions?.filter((session: any) => {
-    const courseTitle = getCourseTitle(session.courseId);
-    const course = courses?.find((c: any) => c.id === session.courseId);
-    const trainerName = course ? getTrainerName(course.trainerId) : "";
-    const sessionStatus = getSessionStatus(new Date(session.date));
-    
-    const matchesSearch = searchQuery === "" ||
-      courseTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      trainerName.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || sessionStatus === statusFilter;
-    const matchesTrainer = trainerFilter === "all" || 
-      (course && trainerFilter === course.trainerId.toString());
-    
-    return matchesSearch && matchesStatus && matchesTrainer;
-  }) || [];
+  const handleDeleteSession = (session: SessionWithDetails) => {
+    if (window.confirm(`Etes-vous sur de vouloir supprimer la session du ${formatDate(session.date)} ?`)) {
+      deleteSessionMutation.mutate(session.id);
+    }
+  };
 
-  // Liste des formateurs pour le filtre
-  const trainers = users?.filter((u: any) => u.role === "trainer") || [];
+  const prepareEditSession = (session: SessionWithDetails) => {
+    setSelectedSession(session);
+    setFormData({
+      courseId: session.courseId,
+      date: new Date(session.date).toISOString().split('T')[0],
+      startTime: session.startTime,
+      endTime: session.endTime,
+      maxStudents: session.maxStudents,
+      zoomLink: session.zoomLink,
+      recordingLink: session.recordingLink
+    });
+    setIsEditDialogOpen(true);
+  };
 
-  // Statistiques des sessions
-  const totalSessions = sessions?.length || 0;
-  const upcomingSessions = sessions?.filter((s: any) => getSessionStatus(new Date(s.date)) === "upcoming").length || 0;
-  const completedSessions = sessions?.filter((s: any) => getSessionStatus(new Date(s.date)) === "completed").length || 0;
-  const soonSessions = sessions?.filter((s: any) => getSessionStatus(new Date(s.date)) === "soon").length || 0;
+  const viewSessionDetails = (session: SessionWithDetails) => {
+    setSelectedSession(session);
+    setIsViewDialogOpen(true);
+  };
+
+  const filteredSessions = sessions.filter(session => {
+    // Filter by search query
+    const matchesSearch = 
+      session.courseTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      session.trainerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      session.courseCategoryName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      session.zoomLink.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const now = new Date();
+    const sessionDate = new Date(session.date);
+    const isPast = sessionDate < now;
+    const isUpcoming = sessionDate >= now;
+    
+    // Filter by tab
+    if (activeTab === "all") return matchesSearch;
+    if (activeTab === "upcoming") return matchesSearch && isUpcoming;
+    if (activeTab === "past") return matchesSearch && isPast;
+    
+    return matchesSearch;
+  });
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
+  const formatTime = (timeString: string) => {
+    return timeString;
+  };
+
+  const formatDateTime = (dateString: string, timeString: string) => {
+    return `${formatDate(dateString)} à ${formatTime(timeString)}`;
+  };
+
+  const getStatusBadge = (sessionDate: string) => {
+    const now = new Date();
+    const sessionDateTime = new Date(sessionDate);
+    
+    if (sessionDateTime < now) {
+      return (
+        <Badge className="bg-gray-100 text-gray-800">
+          Terminée
+        </Badge>
+      );
+    } else {
+      const diffTime = Math.abs(sessionDateTime.getTime() - now.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays <= 2) {
+        return (
+          <Badge className="bg-red-100 text-red-800">
+            Aujourd'hui / Demain
+          </Badge>
+        );
+      } else if (diffDays <= 7) {
+        return (
+          <Badge className="bg-orange-100 text-orange-800">
+            Cette semaine
+          </Badge>
+        );
+      } else {
+        return (
+          <Badge className="bg-green-100 text-green-800">
+            A venir
+          </Badge>
+        );
+      }
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copié",
+      description: "Lien copié dans le presse-papier",
+    });
+  };
 
   return (
-    <div className="space-y-8">
-      {/* En-tête */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 font-heading">Gestion des sessions</h1>
-        <p className="mt-2 text-gray-600">
-          Gérez les sessions programmées et passées pour toutes les formations.
-        </p>
-      </div>
-
-      {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Total Sessions</p>
-              <p className="text-2xl font-bold">{totalSessions}</p>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-              <CalendarDays className="h-5 w-5 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Programmées</p>
-              <p className="text-2xl font-bold">{upcomingSessions}</p>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-              <CalendarPlus className="h-5 w-5 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">À venir (24h)</p>
-              <p className="text-2xl font-bold">{soonSessions}</p>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
-              <Clock className="h-5 w-5 text-amber-600" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Terminées</p>
-              <p className="text-2xl font-bold">{completedSessions}</p>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-              <CalendarCheck className="h-5 w-5 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filtres et recherche */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
-        <div className="flex-1">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Rechercher par formation, formateur..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10"
-            />
-          </div>
-        </div>
-        <div className="w-full md:w-48">
-          <Select 
-            value={statusFilter} 
-            onValueChange={setStatusFilter}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Statut" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les statuts</SelectItem>
-              <SelectItem value="upcoming">Programmées</SelectItem>
-              <SelectItem value="soon">À venir (24h)</SelectItem>
-              <SelectItem value="completed">Terminées</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="w-full md:w-48">
-          <Select 
-            value={trainerFilter} 
-            onValueChange={setTrainerFilter}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Formateur" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les formateurs</SelectItem>
-              {trainers.map((trainer: any) => (
-                <SelectItem key={trainer.id} value={trainer.id.toString()}>
-                  {trainer.displayName || trainer.username}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <Button className="bg-primary">
-          <PlusCircle className="h-4 w-4 mr-2" />
-          Nouvelle session
-        </Button>
-      </div>
-
-      {/* Liste des sessions */}
+    <div className="p-6 space-y-6">
       <Card>
-        <CardHeader>
-          <CardTitle>Toutes les sessions</CardTitle>
-          <CardDescription>
-            {filteredSessions.length} session{filteredSessions.length !== 1 ? 's' : ''} trouvée{filteredSessions.length !== 1 ? 's' : ''}
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Gestion des Sessions</CardTitle>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Ajouter une session
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Ajouter une nouvelle session</DialogTitle>
+                <DialogDescription>
+                  Creer une nouvelle session avec les informations ci-dessous.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="courseId" className="text-right">
+                    Formation
+                  </label>
+                  <Select 
+                    value={formData.courseId.toString()} 
+                    onValueChange={(value) => handleSelectChange('courseId', value)}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Selectionner une formation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {courses.map(course => (
+                        <SelectItem key={course.id} value={course.id.toString()}>
+                          {course.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="date" className="text-right">
+                    Date
+                  </label>
+                  <Input
+                    id="date"
+                    name="date"
+                    type="date"
+                    className="col-span-3"
+                    value={formData.date}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="startTime" className="text-right">
+                    Heure de début
+                  </label>
+                  <Input
+                    id="startTime"
+                    name="startTime"
+                    type="time"
+                    className="col-span-3"
+                    value={formData.startTime}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="endTime" className="text-right">
+                    Heure de fin
+                  </label>
+                  <Input
+                    id="endTime"
+                    name="endTime"
+                    type="time"
+                    className="col-span-3"
+                    value={formData.endTime}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="maxStudents" className="text-right">
+                    Nb places max
+                  </label>
+                  <Input
+                    id="maxStudents"
+                    name="maxStudents"
+                    type="number"
+                    className="col-span-3"
+                    value={formData.maxStudents}
+                    onChange={handleNumberInputChange}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="zoomLink" className="text-right">
+                    Lien Zoom
+                  </label>
+                  <Input
+                    id="zoomLink"
+                    name="zoomLink"
+                    className="col-span-3"
+                    value={formData.zoomLink}
+                    onChange={handleInputChange}
+                    placeholder="https://zoom.us/j/..."
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="recordingLink" className="text-right">
+                    Lien Enregistrement
+                  </label>
+                  <Input
+                    id="recordingLink"
+                    name="recordingLink"
+                    className="col-span-3"
+                    value={formData.recordingLink || ''}
+                    onChange={handleInputChange}
+                    placeholder="https://..."
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                  Annuler
+                </Button>
+                <Button 
+                  type="button" 
+                  onClick={handleAddSession}
+                  disabled={createSessionMutation.isPending}
+                  className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"
+                >
+                  {createSessionMutation.isPending ? "Creation en cours..." : "Creer la session"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </CardHeader>
         <CardContent>
-          {isSessionsLoading ? (
-            <div className="flex justify-center items-center py-10">
-              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Tabs 
+                defaultValue="upcoming" 
+                value={activeTab} 
+                onValueChange={setActiveTab} 
+                className="w-[400px]"
+              >
+                <TabsList>
+                  <TabsTrigger value="all">Toutes</TabsTrigger>
+                  <TabsTrigger value="upcoming">A venir</TabsTrigger>
+                  <TabsTrigger value="past">Terminées</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <div className="relative w-[300px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Rechercher une session..." 
+                  className="pl-10" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
             </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Formation</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Heure</TableHead>
-                  <TableHead>Formateur</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Inscrits</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredSessions.map((session: any) => {
-                  const course = courses?.find((c: any) => c.id === session.courseId);
-                  const trainerName = course ? getTrainerName(course.trainerId) : "Formateur inconnu";
-                  const sessionDate = new Date(session.date);
-                  const sessionStatus = getSessionStatus(sessionDate);
-                  
-                  return (
-                    <TableRow key={session.id}>
-                      <TableCell>
-                        <div className="font-medium">{getCourseTitle(session.courseId)}</div>
-                      </TableCell>
-                      <TableCell>
-                        {format(sessionDate, "d MMMM yyyy", { locale: fr })}
-                      </TableCell>
-                      <TableCell>
-                        {format(sessionDate, "HH:mm", { locale: fr })}
-                      </TableCell>
-                      <TableCell>{trainerName}</TableCell>
-                      <TableCell>
-                        <Badge className={
-                          sessionStatus === 'completed' ? 'bg-green-100 text-green-800 border-green-200' :
-                          sessionStatus === 'soon' ? 'bg-amber-100 text-amber-800 border-amber-200' :
-                          'bg-purple-100 text-purple-800 border-purple-200'
-                        }>
-                          {sessionStatus === 'completed' ? 'Terminée' :
-                           sessionStatus === 'soon' ? 'Très prochainement' : 'À venir'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <Users className="h-4 w-4 mr-1 text-gray-500" />
-                          <span>{session.enrollmentCount || 0}</span>
-                          <span className="text-gray-400 mx-1">/</span>
-                          <span>{course?.maxStudents || 15}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem>
-                              <Eye className="h-4 w-4 mr-2" />
-                              Détails
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <VideoIcon className="h-4 w-4 mr-2" />
-                              Lien Zoom
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Users className="h-4 w-4 mr-2" />
-                              Participants
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Modifier
-                            </DropdownMenuItem>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600">
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Supprimer
-                                </DropdownMenuItem>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Cette action supprimera définitivement la session du {format(sessionDate, "d MMMM yyyy à HH:mm", { locale: fr })}.
-                                    Cette action est irréversible.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                  <AlertDialogAction 
-                                    onClick={() => deleteSession(session.id)}
-                                    className="bg-red-600 hover:bg-red-700"
-                                  >
-                                    Supprimer
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-
-                {filteredSessions.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
-                      <div className="flex flex-col items-center justify-center text-gray-500">
-                        <Calendar className="h-12 w-12 text-gray-300 mb-3" />
-                        <p className="text-lg font-medium">Aucune session trouvée</p>
-                        <p className="text-sm max-w-md mt-1">
-                          Aucune session ne correspond à vos critères de recherche. Essayez d'ajuster vos filtres.
-                        </p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+            
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin w-10 h-10 border-4 border-[#1D2B6C] border-t-transparent rounded-full"></div>
+              </div>
+            ) : (
+              <>
+                {filteredSessions.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Formation</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Horaires</TableHead>
+                        <TableHead>Inscriptions</TableHead>
+                        <TableHead>Formateur</TableHead>
+                        <TableHead>Statut</TableHead>
+                        <TableHead>Liens</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredSessions.map((session) => {
+                        const now = new Date();
+                        const sessionDate = new Date(session.date);
+                        const isPast = sessionDate < now;
+                        
+                        return (
+                          <TableRow key={session.id}>
+                            <TableCell>
+                              <div className="font-medium">{session.courseTitle}</div>
+                              <div className="text-xs text-muted-foreground">{session.courseCategoryName}</div>
+                            </TableCell>
+                            <TableCell>
+                              {formatDate(session.date)}
+                            </TableCell>
+                            <TableCell>
+                              {formatTime(session.startTime)} - {formatTime(session.endTime)}
+                            </TableCell>
+                            <TableCell>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-center">
+                                      <Users className="h-4 w-4 mr-1 text-muted-foreground" />
+                                      <span>{session.enrollmentCount}/{session.maxStudents}</span>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{session.enrollmentCount} inscrits sur {session.maxStudents} places</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </TableCell>
+                            <TableCell>
+                              {session.trainerName}
+                            </TableCell>
+                            <TableCell>
+                              {getStatusBadge(session.date)}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex space-x-1">
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={() => copyToClipboard(session.zoomLink)}
+                                      >
+                                        <Video className="h-3 w-3" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Copier le lien Zoom</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                
+                                {session.recordingLink && (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button 
+                                          variant="outline" 
+                                          size="sm"
+                                          onClick={() => copyToClipboard(session.recordingLink || '')}
+                                        >
+                                          <LinkIcon className="h-3 w-3" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Copier le lien d'enregistrement</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end space-x-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => viewSessionDetails(session)}
+                                  className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => prepareEditSession(session)}
+                                  className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => handleDeleteSession(session)}
+                                  className="text-red-600 border-red-600 hover:bg-red-50"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-10">
+                    <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <h3 className="text-lg font-medium mb-2">Aucune session trouvée</h3>
+                    <p className="text-muted-foreground mb-4">
+                      {searchQuery 
+                        ? "Aucune session ne correspond à votre recherche." 
+                        : "Vous n'avez encore aucune session."}
+                    </p>
+                    <Button 
+                      onClick={() => setIsAddDialogOpen(true)}
+                      className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"
+                    >
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Ajouter une session
+                    </Button>
+                  </div>
                 )}
-              </TableBody>
-            </Table>
-          )}
+              </>
+            )}
+          </div>
         </CardContent>
       </Card>
+
+      {/* View Session Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          {selectedSession && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center justify-between">
+                  <DialogTitle>Détails de la session</DialogTitle>
+                  {getStatusBadge(selectedSession.date)}
+                </div>
+                <DialogDescription>
+                  Session pour la formation : <span className="font-medium">{selectedSession.courseTitle}</span>
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="bg-muted rounded-lg p-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-sm font-medium mb-1 text-muted-foreground">Date</div>
+                      <div className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                        {formatDate(selectedSession.date)}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium mb-1 text-muted-foreground">Horaires</div>
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                        {formatTime(selectedSession.startTime)} - {formatTime(selectedSession.endTime)}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium mb-1 text-muted-foreground">Formateur</div>
+                      <div>{selectedSession.trainerName}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium mb-1 text-muted-foreground">Catégorie</div>
+                      <div>{selectedSession.courseCategoryName}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium mb-1 text-muted-foreground">Inscriptions</div>
+                      <div className="flex items-center">
+                        <Users className="h-4 w-4 mr-2 text-muted-foreground" />
+                        {selectedSession.enrollmentCount}/{selectedSession.maxStudents}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Liens de connexion</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-2 bg-blue-50 rounded-md">
+                      <div className="flex items-center">
+                        <Video className="h-4 w-4 mr-2 text-blue-500" />
+                        <span className="text-sm font-medium">Lien Zoom</span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyToClipboard(selectedSession.zoomLink)}
+                        className="text-blue-600 border-blue-600 hover:bg-blue-100"
+                      >
+                        Copier
+                      </Button>
+                    </div>
+                    
+                    {selectedSession.recordingLink && (
+                      <div className="flex items-center justify-between p-2 bg-purple-50 rounded-md">
+                        <div className="flex items-center">
+                          <LinkIcon className="h-4 w-4 mr-2 text-purple-500" />
+                          <span className="text-sm font-medium">Lien d'enregistrement</span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => copyToClipboard(selectedSession.recordingLink || '')}
+                          className="text-purple-600 border-purple-600 hover:bg-purple-100"
+                        >
+                          Copier
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsViewDialogOpen(false)}
+                >
+                  Fermer
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsViewDialogOpen(false);
+                    setIsEditDialogOpen(true);
+                  }}
+                  className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                >
+                  <Edit2 className="mr-2 h-4 w-4" />
+                  Modifier
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Session Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Modifier la session</DialogTitle>
+            <DialogDescription>
+              Modifier les informations de la session pour {selectedSession?.courseTitle}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="edit-courseId" className="text-right">
+                Formation
+              </label>
+              <Select 
+                value={formData.courseId.toString()} 
+                onValueChange={(value) => handleSelectChange('courseId', value)}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Selectionner une formation" />
+                </SelectTrigger>
+                <SelectContent>
+                  {courses.map(course => (
+                    <SelectItem key={course.id} value={course.id.toString()}>
+                      {course.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="edit-date" className="text-right">
+                Date
+              </label>
+              <Input
+                id="edit-date"
+                name="date"
+                type="date"
+                className="col-span-3"
+                value={formData.date}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="edit-startTime" className="text-right">
+                Heure de début
+              </label>
+              <Input
+                id="edit-startTime"
+                name="startTime"
+                type="time"
+                className="col-span-3"
+                value={formData.startTime}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="edit-endTime" className="text-right">
+                Heure de fin
+              </label>
+              <Input
+                id="edit-endTime"
+                name="endTime"
+                type="time"
+                className="col-span-3"
+                value={formData.endTime}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="edit-maxStudents" className="text-right">
+                Nb places max
+              </label>
+              <Input
+                id="edit-maxStudents"
+                name="maxStudents"
+                type="number"
+                className="col-span-3"
+                value={formData.maxStudents}
+                onChange={handleNumberInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="edit-zoomLink" className="text-right">
+                Lien Zoom
+              </label>
+              <Input
+                id="edit-zoomLink"
+                name="zoomLink"
+                className="col-span-3"
+                value={formData.zoomLink}
+                onChange={handleInputChange}
+                placeholder="https://zoom.us/j/..."
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="edit-recordingLink" className="text-right">
+                Lien Enregistrement
+              </label>
+              <Input
+                id="edit-recordingLink"
+                name="recordingLink"
+                className="col-span-3"
+                value={formData.recordingLink || ''}
+                onChange={handleInputChange}
+                placeholder="https://..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button 
+              type="button" 
+              onClick={handleEditSession}
+              disabled={updateSessionMutation.isPending}
+              className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"
+            >
+              {updateSessionMutation.isPending ? "Mise a jour en cours..." : "Mettre a jour"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

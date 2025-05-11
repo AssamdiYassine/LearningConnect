@@ -1,458 +1,624 @@
-import { Express } from "express";
-import { storage } from "./storage";
-import { z } from "zod";
-import { insertNotificationSchema, insertUserSchema } from "@shared/schema";
+import { Request, Response, NextFunction, Express } from 'express';
+import { z } from 'zod';
+import { storage } from './storage';
+import { scrypt, randomBytes, timingSafeEqual } from 'crypto';
+import { promisify } from 'util';
+import {
+  insertUserSchema,
+  insertCourseSchema,
+  insertSessionSchema,
+  insertCategorySchema,
+  courseLevelEnum,
+  roleEnum
+} from '@shared/schema';
 
-// Middleware to check if user has admin role
-export function hasAdminRole(req: any, res: any, next: any) {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ message: "Forbidden - Admin access required" });
-  }
-  next();
+const scryptAsync = promisify(scrypt);
+
+// Fonction de hachage de mot de passe
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
 }
 
-// Register admin-specific routes
+// Middleware pour vérifier le rôle admin
+export function hasAdminRole(req: any, res: any, next: any) {
+  if (req.isAuthenticated() && req.user.role === 'admin') {
+    return next();
+  }
+  return res.status(403).json({ message: "Accès non autorisé" });
+}
+
 export function registerAdminRoutes(app: Express) {
-  // Admin dashboard stats API
-  app.get("/api/admin/stats", hasAdminRole, async (req, res) => {
-    try {
-      // Get counts
-      const users = await storage.getAllUsers();
-      const courses = await storage.getAllCoursesWithDetails();
-      const sessions = await storage.getAllSessionsWithDetails();
-      const categories = await storage.getAllCategories();
-      
-      // Calculate statistics
-      const totalUsers = users.length;
-      const totalCourses = courses.length;
-      const totalSessions = sessions.length;
-      const totalCategories = categories.length;
-      
-      const studentCount = users.filter(user => user.role === "student").length;
-      const trainerCount = users.filter(user => user.role === "trainer").length;
-      const adminCount = users.filter(user => user.role === "admin").length;
-      
-      const subscribedUsers = users.filter(user => user.isSubscribed).length;
-      const subscriptionRate = totalUsers > 0 ? (subscribedUsers / totalUsers) * 100 : 0;
-      
-      // Get upcoming sessions
-      const now = new Date();
-      const upcomingSessions = sessions.filter(s => new Date(s.date) > now);
-      const pastSessions = sessions.filter(s => new Date(s.date) <= now);
-      
-      // Get pending courses
-      const pendingCourses = courses.filter(c => !c.isApproved);
-      
-      // Monthly data (would come from DB in a real app)
-      // In a real app, this data would be calculated from actual database records
-      const monthlyRevenue = [
-        { name: 'Jan', total: 2200, abonnements: 1500, coursUniques: 700 },
-        { name: 'Fév', total: 2840, abonnements: 1900, coursUniques: 940 },
-        { name: 'Mar', total: 3400, abonnements: 2200, coursUniques: 1200 },
-        { name: 'Avr', total: 2980, abonnements: 1800, coursUniques: 1180 },
-        { name: 'Mai', total: 3450, abonnements: 2300, coursUniques: 1150 },
-      ];
-
-      const userGrowthData = [
-        { name: 'Jan', étudiants: 20, formateurs: 4 },
-        { name: 'Fév', étudiants: 35, formateurs: 5 },
-        { name: 'Mar', étudiants: 45, formateurs: 6 },
-        { name: 'Avr', étudiants: 55, formateurs: 7 },
-        { name: 'Mai', étudiants: 65, formateurs: 8 },
-      ];
-      
-      // Return stats
-      res.json({
-        userStats: {
-          total: totalUsers,
-          students: studentCount,
-          trainers: trainerCount,
-          admins: adminCount,
-          subscribedUsers,
-          subscriptionRate: Math.round(subscriptionRate * 100) / 100
-        },
-        contentStats: {
-          totalCourses,
-          totalSessions,
-          totalCategories,
-          upcomingSessionCount: upcomingSessions.length,
-          pastSessionCount: pastSessions.length,
-          pendingCourseCount: pendingCourses.length
-        },
-        revenueData: monthlyRevenue,
-        growthData: userGrowthData
-      });
-    } catch (error) {
-      console.error("Error fetching admin stats:", error);
-      res.status(500).json({ message: "Failed to fetch admin statistics" });
-    }
-  });
+  // ========== UTILISATEURS ==========
   
-  // Admin list of all users API
-  app.get("/api/admin/users", hasAdminRole, async (req, res) => {
+  // Récupérer tous les utilisateurs 
+  app.get('/api/admin/users', hasAdminRole, async (req, res) => {
     try {
       const users = await storage.getAllUsers();
-      res.json(users);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      res.status(500).json({ message: "Failed to fetch users" });
-    }
-  });
-  
-  // Admin create user API
-  app.post("/api/admin/users", hasAdminRole, async (req, res) => {
-    try {
-      // Validate the user data
-      const userSchema = insertUserSchema.extend({
-        displayName: z.string().optional(),
-      });
-      
-      const validatedData = userSchema.parse(req.body);
-      
-      // Create the user
-      const newUser = await storage.createUser(validatedData);
-      
-      res.status(201).json(newUser);
+      res.status(200).json(users);
     } catch (error: any) {
-      console.error("Error creating user:", error);
-      res.status(500).json({ 
-        message: "Failed to create user", 
-        error: error.message || String(error) 
-      });
+      res.status(500).json({ message: `Erreur lors de la récupération des utilisateurs: ${error.message}` });
     }
   });
 
-  // Admin user update API
-  app.patch("/api/admin/users/:id", hasAdminRole, async (req, res) => {
+  // Récupérer un utilisateur par ID
+  app.get('/api/admin/users/:id', hasAdminRole, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
-      const { 
-        role, 
-        username, 
-        email, 
-        displayName, 
-        password,
-        isSubscribed, 
-        subscriptionType, 
-        subscriptionEndDate 
-      } = req.body;
+      const user = await storage.getUser(userId);
       
-      // Update user role if provided
-      if (role) {
-        await storage.updateUserRole(userId, role);
+      if (!user) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
       }
       
-      // Update profile if any of these fields are provided
-      if (username || email || displayName) {
-        await storage.updateUserProfile(userId, { 
-          displayName: displayName, 
-          email: email 
-        });
+      res.status(200).json(user);
+    } catch (error: any) {
+      res.status(500).json({ message: `Erreur lors de la récupération de l'utilisateur: ${error.message}` });
+    }
+  });
+
+  // Créer un nouvel utilisateur (par l'admin)
+  app.post('/api/admin/users', hasAdminRole, async (req, res) => {
+    try {
+      // Validation du schema utilisateur
+      const userSchema = insertUserSchema.extend({
+        role: z.enum(['student', 'trainer', 'admin']).default('student'),
+        password: z.string().min(6),
+        confirmPassword: z.string().min(6)
+      }).refine((data) => data.password === data.confirmPassword, {
+        message: "Les mots de passe ne correspondent pas",
+        path: ["confirmPassword"]
+      });
+
+      const userData = userSchema.parse(req.body);
+      
+      // Vérifier si l'utilisateur existe déjà
+      const existingUser = await storage.getUserByUsername(userData.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Ce nom d'utilisateur est déjà utilisé" });
       }
       
-      // Update password if provided
-      if (password) {
-        await storage.updateUserPassword(userId, password);
+      const existingEmail = await storage.getUserByEmail(userData.email);
+      if (existingEmail) {
+        return res.status(400).json({ message: "Cette adresse email est déjà utilisée" });
       }
       
-      // Update subscription if provided
-      if (typeof isSubscribed === 'boolean') {
-        await storage.updateSubscription(
+      // Créer l'utilisateur avec le mot de passe hashé
+      const hashedPassword = await hashPassword(userData.password);
+      const newUser = await storage.createUser({
+        username: userData.username,
+        email: userData.email,
+        password: hashedPassword,
+        role: userData.role,
+        displayName: userData.displayName,
+        isSubscribed: userData.isSubscribed,
+        subscriptionType: userData.subscriptionType,
+        subscriptionEndDate: userData.subscriptionEndDate
+      });
+
+      // Remove password from response
+      const { password, ...userWithoutPassword } = newUser;
+      
+      res.status(201).json(userWithoutPassword);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Données invalides", errors: error.format() });
+      } else {
+        res.status(500).json({ message: `Erreur lors de la création de l'utilisateur: ${error.message}` });
+      }
+    }
+  });
+
+  // Mettre à jour un utilisateur
+  app.patch('/api/admin/users/:id', hasAdminRole, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Vérifier si l'utilisateur existe
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+      
+      // Validation des données de mise à jour
+      const updateSchema = z.object({
+        role: z.enum(['student', 'trainer', 'admin']).optional(),
+        displayName: z.string().min(2).optional(),
+        email: z.string().email().optional(),
+        isSubscribed: z.boolean().nullable().optional(),
+        subscriptionType: z.enum(['monthly', 'annual']).nullable().optional(),
+        subscriptionEndDate: z.date().nullable().optional(),
+      });
+      
+      const updateData = updateSchema.parse(req.body);
+      
+      // Mettre à jour l'utilisateur
+      let updatedUser;
+      
+      if (updateData.role) {
+        updatedUser = await storage.updateUserRole(userId, updateData.role);
+      }
+      
+      if (updateData.isSubscribed !== undefined) {
+        updatedUser = await storage.updateSubscription(
           userId, 
-          isSubscribed, 
-          subscriptionType, 
-          subscriptionEndDate ? new Date(subscriptionEndDate) : undefined
+          updateData.isSubscribed,
+          updateData.subscriptionType,
+          updateData.subscriptionEndDate
         );
       }
       
-      // Get the updated user
-      const updatedUser = await storage.getUser(userId);
-      
-      if (!updatedUser) {
-        return res.status(404).json({ message: "User not found" });
+      if (updateData.displayName || updateData.email) {
+        updatedUser = await storage.updateUserProfile(userId, {
+          displayName: updateData.displayName,
+          email: updateData.email
+        });
       }
       
-      res.json(updatedUser);
+      res.status(200).json(updatedUser);
     } catch (error: any) {
-      console.error("Error updating user:", error);
-      res.status(500).json({ 
-        message: "Failed to update user", 
-        error: error.message || String(error) 
-      });
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Données invalides", errors: error.format() });
+      } else {
+        res.status(500).json({ message: `Erreur lors de la mise à jour de l'utilisateur: ${error.message}` });
+      }
     }
   });
-  
-  // Admin delete user API
-  app.delete("/api/admin/users/:id", hasAdminRole, async (req, res) => {
+
+  // Supprimer un utilisateur
+  app.delete('/api/admin/users/:id', hasAdminRole, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
       
-      // In a real app, we would have a deleteUser method
-      // For now, we'll just return success and implement the actual deletion later
+      // Vérifier si l'utilisateur existe
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
       
-      res.json({ success: true, message: "User deleted successfully" });
+      // Ne pas permettre de supprimer son propre compte
+      if (user.id === req.user.id) {
+        return res.status(400).json({ message: "Vous ne pouvez pas supprimer votre propre compte" });
+      }
+      
+      // Supprimer l'utilisateur
+      await storage.deleteUser(userId);
+      
+      res.status(200).json({ message: "Utilisateur supprimé avec succès" });
     } catch (error: any) {
-      console.error("Error deleting user:", error);
-      res.status(500).json({ 
-        message: "Failed to delete user", 
-        error: error.message || String(error)
-      });
+      res.status(500).json({ message: `Erreur lors de la suppression de l'utilisateur: ${error.message}` });
     }
   });
-  
-  // Admin update user status API
-  app.patch("/api/admin/users/:id/status", hasAdminRole, async (req, res) => {
+
+  // Mettre à jour le mot de passe d'un utilisateur
+  app.post('/api/admin/users/:id/reset-password', hasAdminRole, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
-      const { isActive } = req.body;
       
-      if (typeof isActive !== 'boolean') {
-        return res.status(400).json({ message: "isActive must be a boolean" });
+      // Vérifier si l'utilisateur existe
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
       }
       
-      // For now, we'll use the subscription update as a way to track active status
-      // In a real app, we would have a dedicated field for this
-      await storage.updateSubscription(userId, isActive);
+      // Validation du nouveau mot de passe
+      const passwordSchema = z.object({
+        password: z.string().min(6),
+        confirmPassword: z.string().min(6)
+      }).refine((data) => data.password === data.confirmPassword, {
+        message: "Les mots de passe ne correspondent pas",
+        path: ["confirmPassword"]
+      });
       
-      const updatedUser = await storage.getUser(userId);
+      const { password } = passwordSchema.parse(req.body);
       
-      if (!updatedUser) {
-        return res.status(404).json({ message: "User not found" });
-      }
+      // Mettre à jour le mot de passe
+      const hashedPassword = await hashPassword(password);
+      await storage.updateUserPassword(userId, hashedPassword);
       
-      res.json(updatedUser);
+      res.status(200).json({ message: "Mot de passe mis à jour avec succès" });
     } catch (error: any) {
-      console.error("Error updating user status:", error);
-      res.status(500).json({ 
-        message: "Failed to update user status", 
-        error: error.message || String(error) 
-      });
-    }
-  });
-  
-  // Admin pending courses API
-  app.get("/api/admin/pending-courses", hasAdminRole, async (req, res) => {
-    try {
-      const courses = await storage.getAllCoursesWithDetails();
-      const pendingCourses = courses.filter(c => !c.isApproved);
-      res.json(pendingCourses);
-    } catch (error) {
-      console.error("Error fetching pending courses:", error);
-      res.status(500).json({ message: "Failed to fetch pending courses" });
-    }
-  });
-  
-  // Admin course approval API
-  app.patch("/api/admin/courses/:id/approval", hasAdminRole, async (req, res) => {
-    try {
-      const courseId = parseInt(req.params.id);
-      const { approved } = req.body;
-      
-      if (typeof approved !== 'boolean') {
-        return res.status(400).json({ message: "Approved status must be boolean" });
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Données invalides", errors: error.format() });
+      } else {
+        res.status(500).json({ message: `Erreur lors de la mise à jour du mot de passe: ${error.message}` });
       }
-      
-      // Get the course
-      const course = await storage.getCourse(courseId);
-      if (!course) {
-        return res.status(404).json({ message: "Course not found" });
-      }
-      
-      // In a real app, we would use course.updateCourse() to update the approval status
-      // But for now we'll just pretend we updated it and focus on the notification
-      
-      // Create notification for the trainer
-      await storage.createNotification({
-        userId: course.trainerId,
-        message: approved 
-          ? `Votre cours "${course.title}" a été approuvé et est maintenant visible dans le catalogue.`
-          : `Votre cours "${course.title}" n'a pas été approuvé. Veuillez contacter l'administrateur pour plus d'informations.`,
-        type: approved ? "approval" : "rejection",
-        isRead: false
-      });
-      
-      // Return a success response
-      res.json({ 
-        success: true, 
-        message: approved ? "Cours approuvé avec succès" : "Cours rejeté avec succès" 
-      });
-    } catch (error) {
-      console.error("Error updating course approval:", error);
-      res.status(500).json({ message: "Failed to update course approval status" });
     }
   });
+
+  // ========== CATÉGORIES ==========
   
-  // Admin trainer stats API
-  app.get("/api/admin/trainer-stats", hasAdminRole, async (req, res) => {
-    try {
-      const trainers = await storage.getAllUsers();
-      const trainerUsers = trainers.filter(user => user.role === "trainer");
-      
-      // For each trainer, get their courses and sessions
-      const trainerStats = await Promise.all(trainerUsers.map(async (trainer) => {
-        const courses = await storage.getCoursesByTrainer(trainer.id);
-        const sessions = await storage.getSessionsByTrainer(trainer.id);
-        
-        // Calculate stats
-        const totalSessions = sessions.length;
-        const upcomingSessions = sessions.filter(s => new Date(s.date) > new Date()).length;
-        
-        // Get all enrollments for this trainer's sessions
-        const enrollmentLists = await Promise.all(sessions.map(s => 
-          storage.getEnrollmentsBySession(s.id)
-        ));
-        
-        // Combine all enrollments and get unique student IDs
-        const allEnrollments = enrollmentLists.flat();
-        const uniqueStudentIds = new Set(allEnrollments.map(e => e.userId));
-        const totalStudents = uniqueStudentIds.size;
-        
-        // In a real app, these would come from a ratings table
-        const averageRating = 4 + Math.random(); // Simulated between 4.0-5.0
-        const totalRevenue = totalSessions * 100 + courses.length * 500; // Sample calculation
-        
-        return {
-          id: trainer.id,
-          name: trainer.displayName || trainer.username,
-          email: trainer.email,
-          courseCount: courses.length,
-          sessionCount: totalSessions,
-          upcomingSessions: upcomingSessions, 
-          studentCount: totalStudents,
-          averageRating: Math.min(5, parseFloat(averageRating.toFixed(1))),
-          totalRevenue
-        };
-      }));
-      
-      res.json(trainerStats);
-    } catch (error) {
-      console.error("Error fetching trainer stats:", error);
-      res.status(500).json({ message: "Failed to fetch trainer statistics" });
-    }
-  });
-  
-  // Admin broadcast notification API
-  app.post("/api/admin/notifications/broadcast", hasAdminRole, async (req, res) => {
-    try {
-      const { message, type, userRole } = req.body;
-      
-      if (!message || !type) {
-        return res.status(400).json({ message: "Message and type are required" });
-      }
-      
-      // Get users based on role filter
-      let users = await storage.getAllUsers();
-      if (userRole) {
-        users = users.filter(user => user.role === userRole);
-      }
-      
-      // Create a notification for each user
-      const notifications = await Promise.all(users.map(user => 
-        storage.createNotification({
-          userId: user.id,
-          message,
-          type,
-          isRead: false
-        })
-      ));
-      
-      res.json({ 
-        success: true, 
-        count: notifications.length,
-        message: `Notification broadcasted to ${notifications.length} users`
-      });
-    } catch (error) {
-      console.error("Error broadcasting notification:", error);
-      res.status(500).json({ message: "Failed to broadcast notification" });
-    }
-  });
-  
-  // Admin categories management API
-  app.get("/api/admin/categories", hasAdminRole, async (req, res) => {
+  // Récupérer toutes les catégories
+  app.get('/api/admin/categories', async (req, res) => {
     try {
       const categories = await storage.getAllCategories();
-      res.json(categories);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      res.status(500).json({ message: "Failed to fetch categories" });
+      res.status(200).json(categories);
+    } catch (error: any) {
+      res.status(500).json({ message: `Erreur lors de la récupération des catégories: ${error.message}` });
     }
   });
-  
-  app.post("/api/admin/categories", hasAdminRole, async (req, res) => {
+
+  // Récupérer une catégorie par ID
+  app.get('/api/admin/categories/:id', async (req, res) => {
     try {
-      const { name, slug } = req.body;
+      const categoryId = parseInt(req.params.id);
+      const category = await storage.getCategory(categoryId);
       
-      if (!name || !slug) {
-        return res.status(400).json({ message: "Name and slug are required" });
+      if (!category) {
+        return res.status(404).json({ message: "Catégorie non trouvée" });
       }
       
-      const newCategory = await storage.createCategory({ name, slug });
-      res.status(201).json(newCategory);
-    } catch (error) {
-      console.error("Error creating category:", error);
-      res.status(500).json({ message: "Failed to create category" });
+      res.status(200).json(category);
+    } catch (error: any) {
+      res.status(500).json({ message: `Erreur lors de la récupération de la catégorie: ${error.message}` });
     }
   });
-  
-  // Admin blog category management API
-  app.get("/api/admin/blog-categories", hasAdminRole, async (req, res) => {
+
+  // Créer une nouvelle catégorie
+  app.post('/api/admin/categories', hasAdminRole, async (req, res) => {
     try {
-      const categories = await storage.getAllBlogCategories();
-      res.json(categories);
-    } catch (error) {
-      console.error("Error fetching blog categories:", error);
-      res.status(500).json({ message: "Failed to fetch blog categories" });
-    }
-  });
-  
-  app.post("/api/admin/blog-categories", hasAdminRole, async (req, res) => {
-    try {
-      const { name, slug, description } = req.body;
+      const categoryData = insertCategorySchema.parse(req.body);
       
-      if (!name || !slug) {
-        return res.status(400).json({ message: "Name and slug are required" });
+      // Vérifier si la catégorie existe déjà (par le slug)
+      const existingCategory = await storage.getCategoryBySlug(categoryData.slug);
+      if (existingCategory) {
+        return res.status(400).json({ message: "Une catégorie avec ce slug existe déjà" });
       }
       
-      const newCategory = await storage.createBlogCategory({ name, slug, description });
+      // Créer la catégorie
+      const newCategory = await storage.createCategory(categoryData);
+      
       res.status(201).json(newCategory);
-    } catch (error) {
-      console.error("Error creating blog category:", error);
-      res.status(500).json({ message: "Failed to create blog category" });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Données invalides", errors: error.format() });
+      } else {
+        res.status(500).json({ message: `Erreur lors de la création de la catégorie: ${error.message}` });
+      }
+    }
+  });
+
+  // ========== FORMATIONS ==========
+  
+  // Récupérer toutes les formations avec détails
+  app.get('/api/admin/courses', async (req, res) => {
+    try {
+      const courses = await storage.getAllCoursesWithDetails();
+      res.status(200).json(courses);
+    } catch (error: any) {
+      res.status(500).json({ message: `Erreur lors de la récupération des formations: ${error.message}` });
+    }
+  });
+
+  // Récupérer une formation par ID
+  app.get('/api/admin/courses/:id', async (req, res) => {
+    try {
+      const courseId = parseInt(req.params.id);
+      const course = await storage.getCourseWithDetails(courseId);
+      
+      if (!course) {
+        return res.status(404).json({ message: "Formation non trouvée" });
+      }
+      
+      res.status(200).json(course);
+    } catch (error: any) {
+      res.status(500).json({ message: `Erreur lors de la récupération de la formation: ${error.message}` });
+    }
+  });
+
+  // Créer une nouvelle formation
+  app.post('/api/admin/courses', hasAdminRole, async (req, res) => {
+    try {
+      const courseSchema = insertCourseSchema.extend({
+        level: z.enum(['beginner', 'intermediate', 'advanced']),
+        price: z.number().min(0),
+        duration: z.number().min(0),
+        imageUrl: z.string().url().optional()
+      });
+      
+      const courseData = courseSchema.parse(req.body);
+      
+      // Vérifier si la catégorie existe
+      const category = await storage.getCategory(courseData.categoryId);
+      if (!category) {
+        return res.status(400).json({ message: "Catégorie non trouvée" });
+      }
+      
+      // Créer la formation
+      const newCourse = await storage.createCourse({
+        ...courseData,
+        isApproved: true, // Les formations créées par l'admin sont automatiquement approuvées
+      });
+      
+      res.status(201).json(newCourse);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Données invalides", errors: error.format() });
+      } else {
+        res.status(500).json({ message: `Erreur lors de la création de la formation: ${error.message}` });
+      }
+    }
+  });
+
+  // Mettre à jour une formation
+  app.patch('/api/admin/courses/:id', hasAdminRole, async (req, res) => {
+    try {
+      const courseId = parseInt(req.params.id);
+      
+      // Vérifier si la formation existe
+      const course = await storage.getCourse(courseId);
+      if (!course) {
+        return res.status(404).json({ message: "Formation non trouvée" });
+      }
+      
+      // Validation des données de mise à jour
+      const updateSchema = z.object({
+        title: z.string().min(3).optional(),
+        description: z.string().optional(),
+        level: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
+        categoryId: z.number().positive().optional(),
+        trainerId: z.number().positive().optional(),
+        duration: z.number().min(0).optional(),
+        price: z.number().min(0).optional(),
+        imageUrl: z.string().url().optional().nullable(),
+      });
+      
+      const updateData = updateSchema.parse(req.body);
+      
+      // Mettre à jour la formation
+      const updatedCourse = await storage.updateCourse(courseId, updateData);
+      
+      res.status(200).json(updatedCourse);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Données invalides", errors: error.format() });
+      } else {
+        res.status(500).json({ message: `Erreur lors de la mise à jour de la formation: ${error.message}` });
+      }
+    }
+  });
+
+  // Approuver/désapprouver une formation
+  app.patch('/api/admin/courses/:id/approval', hasAdminRole, async (req, res) => {
+    try {
+      const courseId = parseInt(req.params.id);
+      
+      // Vérifier si la formation existe
+      const course = await storage.getCourse(courseId);
+      if (!course) {
+        return res.status(404).json({ message: "Formation non trouvée" });
+      }
+      
+      // Validation des données
+      const approvalSchema = z.object({
+        approved: z.boolean()
+      });
+      
+      const { approved } = approvalSchema.parse(req.body);
+      
+      // Mettre à jour le statut d'approbation
+      const updatedCourse = await storage.updateCourse(courseId, { isApproved: approved });
+      
+      res.status(200).json(updatedCourse);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Données invalides", errors: error.format() });
+      } else {
+        res.status(500).json({ message: `Erreur lors de la mise à jour du statut: ${error.message}` });
+      }
+    }
+  });
+
+  // Supprimer une formation
+  app.delete('/api/admin/courses/:id', hasAdminRole, async (req, res) => {
+    try {
+      const courseId = parseInt(req.params.id);
+      
+      // Vérifier si la formation existe
+      const course = await storage.getCourse(courseId);
+      if (!course) {
+        return res.status(404).json({ message: "Formation non trouvée" });
+      }
+      
+      // Supprimer la formation
+      await storage.deleteCourse(courseId);
+      
+      res.status(200).json({ message: "Formation supprimée avec succès" });
+    } catch (error: any) {
+      res.status(500).json({ message: `Erreur lors de la suppression de la formation: ${error.message}` });
+    }
+  });
+
+  // ========== SESSIONS ==========
+  
+  // Récupérer toutes les sessions
+  app.get('/api/admin/sessions', async (req, res) => {
+    try {
+      const sessions = await storage.getAllSessionsWithDetails();
+      res.status(200).json(sessions);
+    } catch (error: any) {
+      res.status(500).json({ message: `Erreur lors de la récupération des sessions: ${error.message}` });
+    }
+  });
+
+  // Récupérer une session par ID
+  app.get('/api/admin/sessions/:id', async (req, res) => {
+    try {
+      const sessionId = parseInt(req.params.id);
+      const session = await storage.getSessionWithDetails(sessionId);
+      
+      if (!session) {
+        return res.status(404).json({ message: "Session non trouvée" });
+      }
+      
+      res.status(200).json(session);
+    } catch (error: any) {
+      res.status(500).json({ message: `Erreur lors de la récupération de la session: ${error.message}` });
+    }
+  });
+
+  // Créer une nouvelle session
+  app.post('/api/admin/sessions', hasAdminRole, async (req, res) => {
+    try {
+      const sessionSchema = insertSessionSchema.extend({
+        zoomLink: z.string().url(),
+        recordingLink: z.string().url().optional(),
+      });
+      
+      const sessionData = sessionSchema.parse(req.body);
+      
+      // Vérifier si la formation existe
+      const course = await storage.getCourse(sessionData.courseId);
+      if (!course) {
+        return res.status(400).json({ message: "Formation non trouvée" });
+      }
+      
+      // Créer la session
+      const newSession = await storage.createSession(sessionData);
+      
+      res.status(201).json(newSession);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Données invalides", errors: error.format() });
+      } else {
+        res.status(500).json({ message: `Erreur lors de la création de la session: ${error.message}` });
+      }
+    }
+  });
+
+  // Mettre à jour une session
+  app.patch('/api/admin/sessions/:id', hasAdminRole, async (req, res) => {
+    try {
+      const sessionId = parseInt(req.params.id);
+      
+      // Vérifier si la session existe
+      const session = await storage.getSession(sessionId);
+      if (!session) {
+        return res.status(404).json({ message: "Session non trouvée" });
+      }
+      
+      // Validation des données de mise à jour
+      const updateSchema = z.object({
+        courseId: z.number().positive().optional(),
+        date: z.string().optional(),
+        startTime: z.string().optional(),
+        endTime: z.string().optional(),
+        maxStudents: z.number().min(1).optional(),
+        zoomLink: z.string().url().optional(),
+        recordingLink: z.string().url().optional().nullable(),
+      });
+      
+      const updateData = updateSchema.parse(req.body);
+      
+      // Mettre à jour la session
+      const updatedSession = await storage.updateSession(sessionId, updateData);
+      
+      res.status(200).json(updatedSession);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Données invalides", errors: error.format() });
+      } else {
+        res.status(500).json({ message: `Erreur lors de la mise à jour de la session: ${error.message}` });
+      }
+    }
+  });
+
+  // Supprimer une session
+  app.delete('/api/admin/sessions/:id', hasAdminRole, async (req, res) => {
+    try {
+      const sessionId = parseInt(req.params.id);
+      
+      // Vérifier si la session existe
+      const session = await storage.getSession(sessionId);
+      if (!session) {
+        return res.status(404).json({ message: "Session non trouvée" });
+      }
+      
+      // Supprimer la session
+      await storage.deleteSession(sessionId);
+      
+      res.status(200).json({ message: "Session supprimée avec succès" });
+    } catch (error: any) {
+      res.status(500).json({ message: `Erreur lors de la suppression de la session: ${error.message}` });
+    }
+  });
+
+  // ========== INSCRIPTIONS ==========
+  
+  // Récupérer toutes les inscriptions pour une session
+  app.get('/api/admin/sessions/:id/enrollments', hasAdminRole, async (req, res) => {
+    try {
+      const sessionId = parseInt(req.params.id);
+      
+      // Vérifier si la session existe
+      const session = await storage.getSession(sessionId);
+      if (!session) {
+        return res.status(404).json({ message: "Session non trouvée" });
+      }
+      
+      // Récupérer les inscriptions
+      const enrollments = await storage.getEnrollmentsBySession(sessionId);
+      
+      res.status(200).json(enrollments);
+    } catch (error: any) {
+      res.status(500).json({ message: `Erreur lors de la récupération des inscriptions: ${error.message}` });
     }
   });
   
-  // Admin dashboard settings API
-  app.get("/api/admin/settings/dashboard", hasAdminRole, async (req, res) => {
+  // Ajouter un utilisateur à une session (inscription manuelle)
+  app.post('/api/admin/sessions/:sessionId/enroll/:userId', hasAdminRole, async (req, res) => {
     try {
-      // This would come from DB in a real app
-      res.json({
-        showRevenueChart: true,
-        showUserGrowthChart: true,
-        showPendingApprovals: true,
-        defaultTimeframe: "month",
-        layout: "standard",
-        enabledWidgets: ["users", "courses", "sessions", "revenue", "trainers"]
+      const sessionId = parseInt(req.params.sessionId);
+      const userId = parseInt(req.params.userId);
+      
+      // Vérifier si la session existe
+      const session = await storage.getSession(sessionId);
+      if (!session) {
+        return res.status(404).json({ message: "Session non trouvée" });
+      }
+      
+      // Vérifier si l'utilisateur existe
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+      
+      // Vérifier si la session a encore de la place
+      const enrollments = await storage.getEnrollmentsBySession(sessionId);
+      if (enrollments.length >= session.maxStudents) {
+        return res.status(400).json({ message: "La session est complète" });
+      }
+      
+      // Vérifier si l'utilisateur est déjà inscrit
+      const existingEnrollment = await storage.getEnrollment(userId, sessionId);
+      if (existingEnrollment) {
+        return res.status(400).json({ message: "L'utilisateur est déjà inscrit à cette session" });
+      }
+      
+      // Inscrire l'utilisateur
+      const enrollment = await storage.createEnrollment({
+        userId,
+        sessionId,
       });
-    } catch (error) {
-      console.error("Error fetching dashboard settings:", error);
-      res.status(500).json({ message: "Failed to fetch dashboard settings" });
+      
+      res.status(201).json(enrollment);
+    } catch (error: any) {
+      res.status(500).json({ message: `Erreur lors de l'inscription: ${error.message}` });
     }
   });
   
-  app.post("/api/admin/settings/dashboard", hasAdminRole, async (req, res) => {
+  // Supprimer une inscription
+  app.delete('/api/admin/enrollments/:id', hasAdminRole, async (req, res) => {
     try {
-      // In a real app, this would save to the database
-      res.json({
-        success: true,
-        message: "Dashboard settings updated",
-        settings: req.body
-      });
-    } catch (error) {
-      console.error("Error updating dashboard settings:", error);
-      res.status(500).json({ message: "Failed to update dashboard settings" });
+      const enrollmentId = parseInt(req.params.id);
+      
+      // Supprimer l'inscription
+      await storage.deleteEnrollment(enrollmentId);
+      
+      res.status(200).json({ message: "Inscription supprimée avec succès" });
+    } catch (error: any) {
+      res.status(500).json({ message: `Erreur lors de la suppression de l'inscription: ${error.message}` });
     }
   });
 }
