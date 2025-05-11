@@ -53,6 +53,38 @@ export async function seedBlogDemoData() {
         );
       `);
       
+      // Vérifier si les colonnes nécessaires existent
+      try {
+        await db.execute(sql`
+          DO $$
+          BEGIN
+            IF NOT EXISTS (
+              SELECT 1 FROM information_schema.columns 
+              WHERE table_name = 'blog_posts' AND column_name = 'read_time'
+            ) THEN
+              ALTER TABLE blog_posts ADD COLUMN read_time INTEGER;
+            END IF;
+            
+            IF NOT EXISTS (
+              SELECT 1 FROM information_schema.columns 
+              WHERE table_name = 'blog_posts' AND column_name = 'tags'
+            ) THEN
+              ALTER TABLE blog_posts ADD COLUMN tags TEXT[];
+            END IF;
+            
+            IF NOT EXISTS (
+              SELECT 1 FROM information_schema.columns 
+              WHERE table_name = 'blog_posts' AND column_name = 'view_count'
+            ) THEN
+              ALTER TABLE blog_posts ADD COLUMN view_count INTEGER DEFAULT 0;
+            END IF;
+          END$$;
+        `);
+        console.log("Colonnes nécessaires vérifiées et ajoutées si nécessaire");
+      } catch (error) {
+        console.error("Erreur lors de la vérification/ajout des colonnes:", error);
+      }
+      
       // Créer la table blog_comments
       await db.execute(sql`
         CREATE TABLE IF NOT EXISTS blog_comments (
@@ -120,6 +152,7 @@ export async function seedBlogDemoData() {
       }
       
       const admin = adminUsers[0];
+      console.log("Admin trouvé:", admin);
 
       // Exemple d'article de blog
       const samplePost = {
