@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { withAdminDashboard } from "@/lib/with-admin-dashboard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { 
@@ -52,7 +53,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 
-export default function AdminPendingCourses() {
+function AdminPendingCourses() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [rejectReason, setRejectReason] = useState("");
@@ -484,3 +485,7 @@ export default function AdminPendingCourses() {
     </div>
   );
 }
+
+// Exporter le composant avec le HOC pour l'administration
+const AdminPendingCoursesWithDashboard = withAdminDashboard(AdminPendingCourses);
+export default AdminPendingCoursesWithDashboard;
