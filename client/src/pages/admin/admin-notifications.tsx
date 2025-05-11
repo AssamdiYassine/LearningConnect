@@ -85,14 +85,43 @@ function AdminNotificationsPage() {
     return notification.type === activeTab;
   }) || [];
 
-  // Grouper les notifications par date
+  // Grouper les notifications par date avec validation
   const groupedNotifications: Record<string, Notification[]> = {};
   filteredNotifications.forEach((notification: Notification) => {
-    const date = new Date(notification.createdAt).toLocaleDateString('fr-FR');
-    if (!groupedNotifications[date]) {
-      groupedNotifications[date] = [];
+    try {
+      // Vérifier si la date est valide
+      const dateObj = new Date(notification.createdAt);
+      if (isNaN(dateObj.getTime())) {
+        // Date invalide, utiliser la date actuelle
+        console.warn("Date invalide détectée pour la notification:", notification);
+        const date = new Date().toLocaleDateString('fr-FR');
+        if (!groupedNotifications[date]) {
+          groupedNotifications[date] = [];
+        }
+        groupedNotifications[date].push({
+          ...notification,
+          createdAt: new Date().toISOString()
+        });
+      } else {
+        // Date valide
+        const date = dateObj.toLocaleDateString('fr-FR');
+        if (!groupedNotifications[date]) {
+          groupedNotifications[date] = [];
+        }
+        groupedNotifications[date].push(notification);
+      }
+    } catch (e) {
+      console.error("Erreur lors du traitement de la date:", e);
+      // Grouper dans "Aujourd'hui" en cas d'erreur
+      const date = new Date().toLocaleDateString('fr-FR');
+      if (!groupedNotifications[date]) {
+        groupedNotifications[date] = [];
+      }
+      groupedNotifications[date].push({
+        ...notification,
+        createdAt: new Date().toISOString()
+      });
     }
-    groupedNotifications[date].push(notification);
   });
 
   // Calculer le nombre de notifications non lues
@@ -169,11 +198,27 @@ function AdminNotificationsPage() {
                     .map(([date, notifications]) => (
                       <div key={date} className="space-y-4">
                         <h3 className="text-sm font-medium text-muted-foreground">
-                          {new Date(date).toLocaleDateString() === new Date().toLocaleDateString() 
-                            ? "Aujourd'hui" 
-                            : new Date(date).toLocaleDateString() === new Date(Date.now() - 86400000).toLocaleDateString()
-                              ? "Hier"
-                              : format(new Date(date), "d MMMM yyyy", { locale: fr })}
+                          {(() => {
+                            try {
+                              // Aujourd'hui ?
+                              if (date === new Date().toLocaleDateString('fr-FR')) {
+                                return "Aujourd'hui";
+                              }
+                              
+                              // Hier ?
+                              const yesterday = new Date();
+                              yesterday.setDate(yesterday.getDate() - 1);
+                              if (date === yesterday.toLocaleDateString('fr-FR')) {
+                                return "Hier";
+                              }
+                              
+                              // Format standard
+                              return date;
+                            } catch (e) {
+                              console.error("Erreur d'affichage de date", e);
+                              return "Date inconnue";
+                            }
+                          })()}
                         </h3>
                         <div className="space-y-2">
                           {notifications.map((notification: Notification) => (
@@ -190,7 +235,18 @@ function AdminNotificationsPage() {
                                      notification.type}
                                   </Badge>
                                   <p className="text-xs text-muted-foreground">
-                                    {format(new Date(notification.createdAt), "HH:mm", { locale: fr })}
+                                    {(() => {
+                                      try {
+                                        const dateObj = new Date(notification.createdAt);
+                                        if (isNaN(dateObj.getTime())) {
+                                          return "--:--";
+                                        }
+                                        return dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                                      } catch (e) {
+                                        console.error("Erreur de formatage d'heure", e);
+                                        return "--:--";
+                                      }
+                                    })()}
                                   </p>
                                 </div>
                                 <p className={`text-sm ${notification.isRead ? 'text-muted-foreground' : 'font-medium'}`}>
