@@ -640,6 +640,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to delete notification" });
     }
   });
+  
+  // Route pour marquer toutes les notifications d'un utilisateur comme lues
+  app.post("/api/notifications/read-all", isAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      // Récupérer toutes les notifications de l'utilisateur
+      const notifications = await storage.getNotificationsByUser(req.user.id);
+      
+      // Compter combien de notifications ont été mises à jour
+      let updatedCount = 0;
+      
+      // Marquer chaque notification non lue comme lue
+      for (const notification of notifications) {
+        if (!notification.isRead) {
+          await storage.updateNotificationStatus(notification.id, true);
+          updatedCount++;
+        }
+      }
+      
+      res.json({ success: true, count: updatedCount });
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      res.status(500).json({ message: "Failed to mark all notifications as read" });
+    }
+  });
 
   app.post("/api/notifications", hasRole(["admin", "trainer"]), async (req, res) => {
     try {
