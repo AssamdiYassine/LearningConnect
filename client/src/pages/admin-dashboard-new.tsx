@@ -144,46 +144,37 @@ export default function AdminDashboardNew() {
     { id: 'settings', label: 'Paramètres', icon: <Settings className="h-5 w-5" /> },
   ];
 
-  // Données d'exemple pour les graphiques
-  const revenueData = [
-    { id: 'revenue', value: 6000, label: 'Revenus', color: '#5F8BFF' },
-    { id: 'costs', value: 2000, label: 'Coûts', color: '#7A6CFF' },
-    { id: 'profit', value: 4000, label: 'Profit', color: '#1D2B6C' },
-  ];
+  // Traitement des données du backend pour les graphiques
+  const monthlyData = statistics?.monthlyRevenue?.map(item => ({
+    month: item.month,
+    revenue: item.amount
+  })) || [];
 
-  const monthlyData = [
-    { month: 'Jan', revenue: 1200 },
-    { month: 'Fév', revenue: 1500 },
-    { month: 'Mar', revenue: 1800 },
-    { month: 'Avr', revenue: 2200 },
-    { month: 'Mai', revenue: 2500 },
-    { month: 'Jun', revenue: 2800 },
-  ];
+  // Transformation des données pour le graphique de répartition des revenus
+  const revenueData = statistics?.revenueDistribution?.map(item => ({
+    id: item.label,
+    value: item.value,
+    label: item.label,
+    color: item.label === 'Formateurs' ? '#7A6CFF' : '#5F8BFF'
+  })) || [];
 
+  // Transformation des données pour le graphique d'évolution des utilisateurs
   const lineData = [
     {
       id: "utilisateurs",
       color: "#5F8BFF",
-      data: [
-        { x: "Jan", y: 20 },
-        { x: "Fév", y: 35 },
-        { x: "Mar", y: 48 },
-        { x: "Avr", y: 65 },
-        { x: "Mai", y: 78 },
-        { x: "Jun", y: 90 }
-      ]
+      data: statistics?.monthlyUsers?.map(item => ({
+        x: item.month,
+        y: item.user_count
+      })) || []
     },
     {
       id: "formateurs",
       color: "#7A6CFF",
-      data: [
-        { x: "Jan", y: 5 },
-        { x: "Fév", y: 8 },
-        { x: "Mar", y: 10 },
-        { x: "Avr", y: 12 },
-        { x: "Mai", y: 15 },
-        { x: "Jun", y: 18 }
-      ]
+      data: statistics?.monthlyUsers?.map(item => ({
+        x: item.month,
+        y: item.trainer_count
+      })) || []
     }
   ];
 
@@ -329,7 +320,7 @@ export default function AdminDashboardNew() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center justify-between">
-                      <div className="text-2xl font-bold">{statistics?.totalUsers || 0}</div>
+                      <div className="text-2xl font-bold">{statistics?.userStats?.total_users || 0}</div>
                       <Users className="h-8 w-8 text-[#5F8BFF]" />
                     </div>
                   </CardContent>
@@ -343,7 +334,7 @@ export default function AdminDashboardNew() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center justify-between">
-                      <div className="text-2xl font-bold">{statistics?.totalCourses || 0}</div>
+                      <div className="text-2xl font-bold">{statistics?.courseStats?.total_courses || 0}</div>
                       <BookOpen className="h-8 w-8 text-[#7A6CFF]" />
                     </div>
                   </CardContent>
@@ -357,7 +348,7 @@ export default function AdminDashboardNew() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center justify-between">
-                      <div className="text-2xl font-bold">{statistics?.totalSessions || 0}</div>
+                      <div className="text-2xl font-bold">{statistics?.sessionStats?.total_sessions || 0}</div>
                       <Calendar className="h-8 w-8 text-[#1D2B6C]" />
                     </div>
                   </CardContent>
@@ -371,7 +362,7 @@ export default function AdminDashboardNew() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center justify-between">
-                      <div className="text-2xl font-bold">{statistics?.totalSubscriptions || 0}</div>
+                      <div className="text-2xl font-bold">{statistics?.enrollmentStats?.total_enrollments || 0}</div>
                       <CreditCard className="h-8 w-8 text-[#5F8BFF]" />
                     </div>
                   </CardContent>
@@ -391,6 +382,8 @@ export default function AdminDashboardNew() {
                         data={monthlyData}
                         keys={["revenue"]}
                         indexBy="month"
+                        width={500}
+                        height={300}
                         margin={{ top: 10, right: 10, bottom: 40, left: 60 }}
                         padding={0.3}
                         colors={["#5F8BFF"]}
