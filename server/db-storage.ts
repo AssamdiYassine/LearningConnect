@@ -123,6 +123,10 @@ export class DatabaseStorage implements IStorage {
       
     return user;
   }
+  
+  async deleteUser(id: number): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
+  }
 
   // Category operations
   async createCategory(category: InsertCategory): Promise<Category> {
@@ -165,6 +169,19 @@ export class DatabaseStorage implements IStorage {
 
   async getAllCourses(): Promise<Course[]> {
     return await db.select().from(courses);
+  }
+
+  async updateCourse(id: number, data: Partial<Course>): Promise<Course> {
+    const [updatedCourse] = await db
+      .update(courses)
+      .set(data)
+      .where(eq(courses.id, id))
+      .returning();
+    return updatedCourse;
+  }
+
+  async deleteCourse(id: number): Promise<void> {
+    await db.delete(courses).where(eq(courses.id, id));
   }
 
   async getCourseWithDetails(id: number): Promise<CourseWithDetails | undefined> {
