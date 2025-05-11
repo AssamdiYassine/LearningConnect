@@ -51,6 +51,9 @@ function hasRole(roles: string[]) {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   setupAuth(app);
+  
+  // Register admin dashboard routes
+  registerAdminDashboard(app, pool);
 
   // User routes
   app.get("/api/users", hasRole(["admin"]), async (req, res) => {
