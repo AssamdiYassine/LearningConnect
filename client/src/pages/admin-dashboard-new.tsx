@@ -15,21 +15,18 @@ import {
   ChevronDown,
   Menu,
   LayoutDashboard,
-  PanelTop,
   CreditCard,
-  BookOpenCheck,
   Tag,
   BadgeCheck,
-  Blocks,
   LineChart,
   Activity,
   Search,
-  MessageSquare,
   BarChart3,
   CheckCircle,
   XCircle,
   Clock,
-  Plus
+  Plus,
+  PencilLine
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
