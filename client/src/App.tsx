@@ -201,6 +201,10 @@ function Router() {
         <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
       </Route>
       
+      <Route path="/admin-dashboard-new">
+        <ProtectedRoute component={AdminDashboardNew} allowedRoles={["admin"]} />
+      </Route>
+      
       {/* Nouvelles routes admin avec leurs composants spécifiques */}
       <Route path="/admin/users">
         <ProtectedRoute component={AdminUsers} allowedRoles={["admin"]} />
@@ -283,7 +287,7 @@ function Router() {
 
 function App() {
   const [location] = useLocation();
-  const isAdminRoute = location.startsWith("/admin") || location === "/admin-dashboard";
+  const isAdminRoute = location.startsWith("/admin") || location === "/admin-dashboard" || location === "/admin-dashboard-new";
   const isDarkDashboard = location === "/admin/dashboard-new" || 
                        location === "/admin-dashboard-new" || 
                        location.startsWith("/admin/dashboard-new/");
