@@ -267,6 +267,32 @@ function Router() {
         <ProtectedRoute component={AdminBlogsPage} allowedRoles={["admin"]} />
       </Route>
       
+      <Route path="/admin/blogs/edit-post">
+        <ProtectedRoute component={EditBlogPostPage} allowedRoles={["admin"]} />
+      </Route>
+      
+      <Route path="/admin/blogs/edit-post/:id">
+        {params => (
+          <ProtectedRoute 
+            component={() => <EditBlogPostPage id={params.id} />} 
+            allowedRoles={["admin"]} 
+          />
+        )}
+      </Route>
+      
+      <Route path="/admin/blogs/edit-category">
+        <ProtectedRoute component={EditBlogCategoryPage} allowedRoles={["admin"]} />
+      </Route>
+      
+      <Route path="/admin/blogs/edit-category/:id">
+        {params => (
+          <ProtectedRoute 
+            component={() => <EditBlogCategoryPage id={params.id} />} 
+            allowedRoles={["admin"]} 
+          />
+        )}
+      </Route>
+      
       <Route path="/admin/api-settings">
         <ProtectedRoute component={AdminApiSettings} allowedRoles={["admin"]} />
       </Route>
