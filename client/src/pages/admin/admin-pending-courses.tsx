@@ -62,74 +62,101 @@ export default function AdminPendingCourses() {
   const [isApprovalDialogOpen, setIsApprovalDialogOpen] = useState(false);
   const [isRejectionDialogOpen, setIsRejectionDialogOpen] = useState(false);
 
-  // Pour l'exemple, nous simulons des cours en attente
-  // En production, nous les récupérerions de l'API
-  const pendingCourses = [
-    {
-      id: 1,
-      title: "Python pour la Data Science",
-      description: "Une introduction complète à Python pour l'analyse de données et la data science, incluant NumPy, Pandas et Matplotlib.",
-      trainerId: 2,
-      trainerName: "Thomas Durand",
-      level: "intermediate",
-      duration: 720, // 12 heures
-      maxStudents: 15,
-      categoryId: 3,
-      categoryName: "Data Science",
-      createdAt: new Date("2025-05-02T14:23:00"),
-      status: "pending"
-    },
-    {
-      id: 2,
-      title: "DevOps avec GitLab CI/CD",
-      description: "Maîtrisez les pipelines CI/CD avec GitLab, automatisez vos tests et déploiements pour une livraison continue efficace.",
-      trainerId: 3,
-      trainerName: "Marie Lemaire",
-      level: "advanced",
-      duration: 480, // 8 heures
-      maxStudents: 12,
-      categoryId: 5,
-      categoryName: "DevOps",
-      createdAt: new Date("2025-05-04T09:15:00"),
-      status: "pending"
-    },
-    {
-      id: 3,
-      title: "UI/UX Design pour développeurs",
-      description: "Apprenez les principes fondamentaux du design UI/UX pour améliorer vos applications et interfaces utilisateur.",
-      trainerId: 4,
-      trainerName: "Julien Martin",
-      level: "beginner",
-      duration: 360, // 6 heures
-      maxStudents: 20,
-      categoryId: 2,
-      categoryName: "Design",
-      createdAt: new Date("2025-05-05T16:45:00"),
-      status: "pending"
-    }
-  ];
-
-  // Simulation des utilisateurs
-  const { data: users } = useQuery({
-    queryKey: ["/api/users"],
+  // Récupérer les demandes d'approbation en attente depuis l'API
+  const { data: pendingApprovals, isLoading: isLoadingApprovals, error: approvalsError } = useQuery({
+    queryKey: ["/api/admin/approvals/pending"],
     enabled: !!user && user.role === "admin"
   });
 
-  // Simulation des catégories
-  const { data: categories } = useQuery({
-    queryKey: ["/api/categories"],
+  // Récupérer les utilisateurs pour afficher les détails des formateurs
+  const { data: users } = useQuery({
+    queryKey: ["/api/admin/users"],
     enabled: !!user && user.role === "admin"
+  });
+
+  // Récupérer les catégories pour afficher les catégories de cours
+  const { data: categories } = useQuery({
+    queryKey: ["/api/admin/categories"],
+    enabled: !!user && user.role === "admin"
+  });
+  
+  // Filtrer les cours en attente d'approbation
+  const pendingCourses = pendingApprovals?.filter((approval: any) => 
+    approval.type === 'course' && approval.status === 'pending' && approval.course
+  ) || [];
+
+  // Mutation pour approuver une demande
+  const approveMutation = useMutation({
+    mutationFn: async (approvalId: number) => {
+      const res = await apiRequest("POST", `/api/admin/approvals/${approvalId}/approve`, {
+        reviewerId: user?.id
+      });
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Formation approuvée",
+        description: "La formation a été approuvée et est maintenant disponible sur la plateforme.",
+      });
+      setIsApprovalDialogOpen(false);
+      setSelectedCourseId(null);
+      // Invalider les requêtes pour rafraîchir les données
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/approvals/pending"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur lors de l'approbation",
+        description: error.message || "Une erreur s'est produite lors de l'approbation du cours.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Mutation pour rejeter une demande
+  const rejectMutation = useMutation({
+    mutationFn: async ({ approvalId, notes }: { approvalId: number, notes: string }) => {
+      const res = await apiRequest("POST", `/api/admin/approvals/${approvalId}/reject`, {
+        reviewerId: user?.id,
+        notes
+      });
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Formation refusée",
+        description: "La formation a été refusée et le formateur a été notifié.",
+      });
+      setIsRejectionDialogOpen(false);
+      setSelectedCourseId(null);
+      setRejectReason("");
+      // Invalider les requêtes pour rafraîchir les données
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/approvals/pending"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur lors du refus",
+        description: error.message || "Une erreur s'est produite lors du refus du cours.",
+        variant: "destructive"
+      });
+    }
   });
 
   // Fonctions pour approuver/refuser un cours
   const handleApproveCourse = (courseId: number) => {
-    toast({
-      title: "Formation approuvée",
-      description: "La formation a été approuvée et est maintenant disponible sur la plateforme.",
-    });
-    setIsApprovalDialogOpen(false);
-    setSelectedCourseId(null);
-    // Ici, vous feriez une mutation pour mettre à jour le statut du cours
+    // Trouver l'ID de la demande d'approbation correspondant au cours
+    const approval = pendingApprovals?.find((a: any) => 
+      a.type === 'course' && a.status === 'pending' && a.course?.id === courseId
+    );
+    
+    if (approval) {
+      approveMutation.mutate(approval.id);
+    } else {
+      toast({
+        title: "Erreur",
+        description: "Demande d'approbation introuvable.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleRejectCourse = (courseId: number) => {
@@ -142,20 +169,49 @@ export default function AdminPendingCourses() {
       return;
     }
     
-    toast({
-      title: "Formation refusée",
-      description: "La formation a été refusée et le formateur a été notifié.",
-    });
-    setIsRejectionDialogOpen(false);
-    setSelectedCourseId(null);
-    setRejectReason("");
-    // Ici, vous feriez une mutation pour refuser le cours avec le motif
+    // Trouver l'ID de la demande d'approbation correspondant au cours
+    const approval = pendingApprovals?.find((a: any) => 
+      a.type === 'course' && a.status === 'pending' && a.course?.id === courseId
+    );
+    
+    if (approval) {
+      rejectMutation.mutate({ 
+        approvalId: approval.id, 
+        notes: rejectReason 
+      });
+    } else {
+      toast({
+        title: "Erreur",
+        description: "Demande d'approbation introuvable.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Fonction pour obtenir le nom du formateur
   const getTrainerName = (trainerId: number) => {
     const trainer = users?.find((u: any) => u.id === trainerId);
-    return trainer ? (trainer.displayName || trainer.username) : pendingCourses.find(c => c.trainerId === trainerId)?.trainerName || "Formateur inconnu";
+    return trainer ? (trainer.displayName || trainer.username) : "Formateur inconnu";
+  };
+  
+  // Fonction pour obtenir les détails du cours à partir de l'approbation
+  const getCourseDetailsFromApproval = (approval: any) => {
+    if (!approval || !approval.course) return null;
+    
+    return {
+      id: approval.course.id,
+      title: approval.course.title,
+      description: approval.course.description,
+      trainerId: approval.course.trainerId,
+      level: approval.course.level,
+      duration: approval.course.duration,
+      maxStudents: approval.course.maxStudents,
+      categoryId: approval.course.categoryId,
+      categoryName: approval.course.category?.name || "Non catégorisé",
+      createdAt: new Date(approval.createdAt),
+      status: approval.status,
+      approvalId: approval.id
+    };
   };
 
   return (
@@ -231,7 +287,12 @@ export default function AdminPendingCourses() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {pendingCourses.length === 0 ? (
+          {isLoadingApprovals ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Loader2 className="h-16 w-16 text-primary/30 animate-spin mb-4" />
+              <p className="text-gray-500">Chargement des demandes d'approbation...</p>
+            </div>
+          ) : pendingCourses.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <CheckCheck className="h-16 w-16 text-green-300 mb-4" />
               <h3 className="text-xl font-medium text-gray-900">Tout est à jour !</h3>
@@ -242,7 +303,11 @@ export default function AdminPendingCourses() {
             </div>
           ) : (
             <div className="space-y-6">
-              {pendingCourses.map((course) => (
+              {pendingCourses.map((approval) => {
+                const course = getCourseDetailsFromApproval(approval);
+                if (!course) return null;
+                
+                return (
                 <Card key={course.id} className="overflow-hidden">
                   <div className="p-5 border-l-4 border-amber-400">
                     <div className="flex justify-between items-start">
