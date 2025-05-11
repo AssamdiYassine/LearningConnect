@@ -6,8 +6,7 @@ import { apiRequest } from '@/lib/queryClient';
 interface Notification {
   id: number;
   userId: number;
-  title: string;
-  body: string;
+  message: string;
   type: string;
   isRead: boolean;
   createdAt: string;

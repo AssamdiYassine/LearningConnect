@@ -54,6 +54,14 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
     return result;
   };
 
+  dbStorage.getNotificationById = async function(id: number) {
+    const [notification] = await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.id, id));
+    return notification;
+  };
+
   dbStorage.updateNotificationStatus = async function(id: number, isRead: boolean) {
     const [updatedNotification] = await db
       .update(notifications)
@@ -61,6 +69,15 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
       .where(eq(notifications.id, id))
       .returning();
     return updatedNotification;
+  };
+  
+  dbStorage.markAllNotificationsAsRead = async function() {
+    const result = await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.isRead, false))
+      .returning();
+    return result.length;
   };
 
   // Fonction pour récupérer les courses qui ont besoin d'approbation

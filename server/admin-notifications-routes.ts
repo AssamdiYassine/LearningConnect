@@ -29,27 +29,14 @@ export function registerAdminNotificationRoutes(app: Express) {
     }
   });
 
-  // Route pour marquer une notification comme lue (accessible en tant qu'admin)
-  app.patch("/api/notifications/:id/read", isAuthenticated, async (req, res) => {
+  // Route pour marquer toutes les notifications comme lues (uniquement admin)
+  app.post("/api/admin/notifications/mark-all-read", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const { id } = req.params;
-      const notification = await storage.markNotificationAsRead(parseInt(id));
-      res.json(notification);
+      const result = await storage.markAllNotificationsAsRead();
+      res.json({ success: true, count: result });
     } catch (error) {
-      console.error("Erreur lors de la mise à jour de la notification:", error);
-      res.status(500).json({ message: "Erreur lors de la mise à jour de la notification" });
-    }
-  });
-
-  // Route pour supprimer une notification
-  app.delete("/api/notifications/:id", isAuthenticated, async (req, res) => {
-    try {
-      const { id } = req.params;
-      await storage.deleteNotification(parseInt(id));
-      res.status(200).json({ success: true });
-    } catch (error) {
-      console.error("Erreur lors de la suppression de la notification:", error);
-      res.status(500).json({ message: "Erreur lors de la suppression de la notification" });
+      console.error("Erreur lors du marquage des notifications comme lues:", error);
+      res.status(500).json({ message: "Erreur lors du marquage des notifications comme lues" });
     }
   });
 }
