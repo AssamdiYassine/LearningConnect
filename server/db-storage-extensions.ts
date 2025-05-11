@@ -1,5 +1,16 @@
 import { eq, sql, desc, and, isNull, like, inArray } from "drizzle-orm";
-import { users, courses, sessions, enrollments, categories, notifications, approvalRequests } from "@shared/schema";
+import { 
+  users, 
+  courses, 
+  sessions, 
+  enrollments, 
+  categories, 
+  notifications, 
+  approvalRequests,
+  blogCategories,
+  blogPosts,
+  blogComments
+} from "@shared/schema";
 import { DatabaseStorage } from "./db-storage";
 import { pool } from "./db";
 import { db } from "./db";
@@ -145,6 +156,281 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
       })
       .returning();
     return notification;
+  };
+
+  // Implémentations des méthodes pour les catégories de blog
+  dbStorage.createBlogCategory = async function(categoryData) {
+    const [category] = await db
+      .insert(blogCategories)
+      .values(categoryData)
+      .returning();
+    return category;
+  };
+
+  dbStorage.getAllBlogCategories = async function() {
+    return await db
+      .select()
+      .from(blogCategories)
+      .orderBy(blogCategories.name);
+  };
+
+  dbStorage.getBlogCategory = async function(id) {
+    const [category] = await db
+      .select()
+      .from(blogCategories)
+      .where(eq(blogCategories.id, id));
+    return category;
+  };
+
+  dbStorage.getBlogCategoryBySlug = async function(slug) {
+    const [category] = await db
+      .select()
+      .from(blogCategories)
+      .where(eq(blogCategories.slug, slug));
+    return category;
+  };
+
+  dbStorage.updateBlogCategory = async function(id, data) {
+    const [updatedCategory] = await db
+      .update(blogCategories)
+      .set({
+        ...data,
+        updatedAt: new Date()
+      })
+      .where(eq(blogCategories.id, id))
+      .returning();
+    return updatedCategory;
+  };
+
+  dbStorage.deleteBlogCategory = async function(id) {
+    await db.delete(blogCategories).where(eq(blogCategories.id, id));
+  };
+
+  // Implémentations des méthodes pour les articles de blog
+  dbStorage.createBlogPost = async function(postData) {
+    const [post] = await db
+      .insert(blogPosts)
+      .values({
+        ...postData,
+        readTime: postData.readTime || Math.ceil(postData.content.split(/\s+/).length / 200)
+      })
+      .returning();
+    return post;
+  };
+
+  dbStorage.getBlogPost = async function(id) {
+    const [post] = await db
+      .select()
+      .from(blogPosts)
+      .where(eq(blogPosts.id, id));
+    return post;
+  };
+
+  dbStorage.getBlogPostWithDetails = async function(id) {
+    const result = await db
+      .select({
+        post: blogPosts,
+        category: blogCategories,
+        author: users
+      })
+      .from(blogPosts)
+      .leftJoin(blogCategories, eq(blogPosts.categoryId, blogCategories.id))
+      .leftJoin(users, eq(blogPosts.authorId, users.id))
+      .where(eq(blogPosts.id, id));
+
+    if (result.length === 0) return undefined;
+
+    const { post, category, author } = result[0];
+    return {
+      ...post,
+      category: {
+        id: category.id,
+        name: category.name,
+        slug: category.slug
+      },
+      author: {
+        id: author.id,
+        username: author.username,
+        displayName: author.displayName
+      }
+    };
+  };
+
+  dbStorage.getBlogPostBySlugWithDetails = async function(slug) {
+    const result = await db
+      .select({
+        post: blogPosts,
+        category: blogCategories,
+        author: users
+      })
+      .from(blogPosts)
+      .leftJoin(blogCategories, eq(blogPosts.categoryId, blogCategories.id))
+      .leftJoin(users, eq(blogPosts.authorId, users.id))
+      .where(eq(blogPosts.slug, slug));
+
+    if (result.length === 0) return undefined;
+
+    const { post, category, author } = result[0];
+    return {
+      ...post,
+      category: {
+        id: category.id,
+        name: category.name,
+        slug: category.slug
+      },
+      author: {
+        id: author.id,
+        username: author.username,
+        displayName: author.displayName
+      }
+    };
+  };
+
+  dbStorage.getAllBlogPostsWithDetails = async function() {
+    const result = await db
+      .select({
+        post: blogPosts,
+        category: blogCategories,
+        author: users
+      })
+      .from(blogPosts)
+      .leftJoin(blogCategories, eq(blogPosts.categoryId, blogCategories.id))
+      .leftJoin(users, eq(blogPosts.authorId, users.id))
+      .orderBy(desc(blogPosts.createdAt));
+
+    return result.map(({ post, category, author }) => ({
+      ...post,
+      category: {
+        id: category.id,
+        name: category.name,
+        slug: category.slug
+      },
+      author: {
+        id: author.id,
+        username: author.username,
+        displayName: author.displayName
+      }
+    }));
+  };
+
+  dbStorage.getBlogPostsByAuthor = async function(authorId) {
+    const result = await db
+      .select({
+        post: blogPosts,
+        category: blogCategories
+      })
+      .from(blogPosts)
+      .leftJoin(blogCategories, eq(blogPosts.categoryId, blogCategories.id))
+      .where(eq(blogPosts.authorId, authorId))
+      .orderBy(desc(blogPosts.createdAt));
+
+    return result.map(({ post, category }) => ({
+      ...post,
+      category: {
+        id: category.id,
+        name: category.name,
+        slug: category.slug
+      }
+    }));
+  };
+
+  dbStorage.getBlogPostsByCategory = async function(categoryId) {
+    const result = await db
+      .select({
+        post: blogPosts,
+        author: users
+      })
+      .from(blogPosts)
+      .leftJoin(users, eq(blogPosts.authorId, users.id))
+      .where(eq(blogPosts.categoryId, categoryId))
+      .orderBy(desc(blogPosts.createdAt));
+
+    return result.map(({ post, author }) => ({
+      ...post,
+      author: {
+        id: author.id,
+        username: author.username,
+        displayName: author.displayName
+      }
+    }));
+  };
+
+  dbStorage.updateBlogPost = async function(id, data) {
+    // Si le contenu est mis à jour, recalculer le temps de lecture
+    if (data.content) {
+      data.readTime = Math.ceil(data.content.split(/\s+/).length / 200);
+    }
+
+    const [updatedPost] = await db
+      .update(blogPosts)
+      .set({
+        ...data,
+        updatedAt: new Date()
+      })
+      .where(eq(blogPosts.id, id))
+      .returning();
+    return updatedPost;
+  };
+
+  dbStorage.deleteBlogPost = async function(id) {
+    await db.delete(blogPosts).where(eq(blogPosts.id, id));
+  };
+
+  dbStorage.incrementBlogPostViewCount = async function(id) {
+    const [post] = await db
+      .update(blogPosts)
+      .set({
+        viewCount: sql`${blogPosts.viewCount} + 1`
+      })
+      .where(eq(blogPosts.id, id))
+      .returning();
+    return post;
+  };
+
+  // Implémentations des méthodes pour les commentaires
+  dbStorage.createBlogComment = async function(commentData) {
+    const [comment] = await db
+      .insert(blogComments)
+      .values(commentData)
+      .returning();
+    return comment;
+  };
+
+  dbStorage.getBlogCommentsForPost = async function(postId) {
+    const result = await db
+      .select({
+        comment: blogComments,
+        user: users
+      })
+      .from(blogComments)
+      .leftJoin(users, eq(blogComments.userId, users.id))
+      .where(eq(blogComments.postId, postId))
+      .orderBy(blogComments.createdAt);
+
+    return result.map(({ comment, user }) => ({
+      ...comment,
+      user: {
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName
+      }
+    }));
+  };
+
+  dbStorage.approveBlogComment = async function(id) {
+    const [comment] = await db
+      .update(blogComments)
+      .set({
+        isApproved: true,
+        updatedAt: new Date()
+      })
+      .where(eq(blogComments.id, id))
+      .returning();
+    return comment;
+  };
+
+  dbStorage.deleteBlogComment = async function(id) {
+    await db.delete(blogComments).where(eq(blogComments.id, id));
   };
 
   // Retourner l'objet dbStorage modifié
