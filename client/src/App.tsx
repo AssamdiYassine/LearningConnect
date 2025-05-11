@@ -15,6 +15,7 @@ import TrainerRatings from "@/pages/trainer-ratings";
 import TrainerNotifications from "@/pages/trainer-notifications";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminDashboardNew from "@/pages/admin-dashboard-new";
+import AdminDashboardRefactored from "@/pages/admin-dashboard-refactored";
 import Catalog from "@/pages/catalog";
 import Schedule from "@/pages/schedule";
 import Subscription from "@/pages/subscription";
@@ -205,6 +206,10 @@ function Router() {
         <ProtectedRoute component={AdminDashboardNew} allowedRoles={["admin"]} />
       </Route>
       
+      <Route path="/admin-dashboard-refactored">
+        <ProtectedRoute component={AdminDashboardRefactored} allowedRoles={["admin"]} />
+      </Route>
+      
       {/* Nouvelles routes admin avec leurs composants spécifiques */}
       <Route path="/admin/users">
         <ProtectedRoute component={AdminUsers} allowedRoles={["admin"]} />
@@ -292,10 +297,12 @@ function App() {
                       location === "/admin-dashboard" || 
                       location === "/admin-dashboard-new";
   
-  // Vérification améliorée pour le thème sombre - s'applique à TOUTES les routes admin-dashboard-new
+  // Vérification améliorée pour le thème sombre - s'applique aux routes dashboard
   const isDarkDashboard = location === "/admin-dashboard-new" || 
+                       location === "/admin-dashboard-refactored" ||
                        location.startsWith("/admin/dashboard-new") || 
-                       location.startsWith("/admin-dashboard-new/");
+                       location.startsWith("/admin-dashboard-new/") ||
+                       location.startsWith("/admin-dashboard-refactored/");
 
   return (
     <QueryClientProvider client={queryClient}>

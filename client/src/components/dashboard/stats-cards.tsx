@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, BookOpen, Calendar, CreditCard } from 'lucide-react';
 
 interface StatsCardsProps {
@@ -40,9 +40,19 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
-            <div className="text-2xl font-bold">{userStats?.total_users || 0}</div>
+            <div className="text-2xl font-bold">{userStats.total_users}</div>
             <Users className="h-8 w-8 text-[#5F8BFF]" />
           </div>
+          {userStats.students && userStats.trainers && (
+            <div className="text-xs text-muted-foreground mt-2">
+              <span className="inline-block mr-3">
+                <span className="font-medium">{userStats.students}</span> étudiants
+              </span>
+              <span className="inline-block">
+                <span className="font-medium">{userStats.trainers}</span> formateurs
+              </span>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -54,9 +64,19 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
-            <div className="text-2xl font-bold">{courseStats?.total_courses || 0}</div>
+            <div className="text-2xl font-bold">{courseStats.total_courses}</div>
             <BookOpen className="h-8 w-8 text-[#7A6CFF]" />
           </div>
+          {courseStats.approved_courses && courseStats.pending_courses && (
+            <div className="text-xs text-muted-foreground mt-2">
+              <span className="inline-block mr-3">
+                <span className="font-medium">{courseStats.approved_courses}</span> approuvées
+              </span>
+              <span className="inline-block">
+                <span className="font-medium">{courseStats.pending_courses}</span> en attente
+              </span>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -68,21 +88,31 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
-            <div className="text-2xl font-bold">{sessionStats?.total_sessions || 0}</div>
+            <div className="text-2xl font-bold">{sessionStats.total_sessions}</div>
             <Calendar className="h-8 w-8 text-[#1D2B6C]" />
           </div>
+          {sessionStats.upcoming_sessions && sessionStats.completed_sessions && (
+            <div className="text-xs text-muted-foreground mt-2">
+              <span className="inline-block mr-3">
+                <span className="font-medium">{sessionStats.upcoming_sessions}</span> à venir
+              </span>
+              <span className="inline-block">
+                <span className="font-medium">{sessionStats.completed_sessions}</span> terminées
+              </span>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
-            Inscriptions
+            Abonnements
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
-            <div className="text-2xl font-bold">{enrollmentStats?.total_enrollments || 0}</div>
+            <div className="text-2xl font-bold">{enrollmentStats.total_enrollments}</div>
             <CreditCard className="h-8 w-8 text-[#5F8BFF]" />
           </div>
         </CardContent>
