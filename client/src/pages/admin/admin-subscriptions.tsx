@@ -407,8 +407,8 @@ function AdminSubscriptions() {
                       filteredSubscriptions.map((subscription) => (
                         <TableRow key={subscription.id}>
                           <TableCell>
-                            <div className="font-medium">{subscription.user.displayName}</div>
-                            <div className="text-sm text-muted-foreground">{subscription.user.email}</div>
+                            <div className="font-medium">{subscription.user?.displayName || `Utilisateur #${subscription.userId}`}</div>
+                            <div className="text-sm text-muted-foreground">{subscription.user?.email || 'Aucun email'}</div>
                           </TableCell>
                           <TableCell>
                             <Badge variant={subscription.type === "annual" ? "default" : "outline"}>
@@ -489,7 +489,7 @@ function AdminSubscriptions() {
                 <Label htmlFor="client">Client</Label>
                 <Input 
                   id="client" 
-                  value={currentSubscription.user.displayName} 
+                  value={currentSubscription.user?.displayName || `Utilisateur #${currentSubscription.userId}`} 
                   disabled 
                 />
               </div>
