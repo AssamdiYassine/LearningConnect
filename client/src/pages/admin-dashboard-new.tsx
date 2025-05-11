@@ -369,6 +369,54 @@ export default function AdminDashboardNew() {
                 </Card>
               </div>
 
+              {/* Approbations en attente */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Approbations en attente</CardTitle>
+                    <Badge variant="outline" className="bg-amber-100 text-amber-700 hover:bg-amber-100">
+                      {statistics?.pendingApprovals || 0} en attente
+                    </Badge>
+                  </div>
+                  <CardDescription>Formations nécessitant une validation</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {statistics?.recentCourses?.filter(course => !course.isApproved)?.length ? (
+                    <div className="space-y-4">
+                      {statistics.recentCourses
+                        .filter(course => !course.isApproved)
+                        .map(course => (
+                          <div key={course.id} className="flex items-center justify-between border-b pb-3">
+                            <div>
+                              <p className="font-medium">{course.title}</p>
+                              <div className="text-sm text-muted-foreground">
+                                <span>Par {course.trainerName}</span>
+                                <span className="mx-2">•</span>
+                                <span>{course.category || "Non catégorisé"}</span>
+                              </div>
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-50">
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Approuver
+                              </Button>
+                              <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50">
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Refuser
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-6 text-center">
+                      <CheckCircle className="h-10 w-10 text-green-500 mb-2" />
+                      <p className="text-muted-foreground">Aucune approbation en attente</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               {/* Graphiques */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card>
@@ -415,6 +463,60 @@ export default function AdminDashboardNew() {
                             },
                           },
                         }}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Répartition des revenus</CardTitle>
+                    <CardDescription>Répartition entre la plateforme et les formateurs</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-80">
+                      <Pie
+                        data={revenueData}
+                        width={400}
+                        height={300}
+                        margin={{ top: 40, right: 40, bottom: 40, left: 40 }}
+                        innerRadius={0.5}
+                        padAngle={0.7}
+                        cornerRadius={3}
+                        activeOuterRadiusOffset={8}
+                        colors={{ datum: 'data.color' }}
+                        borderWidth={1}
+                        borderColor={{
+                          from: 'color',
+                          modifiers: [['darker', 0.2]]
+                        }}
+                        enableArcLinkLabels={true}
+                        arcLinkLabelsSkipAngle={10}
+                        arcLinkLabelsTextColor="#333333"
+                        arcLinkLabelsThickness={2}
+                        arcLinkLabelsColor={{ from: 'color' }}
+                        arcLabelsSkipAngle={10}
+                        arcLabelsTextColor={{
+                          from: 'color',
+                          modifiers: [['darker', 2]]
+                        }}
+                        legends={[
+                          {
+                            anchor: 'bottom',
+                            direction: 'row',
+                            justify: false,
+                            translateX: 0,
+                            translateY: 56,
+                            itemsSpacing: 0,
+                            itemWidth: 100,
+                            itemHeight: 18,
+                            itemTextColor: '#999',
+                            itemDirection: 'left-to-right',
+                            itemOpacity: 1,
+                            symbolSize: 18,
+                            symbolShape: 'circle',
+                          }
+                        ]}
                       />
                     </div>
                   </CardContent>
