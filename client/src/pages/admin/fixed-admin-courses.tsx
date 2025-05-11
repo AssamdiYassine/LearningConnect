@@ -1049,7 +1049,6 @@ export default function FixedAdminCourses() {
                       <SelectContent>
                         <SelectItem value="null">En attente</SelectItem>
                         <SelectItem value="true">Approuvée</SelectItem>
-                        <SelectItem value="false">Rejetée</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
