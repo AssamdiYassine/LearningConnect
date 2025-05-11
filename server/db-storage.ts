@@ -368,6 +368,10 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return updatedSession;
   }
+  
+  async deleteSession(id: number): Promise<void> {
+    await db.delete(sessions).where(eq(sessions.id, id));
+  }
 
   // Enrollment operations
   async createEnrollment(enrollment: InsertEnrollment): Promise<Enrollment> {

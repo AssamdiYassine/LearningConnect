@@ -17,6 +17,9 @@ export const settingTypeEnum = pgEnum("setting_type", ["api", "system", "email"]
 // Blog post status enum
 export const postStatusEnum = pgEnum("post_status", ["draft", "published", "archived"]);
 
+// Approval status enum
+export const approvalStatusEnum = pgEnum("approval_status", ["pending", "approved", "rejected"]);
+
 // Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
