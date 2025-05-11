@@ -65,7 +65,7 @@ export default function AuthPage() {
     // Redirect users to their appropriate dashboard based on role
     switch (user.role) {
       case "admin":
-        return <Redirect to="/admin" />;
+        return <Redirect to="/admin-dashboard-new" />;
       case "trainer":
         return <Redirect to="/trainer" />;
       default:

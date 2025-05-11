@@ -284,20 +284,23 @@ function Router() {
 function App() {
   const [location] = useLocation();
   const isAdminRoute = location.startsWith("/admin") || location === "/admin-dashboard";
-  const isAdvancedAdminDashboard = location === "/admin/dashboard-new" || location.startsWith("/admin/dashboard-new/");
+  const isDarkDashboard = location === "/admin/dashboard-new" || 
+                       location === "/admin-dashboard-new" || 
+                       location.startsWith("/admin/dashboard-new/");
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light">
+      <ThemeProvider defaultTheme={isDarkDashboard ? "dark" : "light"}>
         <AuthProvider>
           <NotificationsProvider>
             <OnboardingProvider>
               <TooltipProvider>
-              {isAdvancedAdminDashboard ? (
-                <AdminDashboardLayout>
+              {isDarkDashboard ? (
+                // Pas de layout pour le tableau de bord sombre, il est autonome
+                <div className="min-h-screen bg-[#1E1E1E]">
                   <Router />
                   <OnboardingModal />
-                </AdminDashboardLayout>
+                </div>
               ) : isAdminRoute ? (
                 <AdminLayout>
                   <Router />
