@@ -27,7 +27,7 @@ approvalRouter.get('/pending', hasAdminRole, async (req: Request, res: Response)
   }
 });
 
-// Route pour approuver ou rejeter une demande
+// Route générique pour approuver ou rejeter une demande (PATCH)
 approvalRouter.patch('/:id', hasAdminRole, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
@@ -52,6 +52,100 @@ approvalRouter.patch('/:id', hasAdminRole, async (req: Request, res: Response) =
       console.error('Erreur lors de la mise à jour de la demande d\'approbation :', error);
       res.status(500).json({ message: `Erreur: ${error.message}` });
     }
+  }
+});
+
+// Route dédiée pour APPROUVER une demande (POST - plus pratique pour l'API frontend)
+approvalRouter.post('/:id/approve', hasAdminRole, async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    const reviewerId = req.body.reviewerId || req.user!.id;
+    
+    // Valider l'ID du réviseur
+    if (typeof reviewerId !== 'number') {
+      return res.status(400).json({ message: 'ID de réviseur invalide' });
+    }
+    
+    // Approuver la demande
+    const updatedRequest = await storage.updateApprovalStatus(id, 'approved', reviewerId);
+    
+    // Envoi d'une notification au demandeur
+    if (updatedRequest.requesterId) {
+      const approvalRequest = await storage.getApprovalRequest(id);
+      let notificationMessage = 'Votre demande a été approuvée.';
+      
+      if (approvalRequest && approvalRequest.type === 'course') {
+        const course = await storage.getCourse(approvalRequest.itemId || 0);
+        if (course) {
+          notificationMessage = `Votre formation "${course.title}" a été approuvée.`;
+          
+          // Mettre à jour le statut d'approbation du cours
+          await storage.updateCourse(course.id, { isApproved: true });
+        }
+      }
+      
+      // Créer une notification pour l'utilisateur
+      await storage.createNotification({
+        userId: updatedRequest.requesterId,
+        message: notificationMessage,
+        type: 'approval',
+        isRead: false
+      });
+    }
+    
+    res.status(200).json(updatedRequest);
+  } catch (error: any) {
+    console.error('Erreur lors de l\'approbation de la demande:', error);
+    res.status(500).json({ message: `Erreur: ${error.message}` });
+  }
+});
+
+// Route dédiée pour REJETER une demande (POST - plus pratique pour l'API frontend)
+approvalRouter.post('/:id/reject', hasAdminRole, async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { reviewerId, notes } = req.body;
+    
+    if (!notes || typeof notes !== 'string' || notes.trim() === '') {
+      return res.status(400).json({ message: 'Un motif de refus est requis' });
+    }
+    
+    // Rejeter la demande
+    const updatedRequest = await storage.updateApprovalStatus(
+      id, 
+      'rejected', 
+      reviewerId || req.user!.id, 
+      notes
+    );
+    
+    // Envoi d'une notification au demandeur
+    if (updatedRequest.requesterId) {
+      const approvalRequest = await storage.getApprovalRequest(id);
+      let notificationMessage = `Votre demande a été refusée. Motif: ${notes}`;
+      
+      if (approvalRequest && approvalRequest.type === 'course') {
+        const course = await storage.getCourse(approvalRequest.itemId || 0);
+        if (course) {
+          notificationMessage = `Votre formation "${course.title}" a été refusée. Motif: ${notes}`;
+          
+          // Mettre à jour le statut d'approbation du cours à null ou false selon le schéma
+          await storage.updateCourse(course.id, { isApproved: false });
+        }
+      }
+      
+      // Créer une notification pour l'utilisateur
+      await storage.createNotification({
+        userId: updatedRequest.requesterId,
+        message: notificationMessage,
+        type: 'rejection',
+        isRead: false
+      });
+    }
+    
+    res.status(200).json(updatedRequest);
+  } catch (error: any) {
+    console.error('Erreur lors du refus de la demande:', error);
+    res.status(500).json({ message: `Erreur: ${error.message}` });
   }
 });
 

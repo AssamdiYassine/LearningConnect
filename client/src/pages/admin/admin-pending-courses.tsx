@@ -81,9 +81,11 @@ export default function AdminPendingCourses() {
   });
   
   // Filtrer les cours en attente d'approbation
-  const pendingCourses = pendingApprovals?.filter((approval: any) => 
-    approval.type === 'course' && approval.status === 'pending' && approval.course
-  ) || [];
+  const pendingCourses = Array.isArray(pendingApprovals) 
+    ? pendingApprovals.filter((approval: any) => 
+        approval.type === 'course' && approval.status === 'pending' && approval.course
+      ) 
+    : [];
 
   // Mutation pour approuver une demande
   const approveMutation = useMutation({
@@ -144,7 +146,16 @@ export default function AdminPendingCourses() {
   // Fonctions pour approuver/refuser un cours
   const handleApproveCourse = (courseId: number) => {
     // Trouver l'ID de la demande d'approbation correspondant au cours
-    const approval = pendingApprovals?.find((a: any) => 
+    if (!Array.isArray(pendingApprovals)) {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'accéder aux demandes d'approbation.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const approval = pendingApprovals.find((a: any) => 
       a.type === 'course' && a.status === 'pending' && a.course?.id === courseId
     );
     
@@ -170,7 +181,16 @@ export default function AdminPendingCourses() {
     }
     
     // Trouver l'ID de la demande d'approbation correspondant au cours
-    const approval = pendingApprovals?.find((a: any) => 
+    if (!Array.isArray(pendingApprovals)) {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'accéder aux demandes d'approbation.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const approval = pendingApprovals.find((a: any) => 
       a.type === 'course' && a.status === 'pending' && a.course?.id === courseId
     );
     
@@ -190,7 +210,8 @@ export default function AdminPendingCourses() {
 
   // Fonction pour obtenir le nom du formateur
   const getTrainerName = (trainerId: number) => {
-    const trainer = users?.find((u: any) => u.id === trainerId);
+    if (!Array.isArray(users)) return "Formateur inconnu";
+    const trainer = users.find((u: any) => u.id === trainerId);
     return trainer ? (trainer.displayName || trainer.username) : "Formateur inconnu";
   };
   
@@ -266,7 +287,7 @@ export default function AdminPendingCourses() {
               <div>
                 <h3 className="font-medium text-red-800">Refusées (30j)</h3>
                 <p className="text-3xl font-bold text-red-900 mt-2">3</p>
-                <p className="text-sm text-red-700 mt-1">Formations refusées</p>
+                <p className="text-sm text-red-700 mt-1">Formations rejetées</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-red-200 flex items-center justify-center">
                 <XCircle className="h-6 w-6 text-red-600" />
@@ -303,158 +324,159 @@ export default function AdminPendingCourses() {
             </div>
           ) : (
             <div className="space-y-6">
-              {pendingCourses.map((approval) => {
+              {pendingCourses.map((approval: any) => {
                 const course = getCourseDetailsFromApproval(approval);
                 if (!course) return null;
                 
                 return (
-                <Card key={course.id} className="overflow-hidden">
-                  <div className="p-5 border-l-4 border-amber-400">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-lg font-semibold">{course.title}</h3>
-                          <Badge className="bg-amber-100 text-amber-800 border-amber-200">
-                            En attente
-                          </Badge>
+                  <Card key={approval.id} className="overflow-hidden">
+                    <div className="p-5 border-l-4 border-amber-400">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-semibold">{course.title}</h3>
+                            <Badge className="bg-amber-100 text-amber-800 border-amber-200">
+                              En attente
+                            </Badge>
+                          </div>
+                          
+                          <p className="text-gray-500 mt-1 mb-3">{course.description}</p>
+                          
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            <Badge variant="outline" className="bg-gray-50">
+                              {course.categoryName}
+                            </Badge>
+                            <Badge variant="outline" className={
+                              course.level === 'advanced' ? 'bg-red-50 text-red-700 border-red-200' :
+                              course.level === 'intermediate' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                              'bg-green-50 text-green-700 border-green-200'
+                            }>
+                              {course.level === 'advanced' ? 'Avancé' :
+                               course.level === 'intermediate' ? 'Intermédiaire' : 'Débutant'}
+                            </Badge>
+                            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                              {Math.floor(course.duration / 60)} heures
+                            </Badge>
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                              Max {course.maxStudents} étudiants
+                            </Badge>
+                          </div>
+                          
+                          <p className="text-xs text-gray-500">
+                            <span className="font-medium">Formateur:</span> {getTrainerName(course.trainerId)} •&nbsp;  
+                            <span className="font-medium">Soumis le:</span> {new Date(course.createdAt).toLocaleDateString('fr-FR', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric'
+                            })}
+                          </p>
                         </div>
                         
-                        <p className="text-gray-500 mt-1 mb-3">{course.description}</p>
-                        
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          <Badge variant="outline" className="bg-gray-50">
-                            {course.categoryName}
-                          </Badge>
-                          <Badge variant="outline" className={
-                            course.level === 'advanced' ? 'bg-red-50 text-red-700 border-red-200' :
-                            course.level === 'intermediate' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                            'bg-green-50 text-green-700 border-green-200'
-                          }>
-                            {course.level === 'advanced' ? 'Avancé' :
-                             course.level === 'intermediate' ? 'Intermédiaire' : 'Débutant'}
-                          </Badge>
-                          <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                            {Math.floor(course.duration / 60)} heures
-                          </Badge>
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                            Max {course.maxStudents} étudiants
-                          </Badge>
-                        </div>
-                        
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
-                          <span className="flex items-center">
-                            <Calendar className="h-4 w-4 mr-1" />
-                            Soumis le {course.createdAt.toLocaleDateString()}
-                          </span>
-                          <span>
-                            Par {course.trainerName}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="h-8">
-                          <Eye className="h-4 w-4 mr-1" />
-                          Détails
-                        </Button>
-                        
-                        <AlertDialog open={isRejectionDialogOpen && selectedCourseId === course.id} onOpenChange={(open) => {
-                          if (!open) {
-                            setIsRejectionDialogOpen(false);
-                            setSelectedCourseId(null);
-                          }
-                        }}>
-                          <AlertDialogTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="h-8 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
-                              onClick={() => {
-                                setSelectedCourseId(course.id);
-                                setIsRejectionDialogOpen(true);
-                              }}
-                            >
-                              <XCircle className="h-4 w-4 mr-1" />
-                              Refuser
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Refuser la formation</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Vous êtes sur le point de refuser la formation "<span className="font-medium">{course.title}</span>".
-                                Veuillez indiquer un motif pour aider le formateur à améliorer sa proposition.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <div className="py-4">
-                              <Textarea 
-                                placeholder="Motif du refus (obligatoire)" 
-                                value={rejectReason} 
-                                onChange={(e) => setRejectReason(e.target.value)}
-                                className="min-h-[120px]"
-                              />
-                            </div>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel onClick={() => {
-                                setIsRejectionDialogOpen(false);
-                                setSelectedCourseId(null);
-                                setRejectReason("");
-                              }}>
-                                Annuler
-                              </AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => handleRejectCourse(course.id)}
-                                className="bg-red-600 hover:bg-red-700"
+                        <div className="flex space-x-2">
+                          <AlertDialog open={isApprovalDialogOpen && selectedCourseId === course.id} onOpenChange={(open) => {
+                            if (!open) {
+                              setIsApprovalDialogOpen(false);
+                              setSelectedCourseId(null);
+                            }
+                          }}>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="h-8 border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800"
+                                onClick={() => {
+                                  setSelectedCourseId(course.id);
+                                  setIsApprovalDialogOpen(true);
+                                }}
                               >
-                                Confirmer le refus
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                        
-                        <AlertDialog open={isApprovalDialogOpen && selectedCourseId === course.id} onOpenChange={(open) => {
-                          if (!open) {
-                            setIsApprovalDialogOpen(false);
-                            setSelectedCourseId(null);
-                          }
-                        }}>
-                          <AlertDialogTrigger asChild>
-                            <Button 
-                              size="sm" 
-                              className="h-8 bg-green-600 hover:bg-green-700"
-                              onClick={() => {
-                                setSelectedCourseId(course.id);
-                                setIsApprovalDialogOpen(true);
-                              }}
-                            >
-                              <CheckCircle2 className="h-4 w-4 mr-1" />
-                              Approuver
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Approuver la formation</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Vous êtes sur le point d'approuver la formation "<span className="font-medium">{course.title}</span>".
-                                Une fois approuvée, elle sera immédiatement visible dans le catalogue.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Annuler</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => handleApproveCourse(course.id)}
-                                className="bg-green-600 hover:bg-green-700"
+                                <CheckCircle2 className="h-4 w-4 mr-1" />
+                                Approuver
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Approuver la formation</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Vous êtes sur le point d'approuver la formation "<span className="font-medium">{course.title}</span>".
+                                  Une fois approuvée, elle sera visible par tous les utilisateurs de la plateforme.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel onClick={() => {
+                                  setIsApprovalDialogOpen(false);
+                                  setSelectedCourseId(null);
+                                }}>
+                                  Annuler
+                                </AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleApproveCourse(course.id)}
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  Confirmer l'approbation
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                          
+                          <AlertDialog open={isRejectionDialogOpen && selectedCourseId === course.id} onOpenChange={(open) => {
+                            if (!open) {
+                              setIsRejectionDialogOpen(false);
+                              setSelectedCourseId(null);
+                            }
+                          }}>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="h-8 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+                                onClick={() => {
+                                  setSelectedCourseId(course.id);
+                                  setIsRejectionDialogOpen(true);
+                                }}
                               >
-                                Confirmer l'approbation
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Refuser
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Refuser la formation</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Vous êtes sur le point de refuser la formation "<span className="font-medium">{course.title}</span>".
+                                  Veuillez indiquer un motif pour aider le formateur à améliorer sa proposition.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <div className="py-4">
+                                <Textarea 
+                                  placeholder="Motif du refus (obligatoire)" 
+                                  value={rejectReason} 
+                                  onChange={(e) => setRejectReason(e.target.value)}
+                                  className="min-h-[120px]"
+                                />
+                              </div>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel onClick={() => {
+                                  setIsRejectionDialogOpen(false);
+                                  setSelectedCourseId(null);
+                                  setRejectReason("");
+                                }}>
+                                  Annuler
+                                </AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleRejectCourse(course.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Confirmer le refus
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                );
+              })}
             </div>
           )}
         </CardContent>
