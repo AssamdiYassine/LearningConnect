@@ -47,9 +47,7 @@ import { NotificationBell } from '@/components/notification-bell';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
-import { Bar } from '@nivo/bar';
-import { Pie } from '@nivo/pie';
-import { Line } from '@nivo/line';
+import { StatsCards, PendingApprovals, RecentActivity, AnalyticsCharts } from '@/components/dashboard';
 
 type DashboardStatistics = {
   userStats: {
@@ -311,63 +309,12 @@ export default function AdminDashboardNew() {
           {activePage === 'dashboard' && (
             <div className="space-y-8">
               {/* KPI Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Utilisateurs
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div className="text-2xl font-bold">{statistics?.userStats?.total_users || 0}</div>
-                      <Users className="h-8 w-8 text-[#5F8BFF]" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Formations
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div className="text-2xl font-bold">{statistics?.courseStats?.total_courses || 0}</div>
-                      <BookOpen className="h-8 w-8 text-[#7A6CFF]" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Sessions
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div className="text-2xl font-bold">{statistics?.sessionStats?.total_sessions || 0}</div>
-                      <Calendar className="h-8 w-8 text-[#1D2B6C]" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Abonnements
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div className="text-2xl font-bold">{statistics?.enrollmentStats?.total_enrollments || 0}</div>
-                      <CreditCard className="h-8 w-8 text-[#5F8BFF]" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <StatsCards 
+                userStats={statistics?.userStats || { total_users: 0 }}
+                courseStats={statistics?.courseStats || { total_courses: 0 }}
+                sessionStats={statistics?.sessionStats || { total_sessions: 0 }}
+                enrollmentStats={statistics?.enrollmentStats || { total_enrollments: 0 }}
+              />
 
               {/* Approbations en attente */}
               <Card>
