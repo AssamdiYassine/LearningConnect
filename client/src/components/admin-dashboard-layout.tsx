@@ -1,496 +1,253 @@
-import React, { useState } from "react";
-import { useLocation, Link } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
-import { cn } from "@/lib/utils";
+import { useState } from 'react';
+import { Link, useLocation } from 'wouter';
 import {
-  BarChart3,
-  Users,
-  BookOpen,
-  Calendar,
-  FileCheck,
-  Settings,
-  DollarSign,
-  Bell,
-  Package,
-  FileText,
-  Home,
-  ChevronLeft,
-  Menu,
-  X,
-  LogOut,
-  Grid3X3,
-  Layers,
-  Tag,
-  MessageSquare,
-  Mail,
   BarChart,
-  ArrowUpDown,
-  PieChart,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import NotificationBell from "@/components/notification-bell";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useTheme } from "@/hooks/use-theme";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+  Users,
+  Settings,
+  Bell,
+  LogOut,
+  Layout,
+  BookOpen,
+  CheckSquare,
+  FileText,
+  Tag,
+  Home
+} from 'lucide-react';
+import NotificationBell from './notification-bell';
+import { useAuth } from '@/hooks/use-auth';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface AdminDashboardLayoutProps {
   children: React.ReactNode;
 }
 
 export default function AdminDashboardLayout({ children }: AdminDashboardLayoutProps) {
-  const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
-  const { theme, setTheme } = useTheme();
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, logoutMutation } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const handleLogout = () => {
     logoutMutation.mutate();
   };
 
-  const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
+  // Get user initials for avatar
+  const getInitials = (name: string) => {
+    if (!name) return 'AD';
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
   };
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
+  const isActive = (path: string) => {
+    return location === path;
   };
-
-  const navItems = [
-    {
-      group: "Général",
-      items: [
-        {
-          name: "Tableau de bord",
-          path: "/admin/dashboard-new",
-          icon: <BarChart3 className="h-5 w-5" />,
-        },
-        {
-          name: "Analytics",
-          path: "/admin/analytics",
-          icon: <PieChart className="h-5 w-5" />,
-        },
-      ],
-    },
-    {
-      group: "Gestion",
-      items: [
-        {
-          name: "Utilisateurs",
-          path: "/admin/users",
-          icon: <Users className="h-5 w-5" />,
-        },
-        {
-          name: "Cours",
-          path: "/admin/courses",
-          icon: <BookOpen className="h-5 w-5" />,
-        },
-        {
-          name: "Sessions",
-          path: "/admin/sessions",
-          icon: <Calendar className="h-5 w-5" />,
-        },
-        {
-          name: "Catégories",
-          path: "/admin/categories",
-          icon: <Tag className="h-5 w-5" />,
-        },
-      ],
-    },
-    {
-      group: "Modération",
-      items: [
-        {
-          name: "Approbations",
-          path: "/admin/pending-courses",
-          icon: <FileCheck className="h-5 w-5" />,
-        },
-        {
-          name: "Commentaires",
-          path: "/admin/comments",
-          icon: <MessageSquare className="h-5 w-5" />,
-        },
-      ],
-    },
-    {
-      group: "Finances",
-      items: [
-        {
-          name: "Revenus",
-          path: "/admin/revenue",
-          icon: <DollarSign className="h-5 w-5" />,
-        },
-        {
-          name: "Abonnements",
-          path: "/admin/subscriptions",
-          icon: <Package className="h-5 w-5" />,
-        },
-        {
-          name: "Paiements",
-          path: "/admin/payments",
-          icon: <ArrowUpDown className="h-5 w-5" />,
-        },
-      ],
-    },
-    {
-      group: "Contenu",
-      items: [
-        {
-          name: "Blog",
-          path: "/blog/admin",
-          icon: <FileText className="h-5 w-5" />,
-        },
-        {
-          name: "Notifications",
-          path: "/admin/notifications",
-          icon: <Bell className="h-5 w-5" />,
-        },
-        {
-          name: "E-mails",
-          path: "/admin/emails",
-          icon: <Mail className="h-5 w-5" />,
-        },
-      ],
-    },
-    {
-      group: "Système",
-      items: [
-        {
-          name: "Paramètres",
-          path: "/admin/settings",
-          icon: <Settings className="h-5 w-5" />,
-        },
-        {
-          name: "Site public",
-          path: "/",
-          icon: <Home className="h-5 w-5" />,
-        },
-      ],
-    },
-  ];
-
-  if (!user || user.role !== "admin") {
-    return <div>Accès non autorisé</div>;
-  }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Mobile header */}
-      <div className="md:hidden flex items-center justify-between p-4 bg-white dark:bg-gray-800 border-b shadow-sm">
-        <div className="flex items-center">
-          <Button variant="ghost" size="icon" onClick={toggleMobileMenu}>
-            <Menu className="h-6 w-6" />
-          </Button>
-          <div className="ml-3 font-bold text-lg text-primary dark:text-white">
-            Console d'Administration
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <NotificationBell />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          >
-            {theme === "dark" ? (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
+        <div className="flex h-16 items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center">
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="text-gray-500 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary md:hidden"
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                  d={isSidebarOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'}
                 />
               </svg>
-            ) : (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                />
-              </svg>
-            )}
-          </Button>
-        </div>
-      </div>
+            </button>
 
-      {/* Mobile menu */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
-          <div className="bg-white dark:bg-gray-800 w-4/5 h-full animate-in slide-in-from-left">
-            <div className="flex justify-between items-center p-4 border-b">
-              <div className="text-2xl font-bold text-[#5F8BFF] dark:text-white">
-                Nec<span className="text-[#7A6CFF]">form</span>
-              </div>
-              <Button variant="ghost" size="icon" onClick={toggleMobileMenu}>
-                <X className="h-6 w-6" />
-              </Button>
-            </div>
-            <div className="p-4">
-              <div className="flex items-center space-x-3 mb-6">
-                <Avatar>
-                  <AvatarFallback>{user.displayName?.[0] || user.username[0]}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <div className="font-semibold">{user.displayName || user.username}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">{user.email}</div>
-                </div>
-              </div>
-              <ScrollArea className="h-[calc(100vh-180px)]">
-                <div className="space-y-8 pr-4">
-                  {navItems.map((group) => (
-                    <div key={group.group}>
-                      <h3 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold mb-3">
-                        {group.group}
-                      </h3>
-                      <div className="space-y-1">
-                        {group.items.map((item) => (
-                          <Button
-                            key={item.path}
-                            variant="ghost"
-                            className={cn(
-                              "w-full justify-start text-base font-normal",
-                              location === item.path
-                                ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-white font-medium"
-                                : "text-gray-700 dark:text-gray-300"
-                            )}
-                            onClick={() => {
-                              window.location.href = item.path;
-                              setIsMobileMenuOpen(false);
-                            }}
-                          >
-                            <span className="mr-3">{item.icon}</span>
-                            {item.name}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-              <div className="pt-4 border-t mt-4">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-red-600 dark:text-red-400"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="mr-3 h-5 w-5" />
-                  Se déconnecter
+            {/* Logo */}
+            <Link href="/">
+              <a className="flex items-center ml-2 md:ml-0">
+                <div className="text-2xl font-bold text-primary">Necform</div>
+                <div className="ml-2 text-lg font-medium text-primary/70">| Admin</div>
+              </a>
+            </Link>
+          </div>
+
+          {/* Right side - User menu, notifications, etc. */}
+          <div className="flex items-center space-x-4">
+            <NotificationBell />
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                  <Avatar>
+                    <AvatarImage src="" />
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {user ? getInitials(user.displayName || user.username) : 'AD'}
+                    </AvatarFallback>
+                  </Avatar>
                 </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="flex">
-        {/* Sidebar - Desktop */}
-        <aside
-          className={cn(
-            "fixed left-0 top-0 bottom-0 z-10 hidden md:flex flex-col border-r shadow-sm bg-white dark:bg-gray-800 dark:border-gray-700 transition-all ease-in-out duration-300",
-            isCollapsed ? "w-[80px]" : "w-[280px]"
-          )}
-        >
-          <div className="flex flex-col h-full">
-            {/* Sidebar header */}
-            <div
-              className={cn(
-                "flex items-center h-16 px-4 border-b shrink-0",
-                isCollapsed ? "justify-center" : "justify-between"
-              )}
-            >
-              {!isCollapsed && (
-                <Link href="/admin/dashboard">
-                  <div className="text-2xl font-bold cursor-pointer text-[#5F8BFF] dark:text-white">
-                    Nec<span className="text-[#7A6CFF]">form</span>
-                  </div>
-                </Link>
-              )}
-              <Button variant="ghost" size="icon" onClick={toggleSidebar}>
-                <ChevronLeft
-                  className={cn(
-                    "h-5 w-5 transition-transform",
-                    isCollapsed && "rotate-180"
-                  )}
-                />
-              </Button>
-            </div>
-
-            {/* User info */}
-            {!isCollapsed && (
-              <div className="flex items-center gap-3 px-4 py-4 border-b">
-                <Avatar>
-                  <AvatarFallback>{user.displayName?.[0] || user.username[0]}</AvatarFallback>
-                </Avatar>
-                <div className="overflow-hidden">
-                  <div className="font-medium truncate">{user.displayName || user.username}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                    {user.email}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <div className="flex items-center justify-start gap-2 p-2">
+                  <div className="flex flex-col space-y-0.5 leading-none">
+                    <p className="font-medium text-sm">{user?.displayName || user?.username}</p>
+                    <p className="w-[180px] truncate text-xs text-muted-foreground">{user?.email}</p>
                   </div>
                 </div>
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">
+                    <a className="cursor-pointer w-full">Mon profil</a>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings">
+                    <a className="cursor-pointer w-full">Paramètres</a>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-red-600" onClick={handleLogout}>
+                  Se déconnecter
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <aside
+          className={`bg-white border-r border-gray-200 w-64 flex-shrink-0 fixed md:sticky top-16 h-[calc(100vh-4rem)] z-20 transition-transform duration-200 ease-in-out ${
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } md:translate-x-0`}
+        >
+          <div className="flex flex-col h-full py-4 overflow-y-auto">
+            <nav className="space-y-1 px-2">
+              <Link href="/admin-dashboard-new">
+                <a
+                  className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-md ${
+                    isActive('/admin-dashboard-new')
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <BarChart className="h-5 w-5 mr-2" />
+                  Tableau de bord
+                </a>
+              </Link>
+
+              <Link href="/admin/users">
+                <a
+                  className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-md ${
+                    isActive('/admin/users')
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <Users className="h-5 w-5 mr-2" />
+                  Gestion utilisateurs
+                </a>
+              </Link>
+
+              <Link href="/admin/courses">
+                <a
+                  className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-md ${
+                    isActive('/admin/courses')
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <BookOpen className="h-5 w-5 mr-2" />
+                  Gestion des cours
+                </a>
+              </Link>
+
+              <Link href="/admin/approvals">
+                <a
+                  className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-md ${
+                    isActive('/admin/approvals')
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <CheckSquare className="h-5 w-5 mr-2" />
+                  Approbations
+                </a>
+              </Link>
+
+              <Link href="/admin/blog">
+                <a
+                  className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-md ${
+                    isActive('/admin/blog')
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <FileText className="h-5 w-5 mr-2" />
+                  Gestion du blog
+                </a>
+              </Link>
+
+              <Link href="/admin/categories">
+                <a
+                  className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-md ${
+                    isActive('/admin/categories')
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <Tag className="h-5 w-5 mr-2" />
+                  Catégories
+                </a>
+              </Link>
+
+              <div className="pt-4 border-t border-gray-200 mt-4">
+                <Link href="/admin/settings">
+                  <a
+                    className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-md ${
+                      isActive('/admin/settings')
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <Settings className="h-5 w-5 mr-2" />
+                    Paramètres
+                  </a>
+                </Link>
+
+                <Link href="/">
+                  <a
+                    className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-md ${
+                      isActive('/')
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <Home className="h-5 w-5 mr-2" />
+                    Retour au site
+                  </a>
+                </Link>
               </div>
-            )}
-
-            {/* Nav items */}
-            <ScrollArea className="flex-1">
-              <div className={cn("py-2", isCollapsed ? "px-1.5" : "px-3")}>
-                {navItems.map((group) => (
-                  <div key={group.group} className="mb-6">
-                    {!isCollapsed && (
-                      <h3 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold ml-3 mb-1">
-                        {group.group}
-                      </h3>
-                    )}
-                    <div className={cn("space-y-1", isCollapsed && "flex flex-col items-center")}>
-                      {group.items.map((item) => (
-                        <TooltipProvider key={item.path} delayDuration={0}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                className={cn(
-                                  "w-full justify-start",
-                                  location === item.path
-                                    ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-white font-medium"
-                                    : "text-gray-700 dark:text-gray-300",
-                                  isCollapsed
-                                    ? "h-10 w-10 p-0 flex justify-center"
-                                    : "px-3 py-2"
-                                )}
-                                onClick={() => {
-                                  window.location.href = item.path;
-                                }}
-                              >
-                                <span
-                                  className={cn(
-                                    isCollapsed ? "mr-0" : "mr-3"
-                                  )}
-                                >
-                                  {item.icon}
-                                </span>
-                                {!isCollapsed && item.name}
-                              </Button>
-                            </TooltipTrigger>
-                            {isCollapsed && (
-                              <TooltipContent side="right">
-                                {item.name}
-                              </TooltipContent>
-                            )}
-                          </Tooltip>
-                        </TooltipProvider>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-
-            {/* Sidebar footer */}
-            <div
-              className={cn(
-                "border-t p-3 flex shrink-0",
-                isCollapsed ? "justify-center" : "justify-between items-center"
-              )}
-            >
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={cn(isCollapsed ? "mr-0" : "mr-2")}
-                      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                    >
-                      {theme === "dark" ? (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                          />
-                        </svg>
-                      ) : (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                          />
-                        </svg>
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  {isCollapsed && (
-                    <TooltipContent side="right">
-                      {theme === "dark" ? "Mode clair" : "Mode sombre"}
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
-
-              {!isCollapsed && <NotificationBell />}
-
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                      onClick={handleLogout}
-                    >
-                      <LogOut className="h-5 w-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  {isCollapsed && (
-                    <TooltipContent side="right">
-                      Se déconnecter
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+            </nav>
           </div>
         </aside>
 
         {/* Main content */}
         <main
-          className={cn(
-            "flex-1 transition-all duration-300 ease-in-out",
-            isCollapsed ? "md:ml-[80px]" : "md:ml-[280px]"
-          )}
+          className={`flex-1 overflow-y-auto bg-gray-50 ${
+            isSidebarOpen ? 'md:ml-0' : ''
+          }`}
         >
-          <div className="container-wide py-8 px-4 md:px-6">
-            {children}
-          </div>
+          {children}
         </main>
       </div>
     </div>
