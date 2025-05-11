@@ -515,33 +515,420 @@ export default function AdminDashboardNew() {
         {/* Onglet Utilisateurs */}
         <TabsContent value="users" className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Gestion des utilisateurs</CardTitle>
-              <CardDescription>
-                Consultez et gérez les utilisateurs de la plateforme
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Gestion des utilisateurs</CardTitle>
+                <CardDescription>
+                  Consultez et gérez les utilisateurs de la plateforme
+                </CardDescription>
+              </div>
+              <button className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium">
+                Ajouter un utilisateur
+              </button>
             </CardHeader>
             <CardContent>
-              <p className="text-center py-8 text-muted-foreground">
-                Fonction de gestion des utilisateurs en cours de développement...
-              </p>
+              <div className="rounded-md border">
+                <div className="grid grid-cols-7 gap-4 p-4 font-medium bg-muted/50">
+                  <div>Utilisateur</div>
+                  <div>Email</div>
+                  <div>Rôle</div>
+                  <div className="text-center">Statut</div>
+                  <div className="text-center">Abonnement</div>
+                  <div className="text-center">Date inscription</div>
+                  <div className="text-center">Actions</div>
+                </div>
+                <div className="divide-y">
+                  {/* User 1 */}
+                  <div className="grid grid-cols-7 gap-4 p-4 items-center">
+                    <div className="font-medium flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold">TD</span>
+                      Thomas Dubois
+                    </div>
+                    <div className="text-sm text-muted-foreground">admin@necform.fr</div>
+                    <div>
+                      <span className="bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs">
+                        Administrateur
+                      </span>
+                    </div>
+                    <div className="text-center">
+                      <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs">
+                        Actif
+                      </span>
+                    </div>
+                    <div className="text-center">
+                      <span className="bg-purple-100 text-purple-800 rounded-full px-2 py-0.5 text-xs">
+                        Annuel
+                      </span>
+                    </div>
+                    <div className="text-center text-sm text-muted-foreground">
+                      01/01/2023
+                    </div>
+                    <div className="text-center flex gap-2 justify-center">
+                      <button className="text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button className="text-red-600 hover:text-red-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 6h18"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* User 2 */}
+                  <div className="grid grid-cols-7 gap-4 p-4 items-center">
+                    <div className="font-medium flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold">SD</span>
+                      Sarah Dupont
+                    </div>
+                    <div className="text-sm text-muted-foreground">formateur@necform.fr</div>
+                    <div>
+                      <span className="bg-violet-100 text-violet-800 rounded-full px-2 py-0.5 text-xs">
+                        Formateur
+                      </span>
+                    </div>
+                    <div className="text-center">
+                      <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs">
+                        Actif
+                      </span>
+                    </div>
+                    <div className="text-center">
+                      <span className="bg-purple-100 text-purple-800 rounded-full px-2 py-0.5 text-xs">
+                        Annuel
+                      </span>
+                    </div>
+                    <div className="text-center text-sm text-muted-foreground">
+                      05/02/2023
+                    </div>
+                    <div className="text-center flex gap-2 justify-center">
+                      <button className="text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button className="text-red-600 hover:text-red-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 6h18"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* User 3 */}
+                  <div className="grid grid-cols-7 gap-4 p-4 items-center">
+                    <div className="font-medium flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold">JP</span>
+                      Jean Pierre
+                    </div>
+                    <div className="text-sm text-muted-foreground">etudiant@necform.fr</div>
+                    <div>
+                      <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs">
+                        Étudiant
+                      </span>
+                    </div>
+                    <div className="text-center">
+                      <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs">
+                        Actif
+                      </span>
+                    </div>
+                    <div className="text-center">
+                      <span className="bg-orange-100 text-orange-800 rounded-full px-2 py-0.5 text-xs">
+                        Mensuel
+                      </span>
+                    </div>
+                    <div className="text-center text-sm text-muted-foreground">
+                      15/03/2023
+                    </div>
+                    <div className="text-center flex gap-2 justify-center">
+                      <button className="text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button className="text-red-600 hover:text-red-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 6h18"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6 flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Affichage de 3 utilisateurs sur 156
+                </div>
+                <div className="flex gap-1">
+                  <button className="px-3 py-1 border rounded text-sm bg-muted">1</button>
+                  <button className="px-3 py-1 border rounded text-sm">2</button>
+                  <button className="px-3 py-1 border rounded text-sm">3</button>
+                  <button className="px-3 py-1 border rounded text-sm">...</button>
+                  <button className="px-3 py-1 border rounded text-sm">16</button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* Onglet Paramètres */}
-        <TabsContent value="settings" className="space-y-4">
+        <TabsContent value="settings" className="space-y-6">
+          {/* API Intégrations */}
           <Card>
             <CardHeader>
-              <CardTitle>Paramètres de la plateforme</CardTitle>
+              <CardTitle>Intégrations API</CardTitle>
               <CardDescription>
-                Configurez les paramètres généraux et les intégrations API
+                Configurez les intégrations avec des services externes
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-center py-8 text-muted-foreground">
-                Fonction de paramétrage en cours de développement...
-              </p>
+              <div className="space-y-8">
+                {/* Stripe Integration */}
+                <div className="border-b pb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="24" height="24" rx="4" fill="#635BFF" />
+                        <path d="M11.5 7.8C11.5 7.32 11.902 7 12.5 7C13.814 7 15.267 7.68 16.3 8.8V5.92C15.227 5.18 13.874 4.8 12.5 4.8C10.05 4.8 8 6.38 8 7.9C8 11.3 13 10.4 13 12.4C13 12.94 12.52 13.2 11.9 13.2C10.486 13.2 8.9 12.38 7.8 11.2V14.14C8.95 14.94 10.4 15.2 11.9 15.2C14.4 15.2 16.5 13.72 16.5 12.1C16.5 8.5 11.5 9.58 11.5 7.8Z" fill="white" />
+                      </svg>
+                      <div>
+                        <h3 className="font-medium">Stripe</h3>
+                        <p className="text-xs text-muted-foreground">Traitement des paiements</p>
+                      </div>
+                    </div>
+                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Connecté</span>
+                  </div>
+                  
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Clé publique</label>
+                      <div className="flex">
+                        <input 
+                          type="password" 
+                          value="pk_test_•••••••••••••••••••••••••••••"
+                          className="w-full rounded-l-md border px-3 py-2 text-sm"
+                          readOnly
+                        />
+                        <button className="px-3 py-2 bg-muted border border-l-0 rounded-r-md">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Clé secrète</label>
+                      <div className="flex">
+                        <input 
+                          type="password" 
+                          value="sk_test_•••••••••••••••••••••••••••••"
+                          className="w-full rounded-l-md border px-3 py-2 text-sm"
+                          readOnly
+                        />
+                        <button className="px-3 py-2 bg-muted border border-l-0 rounded-r-md">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 flex justify-end">
+                    <button className="px-4 py-2 bg-primary text-white rounded-md text-sm">
+                      Mettre à jour les clés Stripe
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Zoom Integration */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center text-white font-bold">
+                        Z
+                      </div>
+                      <div>
+                        <h3 className="font-medium">Zoom</h3>
+                        <p className="text-xs text-muted-foreground">Visioconférence</p>
+                      </div>
+                    </div>
+                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Connecté</span>
+                  </div>
+                  
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">API Key</label>
+                      <div className="flex">
+                        <input 
+                          type="password" 
+                          value="Adh7G••••••••••••••••••••••"
+                          className="w-full rounded-l-md border px-3 py-2 text-sm"
+                          readOnly
+                        />
+                        <button className="px-3 py-2 bg-muted border border-l-0 rounded-r-md">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">API Secret</label>
+                      <div className="flex">
+                        <input 
+                          type="password" 
+                          value="oP8tR••••••••••••••••••••••"
+                          className="w-full rounded-l-md border px-3 py-2 text-sm"
+                          readOnly
+                        />
+                        <button className="px-3 py-2 bg-muted border border-l-0 rounded-r-md">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Email de compte</label>
+                      <input 
+                        type="email" 
+                        value="contact@necform.fr"
+                        className="w-full rounded-md border px-3 py-2 text-sm"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 flex justify-end">
+                    <button className="px-4 py-2 bg-primary text-white rounded-md text-sm">
+                      Mettre à jour les clés Zoom
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Paramètres généraux */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Paramètres généraux</CardTitle>
+              <CardDescription>
+                Configurez les paramètres généraux de la plateforme
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="font-medium mb-3">Plateforme</h3>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Nom de la plateforme</label>
+                      <input 
+                        type="text" 
+                        value="Necform"
+                        className="w-full rounded-md border px-3 py-2 text-sm"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Email de contact</label>
+                      <input 
+                        type="email" 
+                        value="contact@necform.fr"
+                        className="w-full rounded-md border px-3 py-2 text-sm"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">URL du site</label>
+                      <input 
+                        type="url" 
+                        value="https://necform.fr"
+                        className="w-full rounded-md border px-3 py-2 text-sm"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Fuseau horaire</label>
+                      <select className="w-full rounded-md border px-3 py-2 text-sm">
+                        <option>Europe/Paris (GMT+1)</option>
+                        <option>Europe/London (GMT+0)</option>
+                        <option>America/New_York (GMT-5)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="border-t pt-4">
+                  <h3 className="font-medium mb-3">Inscriptions & abonnements</h3>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="flex items-center justify-between border rounded-md p-3">
+                      <div>
+                        <h4 className="font-medium">Inscriptions ouvertes</h4>
+                        <p className="text-xs text-muted-foreground">Permettre aux nouveaux utilisateurs de s'inscrire</p>
+                      </div>
+                      <div className="h-6 w-11 rounded-full bg-primary relative">
+                        <div className="h-5 w-5 rounded-full bg-white absolute top-0.5 right-0.5"></div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between border rounded-md p-3">
+                      <div>
+                        <h4 className="font-medium">Approbation des formateurs</h4>
+                        <p className="text-xs text-muted-foreground">Nécessite une validation admin pour les formateurs</p>
+                      </div>
+                      <div className="h-6 w-11 rounded-full bg-primary relative">
+                        <div className="h-5 w-5 rounded-full bg-white absolute top-0.5 right-0.5"></div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Prix abonnement mensuel (€)</label>
+                      <input 
+                        type="number" 
+                        value="19.99"
+                        className="w-full rounded-md border px-3 py-2 text-sm"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Prix abonnement annuel (€)</label>
+                      <input 
+                        type="number" 
+                        value="199.99"
+                        className="w-full rounded-md border px-3 py-2 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end">
+                  <button className="px-4 py-2 bg-primary text-white rounded-md text-sm">
+                    Enregistrer les paramètres
+                  </button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
