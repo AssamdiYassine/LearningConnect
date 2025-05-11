@@ -8,6 +8,7 @@ import { registerAdminRoutes } from "./admin-routes";
 import { registerApprovalRoutes } from "./admin-approval-routes";
 import { registerAdminUserRoutes } from "./admin-api-users";
 import { registerAdminCourseRoutes } from "./admin-api-courses";
+import { registerAdminNotificationRoutes } from "./admin-notifications-routes";
 // Import des extensions pour les méthodes de stockage manquantes
 import "./db-storage-extensions";
 import { pool } from "./db";
