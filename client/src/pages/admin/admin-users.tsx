@@ -281,6 +281,7 @@ export default function AdminUsers() {
   };
 
   const prepareEditUser = (user: User) => {
+    console.log("Préparation de l'édition pour l'utilisateur:", user);
     setSelectedUser(user);
     setFormData({
       username: user.username,
@@ -290,7 +291,11 @@ export default function AdminUsers() {
       confirmPassword: '',
       role: user.role
     });
-    setIsEditDialogOpen(true);
+    
+    // Forcer le state à changer avant d'ouvrir la boîte de dialogue
+    setTimeout(() => {
+      setIsEditDialogOpen(true);
+    }, 10);
   };
 
   const filteredUsers = users.filter(user => 
