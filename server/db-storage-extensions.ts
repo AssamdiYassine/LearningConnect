@@ -1,99 +1,79 @@
-import { eq, and, like, desc, sql } from "drizzle-orm";
-import { Pool } from "pg";
-import { db } from "./db";
-import { users, courses, categories, approvalRequests, notifications } from "@shared/schema";
-import { DatabaseStorage } from "./storage";
+import { Pool } from "@neondatabase/serverless";
+import { eq, sql, desc, and, isNull, like, inArray } from "drizzle-orm";
+import { users, courses, sessions, enrollments, categories, notifications, approvalRequests } from "@shared/schema";
+import { drizzle } from "drizzle-orm/neon-serverless";
+import { DatabaseStorage } from "./db-storage";
 
+/**
+ * Étend la classe DatabaseStorage avec des méthodes supplémentaires pour l'interface IStorage
+ * Cette fonction permet d'ajouter des fonctionnalités sans modifier directement le fichier de stockage
+ */
 export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
-  // Extension pour les méthodes liées aux utilisateurs
+  // Méthodes étendues pour les utilisateurs
   dbStorage.getUsersByRole = async function(role: string) {
-    const usersFound = await db
-      .select()
-      .from(users)
-      .where(eq(users.role, role as "admin" | "trainer" | "student"));
-    return usersFound;
+    const db = drizzle({ client: this.pool, schema: { users } });
+    const result = await db.select().from(users).where(eq(users.role, role));
+    return result;
   };
 
-  dbStorage.updateUser = async function(id: number, userData: any) {
-    // S'assurer que nous n'écrasions pas les valeurs existantes avec undefined
-    const updateData: Record<string, any> = {};
-    for (const [key, value] of Object.entries(userData)) {
-      if (value !== undefined) {
-        updateData[key] = value;
-      }
-    }
-
+  dbStorage.updateUser = async function(id: number, data: Partial<typeof users.$inferSelect>) {
+    const db = drizzle({ client: this.pool, schema: { users } });
     const [updatedUser] = await db
       .update(users)
-      .set(updateData)
+      .set({ ...data, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
     return updatedUser;
   };
 
   dbStorage.deleteUser = async function(id: number) {
-    await db
-      .delete(users)
-      .where(eq(users.id, id));
-    return true;
+    const db = drizzle({ client: this.pool, schema: { users } });
+    await db.delete(users).where(eq(users.id, id));
   };
 
-  // Extension pour les méthodes liées aux formations
-  dbStorage.getAllCoursesWithDetails = async function() {
-    const allCourses = await db.select().from(courses);
+  // Méthodes étendues pour les cours
+  dbStorage.deleteCourse = async function(id: number) {
+    const db = drizzle({ client: this.pool, schema: { courses } });
+    await db.delete(courses).where(eq(courses.id, id));
+  };
 
-    // Pour chaque formation, récupérer les détails du formateur et de la catégorie
-    const coursesWithDetails = await Promise.all(
-      allCourses.map(async (course) => {
-        const [trainer] = await db
-          .select()
-          .from(users)
-          .where(eq(users.id, course.trainerId));
+  // Méthodes étendues pour les notifications
+  dbStorage.getNotificationsByUser = async function(userId: number) {
+    const db = drizzle({ client: this.pool, schema: { notifications } });
+    const result = await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
+    return result;
+  };
 
-        const [category] = await db
-          .select()
-          .from(categories)
-          .where(eq(categories.id, course.categoryId));
+  dbStorage.updateNotificationStatus = async function(id: number, isRead: boolean) {
+    const db = drizzle({ client: this.pool, schema: { notifications } });
+    const [updatedNotification] = await db
+      .update(notifications)
+      .set({ isRead, updatedAt: new Date() })
+      .where(eq(notifications.id, id))
+      .returning();
+    return updatedNotification;
+  };
 
-        return {
-          ...course,
-          trainer: trainer ? {
-            id: trainer.id,
-            username: trainer.username,
-            displayName: trainer.displayName
-          } : undefined,
-          category: category ? {
-            id: category.id,
-            name: category.name
-          } : undefined
-        };
+  // Fonction pour récupérer les courses qui ont besoin d'approbation
+  dbStorage.getCoursesNeedingApproval = async function() {
+    const db = drizzle({ client: this.pool, schema: { courses, users, categories } });
+    const results = await db
+      .select({
+        course: courses,
+        trainer: users,
+        category: categories
       })
-    );
-
-    return coursesWithDetails;
-  };
-
-  dbStorage.getCourseWithDetails = async function(id: number) {
-    const [course] = await db
-      .select()
       .from(courses)
-      .where(eq(courses.id, id));
+      .leftJoin(users, eq(courses.trainerId, users.id))
+      .leftJoin(categories, eq(courses.categoryId, categories.id))
+      .where(isNull(courses.isApproved))
+      .orderBy(desc(courses.createdAt));
 
-    if (!course) {
-      return null;
-    }
-
-    const [trainer] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, course.trainerId));
-
-    const [category] = await db
-      .select()
-      .from(categories)
-      .where(eq(categories.id, course.categoryId));
-
-    return {
+    return results.map(({ course, trainer, category }) => ({
       ...course,
       trainer: trainer ? {
         id: trainer.id,
@@ -104,58 +84,80 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
         id: category.id,
         name: category.name
       } : undefined
+    }));
+  };
+
+  // Extension pour les statistiques du tableau de bord d'administration
+  dbStorage.getAdminDashboardStats = async function() {
+    const db = drizzle({ client: this.pool });
+    const userStats = await db.execute(sql`
+      SELECT 
+        COUNT(*) as total_users,
+        COUNT(CASE WHEN ${users.role} = 'student' THEN 1 END) as student_count,
+        COUNT(CASE WHEN ${users.role} = 'trainer' THEN 1 END) as trainer_count,
+        COUNT(CASE WHEN ${users.role} = 'admin' THEN 1 END) as admin_count,
+        COUNT(CASE WHEN ${users.isSubscribed} = true THEN 1 END) as subscribed_count
+      FROM ${users}
+    `);
+
+    const courseStats = await db.execute(sql`
+      SELECT 
+        COUNT(*) as total_courses,
+        COUNT(CASE WHEN ${courses.isApproved} IS NULL THEN 1 END) as pending_courses,
+        COUNT(CASE WHEN ${courses.isApproved} = true THEN 1 END) as approved_courses,
+        COUNT(CASE WHEN ${courses.isApproved} = false THEN 1 END) as rejected_courses
+      FROM ${courses}
+    `);
+
+    const sessionStats = await db.execute(sql`
+      SELECT 
+        COUNT(*) as total_sessions,
+        COUNT(CASE WHEN ${sessions.date} > NOW() THEN 1 END) as upcoming_sessions,
+        COUNT(CASE WHEN ${sessions.date} < NOW() THEN 1 END) as past_sessions
+      FROM ${sessions}
+    `);
+
+    const enrollmentStats = await db.execute(sql`
+      SELECT 
+        COUNT(*) as total_enrollments
+      FROM ${enrollments}
+    `);
+
+    const recentActivity = await db.execute(sql`
+      SELECT 
+        'new_user' as type,
+        ${users.username} as name,
+        ${users.createdAt} as date
+      FROM ${users}
+      ORDER BY ${users.createdAt} DESC
+      LIMIT 5
+    `);
+
+    // Renvoyer les statistiques combinées
+    return {
+      userStats: userStats.rows[0],
+      courseStats: courseStats.rows[0],
+      sessionStats: sessionStats.rows[0],
+      enrollmentStats: enrollmentStats.rows[0],
+      recentActivity: recentActivity.rows
     };
   };
 
-  dbStorage.getCoursesByTrainer = async function(trainerId: number) {
-    const trainerCourses = await db
-      .select()
-      .from(courses)
-      .where(eq(courses.trainerId, trainerId));
-
-    return trainerCourses;
-  };
-
-  dbStorage.getCoursesByCategory = async function(categoryId: number) {
-    const categoryCourses = await db
-      .select()
-      .from(courses)
-      .where(eq(courses.categoryId, categoryId));
-
-    return categoryCourses;
-  };
-
-  dbStorage.deleteCourse = async function(id: number) {
-    await db
-      .delete(courses)
-      .where(eq(courses.id, id));
-    return true;
-  };
-
-  // Extensions pour les méthodes liées aux notifications
+  // Création et mise à jour des notifications
   dbStorage.createNotification = async function(notificationData) {
+    const db = drizzle({ client: this.pool, schema: { notifications } });
     const [notification] = await db
       .insert(notifications)
       .values({
-        userId: notificationData.userId,
-        message: notificationData.message,
-        type: notificationData.type,
-        isRead: notificationData.isRead ?? false,
+        ...notificationData,
         createdAt: new Date(),
+        updatedAt: new Date(),
+        isRead: notificationData.isRead || false
       })
       .returning();
     return notification;
   };
 
-  // Extension pour les méthodes liées à la catégorie
-  dbStorage.getCategoryBySlug = async function(slug: string) {
-    const [category] = await db
-      .select()
-      .from(categories)
-      .where(eq(categories.slug, slug));
-    
-    return category;
-  };
-
+  // Retourner l'objet dbStorage modifié
   return dbStorage;
 }

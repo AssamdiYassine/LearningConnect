@@ -144,6 +144,18 @@ export interface IStorage {
   updateApprovalStatus(id: number, status: 'approved' | 'rejected', reviewerId: number, notes?: string): Promise<ApprovalRequest>;
   getApprovalRequestsByType(type: string, status?: string): Promise<ApprovalRequestWithDetails[]>;
   getApprovalRequestsByRequester(requesterId: number): Promise<ApprovalRequestWithDetails[]>;
+  
+  // Extended user operations
+  getUsersByRole(role: string): Promise<User[]>;
+  updateUser(id: number, data: Partial<User>): Promise<User>;
+  deleteUser(id: number): Promise<void>;
+  
+  // Extended course operations
+  deleteCourse(id: number): Promise<void>;
+  
+  // Extended notifications operations
+  getNotificationsByUser(userId: number): Promise<Notification[]>;
+  updateNotificationStatus(id: number, isRead: boolean): Promise<Notification>;
 }
 
 // In-memory storage implementation
