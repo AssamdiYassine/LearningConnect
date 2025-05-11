@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { withAdminDashboard } from "@/lib/with-admin-dashboard";
 import {
   PlusCircle,
   Search,
@@ -90,7 +91,7 @@ type SessionFormData = {
   recordingLink?: string;
 };
 
-export default function AdminSessions() {
+function AdminSessions() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
@@ -929,3 +930,7 @@ export default function AdminSessions() {
     </div>
   );
 }
+
+// Exporter le composant avec le HOC pour l'administration
+const AdminSessionsWithDashboard = withAdminDashboard(AdminSessions);
+export default AdminSessionsWithDashboard;
