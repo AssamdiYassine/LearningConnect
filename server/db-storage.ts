@@ -638,44 +638,52 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPendingApprovals(): Promise<ApprovalRequestWithDetails[]> {
-    // Récupérer d'abord toutes les demandes en attente
+    // Récupérons d'abord toutes les demandes en attente
     const requests = await db
       .select()
       .from(approvalRequests)
       .where(eq(approvalRequests.status, "pending"));
     
-    // Convertir en objets ApprovalRequestWithDetails
+    // Créons un tableau pour stocker les résultats finaux
     const result: ApprovalRequestWithDetails[] = [];
     
+    // Traitement individuel de chaque demande
     for (const request of requests) {
-      let requester = null;
-      let reviewer = null;
+      // On crée un objet de base pour cette demande
+      const requestWithDetails: ApprovalRequestWithDetails = {
+        ...request,
+        requester: undefined as any, // Ces valeurs seront remplacées ci-dessous
+        reviewer: undefined as any,
+        course: undefined,
+        session: undefined
+      };
       
-      // Récupérer le demandeur si défini
+      // Récupérer le demandeur (requester)
       if (request.requesterId) {
-        const [foundRequester] = await db
+        const [requester] = await db
           .select()
           .from(users)
           .where(eq(users.id, request.requesterId));
-        requester = foundRequester;
+        
+        if (requester) {
+          requestWithDetails.requester = requester;
+        }
       }
       
-      // Récupérer le réviseur si défini
+      // Récupérer le réviseur (reviewer) s'il existe
       if (request.reviewerId) {
-        const [foundReviewer] = await db
+        const [reviewer] = await db
           .select()
           .from(users)
           .where(eq(users.id, request.reviewerId));
-        reviewer = foundReviewer;
+        
+        if (reviewer) {
+          requestWithDetails.reviewer = reviewer;
+        }
       }
       
-      result.push({
-        ...request,
-        requester,
-        reviewer,
-        course: undefined,
-        session: undefined
-      });
+      // Ajouter la demande au tableau de résultats
+      result.push(requestWithDetails);
     }
     
     return result;
@@ -726,51 +734,113 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getApprovalRequestsByType(type: string, status?: string): Promise<ApprovalRequestWithDetails[]> {
+    // Construisons la requête de base
     let query = db
-      .select({
-        request: approvalRequests,
-        requester: users,
-        reviewer: users,
-      })
+      .select()
       .from(approvalRequests)
-      .leftJoin(users, eq(approvalRequests.requesterId, users.id))
-      .leftJoin(users, eq(approvalRequests.reviewerId, users.id))
       .where(eq(approvalRequests.type, type));
       
+    // Ajoutons le filtre optionnel sur le statut
     if (status) {
       query = query.where(eq(approvalRequests.status, status));
     }
     
-    const results = await query;
+    // Exécutons la requête
+    const requests = await query;
     
-    return results.map(({ request, requester, reviewer }) => ({
-      ...request,
-      requester,
-      reviewer,
-      course: undefined, // Ces champs seront remplis si nécessaire par des appels supplémentaires
-      session: undefined
-    }));
+    // Créons un tableau pour stocker les résultats finaux
+    const result: ApprovalRequestWithDetails[] = [];
+    
+    // Traitement individuel de chaque demande pour récupérer les relations
+    for (const request of requests) {
+      // Créons l'objet de base pour cette demande
+      const requestWithDetails: ApprovalRequestWithDetails = {
+        ...request,
+        requester: undefined as any,
+        reviewer: undefined as any,
+        course: undefined,
+        session: undefined
+      };
+      
+      // Récupérer le demandeur (requester)
+      if (request.requesterId) {
+        const [requester] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, request.requesterId));
+        
+        if (requester) {
+          requestWithDetails.requester = requester;
+        }
+      }
+      
+      // Récupérer le réviseur (reviewer) s'il existe
+      if (request.reviewerId) {
+        const [reviewer] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, request.reviewerId));
+        
+        if (reviewer) {
+          requestWithDetails.reviewer = reviewer;
+        }
+      }
+      
+      // Ajouter la demande au tableau de résultats
+      result.push(requestWithDetails);
+    }
+    
+    return result;
   }
 
   async getApprovalRequestsByRequester(requesterId: number): Promise<ApprovalRequestWithDetails[]> {
-    const results = await db
-      .select({
-        request: approvalRequests,
-        requester: users,
-        reviewer: users,
-      })
+    // Récupérons les demandes pour ce demandeur
+    const requests = await db
+      .select()
       .from(approvalRequests)
-      .leftJoin(users, eq(approvalRequests.requesterId, users.id))
-      .leftJoin(users, eq(approvalRequests.reviewerId, users.id))
       .where(eq(approvalRequests.requesterId, requesterId));
     
-    return results.map(({ request, requester, reviewer }) => ({
-      ...request,
-      requester,
-      reviewer,
-      course: undefined, // Ces champs seront remplis si nécessaire par des appels supplémentaires
-      session: undefined
-    }));
+    // Créons un tableau pour stocker les résultats finaux
+    const result: ApprovalRequestWithDetails[] = [];
+    
+    // Pour chaque demande, récupérons les détails associés
+    for (const request of requests) {
+      // Créons l'objet de base pour cette demande
+      const requestWithDetails: ApprovalRequestWithDetails = {
+        ...request,
+        requester: undefined as any,
+        reviewer: undefined as any,
+        course: undefined,
+        session: undefined
+      };
+      
+      // Récupérer le demandeur (requester) - devrait toujours exister
+      const [requester] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, request.requesterId));
+      
+      if (requester) {
+        requestWithDetails.requester = requester;
+      }
+      
+      // Récupérer le réviseur (reviewer) s'il existe
+      if (request.reviewerId) {
+        const [reviewer] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, request.reviewerId));
+        
+        if (reviewer) {
+          requestWithDetails.reviewer = reviewer;
+        }
+      }
+      
+      // Ajouter la demande au tableau de résultats
+      result.push(requestWithDetails);
+    }
+    
+    return result;
   }
 
   // Implémentations des méthodes manquantes pour le Blog
