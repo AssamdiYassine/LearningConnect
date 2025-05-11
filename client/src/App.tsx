@@ -15,6 +15,7 @@ import TrainerRatings from "@/pages/trainer-ratings";
 import TrainerNotifications from "@/pages/trainer-notifications";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminDashboardNew from "@/pages/admin-dashboard-new";
+import AdminRedirect from "@/pages/admin-redirect";
 import Catalog from "@/pages/catalog";
 import Schedule from "@/pages/schedule";
 import Subscription from "@/pages/subscription";
@@ -199,6 +200,10 @@ function Router() {
       
       <Route path="/admin-dashboard">
         <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
+      </Route>
+      
+      <Route path="/admin-redirect">
+        <ProtectedRoute component={AdminRedirect} allowedRoles={["admin"]} />
       </Route>
       
       <Route path="/admin-dashboard-new">
