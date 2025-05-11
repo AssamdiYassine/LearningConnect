@@ -22,7 +22,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -65,10 +64,8 @@ export default function AdminUsers() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
-  const [dialogState, setDialogState] = useState({
-    isAddOpen: false,
-    isEditOpen: false
-  });
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [formData, setFormData] = useState<UserFormData>({
     username: '',
@@ -93,16 +90,16 @@ export default function AdminUsers() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       toast({
-        title: "Utilisateur cree",
-        description: "L'utilisateur a ete cree avec succes",
+        title: "Utilisateur créé",
+        description: "L'utilisateur a été créé avec succès",
       });
       resetForm();
-      setIsAddDialogOpen(false);
+      setAddDialogOpen(false);
     },
     onError: (error: Error) => {
       toast({
         title: "Erreur",
-        description: "Echec de creation de l'utilisateur: " + error.message,
+        description: "Échec de création de l'utilisateur: " + error.message,
         variant: "destructive",
       });
     }
@@ -123,16 +120,16 @@ export default function AdminUsers() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       toast({
-        title: "Utilisateur mis a jour",
-        description: "L'utilisateur a ete mis a jour avec succes",
+        title: "Utilisateur mis à jour",
+        description: "L'utilisateur a été mis à jour avec succès",
       });
       resetForm();
-      setIsEditDialogOpen(false);
+      setEditDialogOpen(false);
     },
     onError: (error: Error) => {
       toast({
         title: "Erreur",
-        description: "Echec de mise a jour de l'utilisateur: " + error.message,
+        description: "Échec de mise à jour de l'utilisateur: " + error.message,
         variant: "destructive",
       });
     }
@@ -147,14 +144,14 @@ export default function AdminUsers() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       toast({
-        title: "Utilisateur supprime",
-        description: "L'utilisateur a ete supprime avec succes",
+        title: "Utilisateur supprimé",
+        description: "L'utilisateur a été supprimé avec succès",
       });
     },
     onError: (error: Error) => {
       toast({
         title: "Erreur",
-        description: "Echec de suppression de l'utilisateur: " + error.message,
+        description: "Échec de suppression de l'utilisateur: " + error.message,
         variant: "destructive",
       });
     }
@@ -175,14 +172,14 @@ export default function AdminUsers() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       toast({
-        title: "Statut mis a jour",
-        description: "Le statut de l'utilisateur a ete mis a jour avec succes",
+        title: "Statut mis à jour",
+        description: "Le statut de l'utilisateur a été mis à jour avec succès",
       });
     },
     onError: (error: Error) => {
       toast({
         title: "Erreur",
-        description: "Echec de mise a jour du statut: " + error.message,
+        description: "Échec de mise à jour du statut: " + error.message,
         variant: "destructive",
       });
     }
@@ -261,14 +258,14 @@ export default function AdminUsers() {
     } else {
       toast({
         title: "Aucune modification",
-        description: "Aucune modification n'a ete apportee",
+        description: "Aucune modification n'a été apportée",
       });
-      setIsEditDialogOpen(false);
+      setEditDialogOpen(false);
     }
   };
 
   const handleDeleteUser = (user: User) => {
-    if (window.confirm(`Etes-vous sur de vouloir supprimer l'utilisateur ${user.username} ?`)) {
+    if (window.confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur ${user.username} ?`)) {
       deleteUserMutation.mutate(user.id);
     }
   };
@@ -282,8 +279,8 @@ export default function AdminUsers() {
     });
   };
 
-  const prepareEditUser = (user: User) => {
-    console.log("Préparation de l'édition pour l'utilisateur:", user);
+  const openEditDialog = (user: User) => {
+    console.log("Ouverture de la boîte de dialogue d'édition pour:", user);
     setSelectedUser(user);
     setFormData({
       username: user.username,
@@ -293,11 +290,7 @@ export default function AdminUsers() {
       confirmPassword: '',
       role: user.role
     });
-    
-    // Forcer le state à changer avant d'ouvrir la boîte de dialogue
-    setTimeout(() => {
-      setIsEditDialogOpen(true);
-    }, 10);
+    setEditDialogOpen(true);
   };
 
   const filteredUsers = users.filter(user => 
@@ -323,20 +316,9 @@ export default function AdminUsers() {
       default:
         return (
           <Badge className="bg-[#5F8BFF] hover:bg-[#5F8BFF]/90">
-            etudiant
+            étudiant
           </Badge>
         );
-    }
-  };
-
-  const getRoleTranslation = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'Administrateur';
-      case 'trainer':
-        return 'Formateur';
-      default:
-        return 'Etudiant';
     }
   };
 
@@ -345,123 +327,17 @@ export default function AdminUsers() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Gestion des utilisateurs</CardTitle>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <Button 
-              className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"
-              onClick={() => {
-                console.log("Ouverture de la boîte de dialogue d'ajout");
-                resetForm();
-                setIsAddDialogOpen(true);
-              }}
-            >
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Ajouter un utilisateur
-            </Button>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Ajouter un nouvel utilisateur</DialogTitle>
-                <DialogDescription>
-                  Creer un nouveau compte utilisateur avec les informations ci-dessous.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <label htmlFor="username" className="text-right">
-                    Nom d'utilisateur
-                  </label>
-                  <Input
-                    id="username"
-                    name="username"
-                    className="col-span-3"
-                    value={formData.username}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <label htmlFor="email" className="text-right">
-                    Email
-                  </label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    className="col-span-3"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <label htmlFor="displayName" className="text-right">
-                    Nom affiche
-                  </label>
-                  <Input
-                    id="displayName"
-                    name="displayName"
-                    className="col-span-3"
-                    value={formData.displayName}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <label htmlFor="password" className="text-right">
-                    Mot de passe
-                  </label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    className="col-span-3"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <label htmlFor="confirmPassword" className="text-right">
-                    Confirmer
-                  </label>
-                  <Input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    className="col-span-3"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <label htmlFor="role" className="text-right">
-                    Role
-                  </label>
-                  <Select 
-                    value={formData.role} 
-                    onValueChange={(value) => handleSelectChange('role', value)}
-                  >
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Selectionner un role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="student">Etudiant</SelectItem>
-                      <SelectItem value="trainer">Formateur</SelectItem>
-                      <SelectItem value="admin">Administrateur</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                  Annuler
-                </Button>
-                <Button 
-                  type="button" 
-                  onClick={handleAddUser}
-                  disabled={createUserMutation.isPending}
-                  className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"
-                >
-                  {createUserMutation.isPending ? "Creation en cours..." : "Creer l'utilisateur"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button 
+            className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"
+            onClick={() => {
+              console.log("Ouverture de la boîte de dialogue d'ajout");
+              resetForm();
+              setAddDialogOpen(true);
+            }}
+          >
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Ajouter un utilisateur
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="mb-4 relative">
@@ -486,7 +362,7 @@ export default function AdminUsers() {
                     <TableRow>
                       <TableHead>Utilisateur</TableHead>
                       <TableHead>Email</TableHead>
-                      <TableHead>Role</TableHead>
+                      <TableHead>Rôle</TableHead>
                       <TableHead>Statut</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -530,7 +406,7 @@ export default function AdminUsers() {
                             <Button 
                               variant="outline" 
                               size="sm" 
-                              onClick={() => prepareEditUser(user)}
+                              onClick={() => openEditDialog(user)}
                               className="text-blue-600 border-blue-600 hover:bg-blue-50"
                             >
                               <Edit2 className="h-4 w-4" />
@@ -552,17 +428,17 @@ export default function AdminUsers() {
               ) : (
                 <div className="text-center py-10">
                   <UserPlus className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Aucun utilisateur trouve</h3>
+                  <h3 className="text-lg font-medium mb-2">Aucun utilisateur trouvé</h3>
                   <p className="text-muted-foreground mb-4">
                     {searchQuery 
-                      ? "Aucun utilisateur ne correspond a votre recherche." 
+                      ? "Aucun utilisateur ne correspond à votre recherche." 
                       : "Vous n'avez encore aucun utilisateur."}
                   </p>
                   <Button 
                     onClick={() => {
                       console.log("Ouverture de la boîte de dialogue d'ajout (cas vide)");
                       resetForm();
-                      setIsAddDialogOpen(true);
+                      setAddDialogOpen(true);
                     }}
                     className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"
                   >
@@ -576,8 +452,116 @@ export default function AdminUsers() {
         </CardContent>
       </Card>
 
+      {/* Add User Dialog */}
+      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Ajouter un nouvel utilisateur</DialogTitle>
+            <DialogDescription>
+              Créer un nouveau compte utilisateur avec les informations ci-dessous.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="username" className="text-right">
+                Nom d'utilisateur
+              </label>
+              <Input
+                id="username"
+                name="username"
+                className="col-span-3"
+                value={formData.username}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="email" className="text-right">
+                Email
+              </label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                className="col-span-3"
+                value={formData.email}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="displayName" className="text-right">
+                Nom affiché
+              </label>
+              <Input
+                id="displayName"
+                name="displayName"
+                className="col-span-3"
+                value={formData.displayName}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="password" className="text-right">
+                Mot de passe
+              </label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                className="col-span-3"
+                value={formData.password}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="confirmPassword" className="text-right">
+                Confirmer
+              </label>
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                className="col-span-3"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="role" className="text-right">
+                Rôle
+              </label>
+              <Select 
+                value={formData.role} 
+                onValueChange={(value) => handleSelectChange('role', value)}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Sélectionner un rôle" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="student">Étudiant</SelectItem>
+                  <SelectItem value="trainer">Formateur</SelectItem>
+                  <SelectItem value="admin">Administrateur</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setAddDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button 
+              type="button" 
+              onClick={handleAddUser}
+              disabled={createUserMutation.isPending}
+              className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"
+            >
+              {createUserMutation.isPending ? "Création en cours..." : "Créer l'utilisateur"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Edit User Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Modifier l'utilisateur</DialogTitle>
@@ -613,7 +597,7 @@ export default function AdminUsers() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="edit-displayName" className="text-right">
-                Nom affiche
+                Nom affiché
               </label>
               <Input
                 id="edit-displayName"
@@ -625,7 +609,7 @@ export default function AdminUsers() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="edit-password" className="text-right">
-                Nouveau mot de passe
+                Mot de passe
               </label>
               <Input
                 id="edit-password"
@@ -653,17 +637,17 @@ export default function AdminUsers() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="edit-role" className="text-right">
-                Role
+                Rôle
               </label>
               <Select 
                 value={formData.role} 
                 onValueChange={(value) => handleSelectChange('role', value)}
               >
                 <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Selectionner un role" />
+                  <SelectValue placeholder="Sélectionner un rôle" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="student">Etudiant</SelectItem>
+                  <SelectItem value="student">Étudiant</SelectItem>
                   <SelectItem value="trainer">Formateur</SelectItem>
                   <SelectItem value="admin">Administrateur</SelectItem>
                 </SelectContent>
@@ -671,7 +655,7 @@ export default function AdminUsers() {
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
               Annuler
             </Button>
             <Button 
@@ -680,7 +664,7 @@ export default function AdminUsers() {
               disabled={updateUserMutation.isPending}
               className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"
             >
-              {updateUserMutation.isPending ? "Mise a jour en cours..." : "Mettre a jour"}
+              {updateUserMutation.isPending ? "Mise à jour en cours..." : "Mettre à jour"}
             </Button>
           </DialogFooter>
         </DialogContent>
