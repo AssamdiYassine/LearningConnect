@@ -13,7 +13,7 @@ import {
   users, courses, categories, sessions, enrollments, notifications, settings, userOnboarding, approvalRequests,
   CourseWithDetails, SessionWithDetails
 } from "@shared/schema";
-import { eq, and, gte, desc, sql } from "drizzle-orm";
+import { eq, and, gte, desc, sql, alias } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -638,24 +638,47 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPendingApprovals(): Promise<ApprovalRequestWithDetails[]> {
-    const results = await db
-      .select({
-        request: approvalRequests,
-        requester: users,
-        reviewer: users,
-      })
+    // Récupérer d'abord toutes les demandes en attente
+    const requests = await db
+      .select()
       .from(approvalRequests)
-      .leftJoin(users, eq(approvalRequests.requesterId, users.id))
-      .leftJoin(users, eq(approvalRequests.reviewerId, users.id))
       .where(eq(approvalRequests.status, "pending"));
-
-    return results.map(({ request, requester, reviewer }) => ({
-      ...request,
-      requester,
-      reviewer,
-      course: undefined, // Ces champs seront remplis si nécessaire par des appels supplémentaires
-      session: undefined
-    }));
+    
+    // Convertir en objets ApprovalRequestWithDetails
+    const result: ApprovalRequestWithDetails[] = [];
+    
+    for (const request of requests) {
+      let requester = null;
+      let reviewer = null;
+      
+      // Récupérer le demandeur si défini
+      if (request.requesterId) {
+        const [foundRequester] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, request.requesterId));
+        requester = foundRequester;
+      }
+      
+      // Récupérer le réviseur si défini
+      if (request.reviewerId) {
+        const [foundReviewer] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, request.reviewerId));
+        reviewer = foundReviewer;
+      }
+      
+      result.push({
+        ...request,
+        requester,
+        reviewer,
+        course: undefined,
+        session: undefined
+      });
+    }
+    
+    return result;
   }
 
   async updateApprovalStatus(id: number, status: 'approved' | 'rejected', reviewerId: number, notes?: string): Promise<ApprovalRequest> {
