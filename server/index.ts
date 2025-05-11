@@ -2,9 +2,12 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { registerAdminRoutes } from "./admin-routes";
 import { registerAdminSubscriptionRoutes } from "./admin-subscription-routes";
+import { registerAdminApiSettingsRoutes } from "./admin-api-settings-routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedBlogDemoData } from "./blog-demo-data";
 import seedNotifications from "./seed-notifications";
+import { extendDatabaseStorageForApi } from "./db-storage-api";
+import { storage } from "./storage";
 
 const app = express();
 app.use(express.json());
@@ -49,6 +52,12 @@ app.use((req, res, next) => {
   
   // Register admin subscription routes
   registerAdminSubscriptionRoutes(app);
+  
+  // Extend database storage with API functions
+  extendDatabaseStorageForApi(storage as any);
+  
+  // Register admin API settings routes
+  registerAdminApiSettingsRoutes(app);
 
   // Initialiser les données de démonstration pour le blog
   try {

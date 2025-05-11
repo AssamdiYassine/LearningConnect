@@ -41,6 +41,7 @@ function AdminApiSettingsPage() {
   // Récupération des paramètres
   const { data: settings, isLoading } = useQuery<ApiSettings>({
     queryKey: ["/api/admin/settings/api"],
+    retry: 1,
   });
   
   // Mettre à jour les champs lorsque les paramètres sont chargés
@@ -57,10 +58,7 @@ function AdminApiSettingsPage() {
   // Mutation pour enregistrer les paramètres
   const saveMutation = useMutation({
     mutationFn: async (data: ApiSettings) => {
-      const response = await apiRequest("POST", "/api/admin/settings", {
-        type: "api",
-        settings: data,
-      });
+      const response = await apiRequest("POST", "/api/admin/settings/api", data);
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -106,12 +104,13 @@ function AdminApiSettingsPage() {
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message);
+        throw new Error(errorData.message || "La connexion à l'API Stripe a échoué");
       }
       
+      const data = await response.json();
       toast({
         title: "Connexion réussie",
-        description: "La connexion à l'API Stripe fonctionne correctement.",
+        description: data.message || "La connexion à l'API Stripe fonctionne correctement.",
       });
     } catch (error: any) {
       toast({
@@ -128,12 +127,13 @@ function AdminApiSettingsPage() {
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message);
+        throw new Error(errorData.message || "La connexion à l'API Zoom a échoué");
       }
       
+      const data = await response.json();
       toast({
         title: "Connexion réussie",
-        description: "La connexion à l'API Zoom fonctionne correctement.",
+        description: data.message || "La connexion à l'API Zoom fonctionne correctement.",
       });
     } catch (error: any) {
       toast({
