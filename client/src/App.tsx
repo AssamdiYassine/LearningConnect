@@ -206,7 +206,17 @@ function Router() {
         <ProtectedRoute component={AdminDashboard} allowedRoles={["admin"]} />
       </Route>
       
-
+      {/* Redirection des URLs obsolètes vers le dashboard principal */}
+      <Route path="/admin/dashboard-new">
+        <ProtectedRoute 
+          component={() => {
+            // Redirection vers le dashboard principal
+            window.location.href = "/admin";
+            return <div className="flex justify-center items-center h-screen">Redirection...</div>;
+          }} 
+          allowedRoles={["admin"]} 
+        />
+      </Route>
       
       {/* Nouvelles routes admin avec leurs composants spécifiques */}
       <Route path="/admin/users">

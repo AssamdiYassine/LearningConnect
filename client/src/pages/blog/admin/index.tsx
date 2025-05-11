@@ -199,7 +199,7 @@ const AdminBlogPage = () => {
           </p>
         </div>
         <Button asChild className="mt-3 sm:mt-0">
-          <Link to="/admin/blog/new">
+          <Link to="/blog/admin/edit-post">
             <Plus className="mr-2 h-4 w-4" /> Nouvel article
           </Link>
         </Button>
@@ -360,7 +360,7 @@ const AdminBlogPage = () => {
                                   Voir
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
-                                  <Link to={`/admin/blog/edit/${post.id}`}>
+                                  <Link to={`/blog/admin/edit-post/${post.id}`}>
                                     <Edit className="h-4 w-4 mr-2" />
                                     Modifier
                                   </Link>
