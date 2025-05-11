@@ -67,7 +67,7 @@ export default function AuthPage() {
       case "admin":
         return <Redirect to="/admin-dashboard-new" />;
       case "trainer":
-        return <Redirect to="/trainer" />;
+        return <Redirect to="/trainer-dashboard" />;
       default:
         return <Redirect to="/" />;
     }
