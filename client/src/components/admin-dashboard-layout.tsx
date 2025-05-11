@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import NotificationBell from "@/components/notification-bell";
+import { NotificationBell } from "@/components/notification-bell";
 import { 
   BarChart3, 
   Users, 
