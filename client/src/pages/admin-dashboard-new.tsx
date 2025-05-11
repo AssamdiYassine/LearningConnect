@@ -47,6 +47,9 @@ import { NotificationBell } from '@/components/notification-bell';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
+import { Bar } from '@nivo/bar';
+import { Pie } from '@nivo/pie';
+import { Line } from '@nivo/line';
 import { StatsCards, PendingApprovals, RecentActivity, AnalyticsCharts } from '@/components/dashboard';
 
 type DashboardStatistics = {
@@ -391,11 +394,11 @@ export default function AdminDashboardNew() {
                           tickSize: 0,
                           tickPadding: 10,
                           tickValues: 5,
-                          format: (value) => `${value}€`,
+                          format: (value: number) => `${value}€`,
                         }}
                         gridYValues={5}
                         enableLabel={false}
-                        tooltip={({ data, value }) => (
+                        tooltip={({ data, value }: { data: any, value: number }) => (
                           <div className="bg-white p-2 text-xs shadow rounded">
                             <strong>{data.month}:</strong> {value}€
                           </div>
