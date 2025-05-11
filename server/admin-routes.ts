@@ -23,10 +23,13 @@ async function hashPassword(password: string) {
 
 // Middleware pour vérifier le rôle admin
 export function hasAdminRole(req: any, res: any, next: any) {
-  if (req.isAuthenticated() && req.user.role === 'admin') {
-    return next();
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    if (req.user && req.user.role === 'admin') {
+      return next();
+    }
+    return res.status(403).json({ message: "Accès non autorisé - rôle admin requis" });
   }
-  return res.status(403).json({ message: "Accès non autorisé" });
+  return res.status(401).json({ message: "Utilisateur non authentifié" });
 }
 
 export function registerAdminRoutes(app: Express) {

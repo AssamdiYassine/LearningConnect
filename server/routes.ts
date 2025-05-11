@@ -55,16 +55,15 @@ function hasRole(roles: string[]) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup authentication routes
+  // Setup authentication routes FIRST - c'est crucial
   setupAuth(app);
+  
+  // Les autres routes peuvent accéder à req.isAuthenticated() maintenant
   
   // Register admin dashboard routes
   registerAdminDashboard(app, pool);
   
-  // Register admin API routes
-  registerAdminRoutes(app);
-  
-  // Register approval routes
+  // Register approval routes  
   registerApprovalRoutes(app);
   
   // Register new admin API endpoints

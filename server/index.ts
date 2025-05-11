@@ -38,11 +38,11 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Register admin routes first
-  registerAdminRoutes(app);
-  
-  // Register all other routes
+  // Register all routes (including authentication setup) first
   const server = await registerRoutes(app);
+  
+  // Then register admin routes after authentication is set up
+  registerAdminRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
