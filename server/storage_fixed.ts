@@ -53,6 +53,7 @@ export interface IStorage {
   getAllCourses(): Promise<Course[]>;
   getCourseWithDetails(id: number): Promise<CourseWithDetails | undefined>;
   getAllCoursesWithDetails(): Promise<CourseWithDetails[]>;
+  updateCourse(id: number, data: Partial<Course>): Promise<Course>;
 
   // Session operations
   createSession(session: InsertSession): Promise<Session>;
