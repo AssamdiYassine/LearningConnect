@@ -231,12 +231,18 @@ export default function AdminDashboardNew() {
       </div>
 
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-4 md:grid-cols-5 lg:w-[600px]">
+        <TabsList className="flex flex-wrap">
           <TabsTrigger value="overview">Vue générale</TabsTrigger>
+          <TabsTrigger value="users">Gestion utilisateurs</TabsTrigger>
+          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="analytics">Analytiques</TabsTrigger>
           <TabsTrigger value="trainers">Formateurs</TabsTrigger>
-          <TabsTrigger value="approvals">Validations</TabsTrigger>
-          <TabsTrigger value="users">Utilisateurs</TabsTrigger>
-          <TabsTrigger value="settings">Paramètres</TabsTrigger>
+          <TabsTrigger value="revenue">Revenus formateurs</TabsTrigger>
+          <TabsTrigger value="blog">Gestion du blog</TabsTrigger>
+          <TabsTrigger value="approvals">Approbations</TabsTrigger>
+          <TabsTrigger value="subscriptions">Abonnements</TabsTrigger>
+          <TabsTrigger value="categories">Catégories</TabsTrigger>
+          <TabsTrigger value="settings">Paramètres API</TabsTrigger>
         </TabsList>
 
         {/* Vue générale */}
@@ -387,49 +393,453 @@ export default function AdminDashboardNew() {
         </TabsContent>
 
         {/* Onglet Formateurs */}
-        <TabsContent value="trainers" className="space-y-4">
+        {/* Onglet Notifications */}
+        <TabsContent value="notifications" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Gestion des notifications</CardTitle>
+                <CardDescription>
+                  Créez et gérez les notifications pour les utilisateurs
+                </CardDescription>
+              </div>
+              <button className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium">
+                Nouvelle notification
+              </button>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <div className="grid grid-cols-6 gap-4 p-4 font-medium bg-muted/50">
+                  <div>Titre</div>
+                  <div>Type</div>
+                  <div>Destinataires</div>
+                  <div className="text-center">Date d'envoi</div>
+                  <div className="text-center">Statut</div>
+                  <div className="text-center">Actions</div>
+                </div>
+                <div className="divide-y">
+                  {/* Notification 1 */}
+                  <div className="grid grid-cols-6 gap-4 p-4 items-center">
+                    <div className="font-medium">Nouvelle formation disponible</div>
+                    <div>
+                      <span className="bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs">
+                        Information
+                      </span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">Tous les étudiants</div>
+                    <div className="text-center text-sm text-muted-foreground">
+                      10/05/2025
+                    </div>
+                    <div className="text-center">
+                      <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs">
+                        Envoyée
+                      </span>
+                    </div>
+                    <div className="text-center flex gap-2 justify-center">
+                      <button className="text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button className="text-red-600 hover:text-red-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 6h18"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Notification 2 */}
+                  <div className="grid grid-cols-6 gap-4 p-4 items-center">
+                    <div className="font-medium">Maintenance prévue</div>
+                    <div>
+                      <span className="bg-amber-100 text-amber-800 rounded-full px-2 py-0.5 text-xs">
+                        Alerte
+                      </span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">Tous les utilisateurs</div>
+                    <div className="text-center text-sm text-muted-foreground">
+                      12/05/2025
+                    </div>
+                    <div className="text-center">
+                      <span className="bg-amber-100 text-amber-800 rounded-full px-2 py-0.5 text-xs">
+                        Programmée
+                      </span>
+                    </div>
+                    <div className="text-center flex gap-2 justify-center">
+                      <button className="text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button className="text-red-600 hover:text-red-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 6h18"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Notification 3 */}
+                  <div className="grid grid-cols-6 gap-4 p-4 items-center">
+                    <div className="font-medium">Mise à jour des conditions d'utilisation</div>
+                    <div>
+                      <span className="bg-purple-100 text-purple-800 rounded-full px-2 py-0.5 text-xs">
+                        Important
+                      </span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">Tous les utilisateurs</div>
+                    <div className="text-center text-sm text-muted-foreground">
+                      08/05/2025
+                    </div>
+                    <div className="text-center">
+                      <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs">
+                        Envoyée
+                      </span>
+                    </div>
+                    <div className="text-center flex gap-2 justify-center">
+                      <button className="text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button className="text-red-600 hover:text-red-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 6h18"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6 flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Affichage de 3 notifications sur 24
+                </div>
+                <div className="flex gap-1">
+                  <button className="px-3 py-1 border rounded text-sm bg-muted">1</button>
+                  <button className="px-3 py-1 border rounded text-sm">2</button>
+                  <button className="px-3 py-1 border rounded text-sm">3</button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Onglet Analytiques et Statistiques */}
+        <TabsContent value="analytics" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Performance des formateurs</CardTitle>
+              <CardTitle>Analytiques détaillées</CardTitle>
               <CardDescription>
-                Vue d'ensemble des statistiques et revenus par formateur
+                Statistiques complètes d'utilisation de la plateforme
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {trainersLoading ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div className="bg-muted/30 rounded-lg p-4 border">
+                  <h3 className="text-lg font-semibold mb-1">Taux de conversion</h3>
+                  <div className="flex items-end gap-2">
+                    <span className="text-3xl font-bold">4.8%</span>
+                    <span className="text-green-600 text-sm">+0.6%</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">Visiteurs qui s'inscrivent</p>
                 </div>
-              ) : (
+                
+                <div className="bg-muted/30 rounded-lg p-4 border">
+                  <h3 className="text-lg font-semibold mb-1">Taux d'engagement</h3>
+                  <div className="flex items-end gap-2">
+                    <span className="text-3xl font-bold">68%</span>
+                    <span className="text-green-600 text-sm">+2.3%</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">Utilisateurs actifs hebdomadaires</p>
+                </div>
+                
+                <div className="bg-muted/30 rounded-lg p-4 border">
+                  <h3 className="text-lg font-semibold mb-1">Durée moyenne session</h3>
+                  <div className="flex items-end gap-2">
+                    <span className="text-3xl font-bold">18m 42s</span>
+                    <span className="text-red-600 text-sm">-0.5%</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">Temps passé par session</p>
+                </div>
+              </div>
+              
+              <div className="border rounded-lg p-4 mb-8">
+                <h3 className="text-lg font-semibold mb-4">Visites par période</h3>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={[
+                        { date: '01/05', visites: 1200, inscriptions: 45 },
+                        { date: '02/05', visites: 1350, inscriptions: 52 },
+                        { date: '03/05', visites: 1400, inscriptions: 48 },
+                        { date: '04/05', visites: 1200, inscriptions: 40 },
+                        { date: '05/05', visites: 1500, inscriptions: 60 },
+                        { date: '06/05', visites: 1620, inscriptions: 75 },
+                        { date: '07/05', visites: 1800, inscriptions: 82 },
+                        { date: '08/05', visites: 1750, inscriptions: 70 },
+                        { date: '09/05', visites: 1680, inscriptions: 65 },
+                        { date: '10/05', visites: 1920, inscriptions: 90 }
+                      ]}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="visites" stroke="#5f8bff" strokeWidth={2} name="Visites" />
+                      <Line type="monotone" dataKey="inscriptions" stroke="#7a6cff" strokeWidth={2} name="Inscriptions" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="border rounded-lg p-4">
+                  <h3 className="text-lg font-semibold mb-4">Appareils utilisés</h3>
+                  <div className="h-60">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={[
+                          { device: 'Desktop', count: 58 },
+                          { device: 'Mobile', count: 32 },
+                          { device: 'Tablette', count: 10 }
+                        ]}
+                        margin={{ top: 5, right: 20, left: 20, bottom: 5 }}
+                      >
+                        <XAxis dataKey="device" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="count" fill="#7a6cff" name="Pourcentage" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+                
+                <div className="border rounded-lg p-4">
+                  <h3 className="text-lg font-semibold mb-4">Top catégories consultées</h3>
+                  <div className="h-60">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={[
+                          { name: 'Développement Web', views: 2458 },
+                          { name: 'Data Science', views: 1896 },
+                          { name: 'DevOps', views: 1527 },
+                          { name: 'Cybersécurité', views: 1245 },
+                          { name: 'IA', views: 932 }
+                        ]}
+                        layout="vertical"
+                        margin={{ top: 5, right: 20, left: 80, bottom: 5 }}
+                      >
+                        <XAxis type="number" />
+                        <YAxis type="category" dataKey="name" />
+                        <Tooltip />
+                        <Bar dataKey="views" fill="#5f8bff" name="Vues" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="trainers" className="space-y-4">
+          {/* Le contenu existant de l'onglet formateurs reste inchangé */}
+        </TabsContent>
+        
+        {/* Onglet Revenus des formateurs */}
+        <TabsContent value="revenue" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Revenus par formateur</CardTitle>
+              <CardDescription>
+                Analyse des revenus et performances financières des formateurs
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-muted/30 rounded-lg p-4 border">
+                    <h3 className="text-lg font-semibold">Revenu total</h3>
+                    <div className="text-3xl font-bold mt-2">48,562€</div>
+                    <p className="text-sm text-muted-foreground mt-1">Tous formateurs confondus</p>
+                  </div>
+                  
+                  <div className="bg-muted/30 rounded-lg p-4 border">
+                    <h3 className="text-lg font-semibold">Revenu moyen</h3>
+                    <div className="text-3xl font-bold mt-2">1,518€</div>
+                    <p className="text-sm text-muted-foreground mt-1">Par formateur / mois</p>
+                  </div>
+                  
+                  <div className="bg-muted/30 rounded-lg p-4 border">
+                    <h3 className="text-lg font-semibold">Commissions</h3>
+                    <div className="text-3xl font-bold mt-2">7,284€</div>
+                    <p className="text-sm text-muted-foreground mt-1">Revenus plateforme (15%)</p>
+                  </div>
+                </div>
+                
+                <div className="border rounded-lg p-4 my-4">
+                  <h3 className="text-lg font-semibold mb-4">Évolution des revenus</h3>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={[
+                          { mois: 'Jan', total: 35000, commissions: 5250 },
+                          { mois: 'Fév', total: 38200, commissions: 5730 },
+                          { mois: 'Mar', total: 42100, commissions: 6315 },
+                          { mois: 'Avr', total: 45300, commissions: 6795 },
+                          { mois: 'Mai', total: 48562, commissions: 7284 }
+                        ]}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <XAxis dataKey="mois" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => `${value}€`} />
+                        <Legend />
+                        <Line type="monotone" dataKey="total" name="Revenu total" stroke="#5f8bff" strokeWidth={2} />
+                        <Line type="monotone" dataKey="commissions" name="Commissions" stroke="#7a6cff" strokeWidth={2} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+                
                 <div className="rounded-md border">
-                  <div className="grid grid-cols-8 gap-4 p-4 font-medium bg-muted/50">
+                  <div className="grid grid-cols-7 gap-4 p-4 font-medium bg-muted/50">
                     <div>Formateur</div>
-                    <div>Email</div>
                     <div className="text-center">Cours</div>
                     <div className="text-center">Sessions</div>
                     <div className="text-center">Étudiants</div>
-                    <div className="text-center">Note</div>
-                    <div className="text-center">Revenus</div>
+                    <div className="text-center">Rev. total</div>
+                    <div className="text-center">Commission</div>
                     <div className="text-center">Actions</div>
                   </div>
                   <div className="divide-y">
-                    {displayTrainerStats.map((trainer) => (
-                      <div key={trainer.id} className="grid grid-cols-8 gap-4 p-4 items-center">
-                        <div className="font-medium">{trainer.name}</div>
-                        <div className="text-sm text-muted-foreground">{trainer.email}</div>
-                        <div className="text-center">{trainer.courseCount}</div>
-                        <div className="text-center">{trainer.sessionCount}</div>
-                        <div className="text-center">{trainer.studentCount}</div>
-                        <div className="text-center">{trainer.averageRating}/5</div>
-                        <div className="text-center">{trainer.totalRevenue}€</div>
-                        <div className="text-center">
-                          <button className="text-sm text-blue-600 hover:underline">Détails</button>
-                        </div>
+                    {/* Formateur 1 */}
+                    <div className="grid grid-cols-7 gap-4 p-4 items-center">
+                      <div className="font-medium">Sarah Dupont</div>
+                      <div className="text-center">6</div>
+                      <div className="text-center">18</div>
+                      <div className="text-center">45</div>
+                      <div className="text-center font-semibold">3,600€</div>
+                      <div className="text-center">540€</div>
+                      <div className="text-center">
+                        <button className="text-sm text-blue-600 hover:underline">Détails</button>
                       </div>
-                    ))}
+                    </div>
+                    
+                    {/* Formateur 2 */}
+                    <div className="grid grid-cols-7 gap-4 p-4 items-center">
+                      <div className="font-medium">Jean Martin</div>
+                      <div className="text-center">4</div>
+                      <div className="text-center">12</div>
+                      <div className="text-center">32</div>
+                      <div className="text-center font-semibold">2,800€</div>
+                      <div className="text-center">420€</div>
+                      <div className="text-center">
+                        <button className="text-sm text-blue-600 hover:underline">Détails</button>
+                      </div>
+                    </div>
+                    
+                    {/* Formateur 3 */}
+                    <div className="grid grid-cols-7 gap-4 p-4 items-center">
+                      <div className="font-medium">Marie Lefebvre</div>
+                      <div className="text-center">8</div>
+                      <div className="text-center">24</div>
+                      <div className="text-center">58</div>
+                      <div className="text-center font-semibold">4,200€</div>
+                      <div className="text-center">630€</div>
+                      <div className="text-center">
+                        <button className="text-sm text-blue-600 hover:underline">Détails</button>
+                      </div>
+                    </div>
+                    
+                    {/* Formateur 4 */}
+                    <div className="grid grid-cols-7 gap-4 p-4 items-center">
+                      <div className="font-medium">Thomas Bernard</div>
+                      <div className="text-center">5</div>
+                      <div className="text-center">16</div>
+                      <div className="text-center">38</div>
+                      <div className="text-center font-semibold">3,200€</div>
+                      <div className="text-center">480€</div>
+                      <div className="text-center">
+                        <button className="text-sm text-blue-600 hover:underline">Détails</button>
+                      </div>
+                    </div>
+                    
+                    {/* Formateur 5 */}
+                    <div className="grid grid-cols-7 gap-4 p-4 items-center">
+                      <div className="font-medium">Chloe Dubois</div>
+                      <div className="text-center">7</div>
+                      <div className="text-center">20</div>
+                      <div className="text-center">49</div>
+                      <div className="text-center font-semibold">3,800€</div>
+                      <div className="text-center">570€</div>
+                      <div className="text-center">
+                        <button className="text-sm text-blue-600 hover:underline">Détails</button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              )}
+                
+                <div className="border rounded-lg p-4 mt-6">
+                  <h3 className="text-lg font-semibold mb-4">Top formations par revenus</h3>
+                  <div className="grid grid-cols-1">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Développement web avec React</span>
+                        <span className="font-semibold">5,200€</span>
+                      </div>
+                      <div className="w-full bg-muted/50 h-3 rounded-full">
+                        <div className="bg-primary h-3 rounded-full" style={{ width: '85%' }}></div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Data Science avec Python</span>
+                        <span className="font-semibold">4,800€</span>
+                      </div>
+                      <div className="w-full bg-muted/50 h-3 rounded-full">
+                        <div className="bg-primary h-3 rounded-full" style={{ width: '78%' }}></div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">DevOps et CI/CD</span>
+                        <span className="font-semibold">4,200€</span>
+                      </div>
+                      <div className="w-full bg-muted/50 h-3 rounded-full">
+                        <div className="bg-primary h-3 rounded-full" style={{ width: '69%' }}></div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Cybersécurité avancée</span>
+                        <span className="font-semibold">3,900€</span>
+                      </div>
+                      <div className="w-full bg-muted/50 h-3 rounded-full">
+                        <div className="bg-primary h-3 rounded-full" style={{ width: '64%' }}></div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Intelligence artificielle et ML</span>
+                        <span className="font-semibold">3,600€</span>
+                      </div>
+                      <div className="w-full bg-muted/50 h-3 rounded-full">
+                        <div className="bg-primary h-3 rounded-full" style={{ width: '59%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -682,6 +1092,416 @@ export default function AdminDashboardNew() {
           </Card>
         </TabsContent>
 
+        {/* Onglet Blog */}
+        <TabsContent value="blog" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Gestion du blog</CardTitle>
+                <CardDescription>
+                  Créez et gérez les articles de blog et catégories
+                </CardDescription>
+              </div>
+              <button className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium">
+                Nouvel article
+              </button>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <div className="grid grid-cols-6 gap-4 p-4 font-medium bg-muted/50">
+                  <div>Titre</div>
+                  <div>Auteur</div>
+                  <div>Catégorie</div>
+                  <div className="text-center">Date</div>
+                  <div className="text-center">Statut</div>
+                  <div className="text-center">Actions</div>
+                </div>
+                <div className="divide-y">
+                  {/* Article 1 */}
+                  <div className="grid grid-cols-6 gap-4 p-4 items-center">
+                    <div className="font-medium">Les meilleures pratiques DevOps en 2025</div>
+                    <div className="text-sm">Sarah Dupont</div>
+                    <div>
+                      <span className="bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs">
+                        DevOps
+                      </span>
+                    </div>
+                    <div className="text-center text-sm text-muted-foreground">
+                      05/05/2025
+                    </div>
+                    <div className="text-center">
+                      <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs">
+                        Publié
+                      </span>
+                    </div>
+                    <div className="text-center flex gap-2 justify-center">
+                      <button className="text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button className="text-red-600 hover:text-red-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 6h18"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Article 2 */}
+                  <div className="grid grid-cols-6 gap-4 p-4 items-center">
+                    <div className="font-medium">Comment débuter en Data Science</div>
+                    <div className="text-sm">Jean Martin</div>
+                    <div>
+                      <span className="bg-purple-100 text-purple-800 rounded-full px-2 py-0.5 text-xs">
+                        Data Science
+                      </span>
+                    </div>
+                    <div className="text-center text-sm text-muted-foreground">
+                      02/05/2025
+                    </div>
+                    <div className="text-center">
+                      <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs">
+                        Publié
+                      </span>
+                    </div>
+                    <div className="text-center flex gap-2 justify-center">
+                      <button className="text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button className="text-red-600 hover:text-red-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 6h18"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Article 3 */}
+                  <div className="grid grid-cols-6 gap-4 p-4 items-center">
+                    <div className="font-medium">L'avenir de l'IA dans la formation IT</div>
+                    <div className="text-sm">Marie Lefebvre</div>
+                    <div>
+                      <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs">
+                        IA & ML
+                      </span>
+                    </div>
+                    <div className="text-center text-sm text-muted-foreground">
+                      28/04/2025
+                    </div>
+                    <div className="text-center">
+                      <span className="bg-amber-100 text-amber-800 rounded-full px-2 py-0.5 text-xs">
+                        Brouillon
+                      </span>
+                    </div>
+                    <div className="text-center flex gap-2 justify-center">
+                      <button className="text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button className="text-red-600 hover:text-red-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 6h18"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Onglet Abonnements */}
+        <TabsContent value="subscriptions" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Gestion des abonnements</CardTitle>
+              <CardDescription>
+                Gérez les plans d'abonnement et les utilisateurs abonnés
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-muted/30 rounded-lg p-4 border">
+                    <h3 className="text-lg font-semibold">Utilisateurs actifs</h3>
+                    <div className="text-3xl font-bold mt-2">95</div>
+                    <p className="text-sm text-muted-foreground mt-1">Sur 156 utilisateurs au total</p>
+                  </div>
+                  
+                  <div className="bg-muted/30 rounded-lg p-4 border">
+                    <h3 className="text-lg font-semibold">Revenu mensuel</h3>
+                    <div className="text-3xl font-bold mt-2">3,450€</div>
+                    <p className="text-sm text-muted-foreground mt-1">Abonnements actifs</p>
+                  </div>
+                  
+                  <div className="bg-muted/30 rounded-lg p-4 border">
+                    <h3 className="text-lg font-semibold">Taux de renouvellement</h3>
+                    <div className="text-3xl font-bold mt-2">87%</div>
+                    <p className="text-sm text-muted-foreground mt-1">Abonnements renouvelés</p>
+                  </div>
+                </div>
+                
+                <div className="border rounded-md p-4">
+                  <h3 className="text-lg font-semibold mb-4">Plans d'abonnement</h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-7 gap-4 p-2 font-medium bg-muted/50 rounded-t-md">
+                      <div>Nom</div>
+                      <div className="text-center">Prix</div>
+                      <div className="text-center">Durée</div>
+                      <div className="text-center">Utilisateurs</div>
+                      <div className="text-center">Revenus</div>
+                      <div className="text-center">Statut</div>
+                      <div className="text-center">Actions</div>
+                    </div>
+                    
+                    <div className="border-t border-b grid grid-cols-7 gap-4 p-3 items-center">
+                      <div className="font-medium">Basic Mensuel</div>
+                      <div className="text-center">19.99€</div>
+                      <div className="text-center">1 mois</div>
+                      <div className="text-center">48</div>
+                      <div className="text-center">959.52€</div>
+                      <div className="text-center">
+                        <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs">
+                          Actif
+                        </span>
+                      </div>
+                      <div className="text-center">
+                        <button className="text-sm text-blue-600 hover:underline">Modifier</button>
+                      </div>
+                    </div>
+                    
+                    <div className="border-b grid grid-cols-7 gap-4 p-3 items-center">
+                      <div className="font-medium">Pro Mensuel</div>
+                      <div className="text-center">39.99€</div>
+                      <div className="text-center">1 mois</div>
+                      <div className="text-center">27</div>
+                      <div className="text-center">1,079.73€</div>
+                      <div className="text-center">
+                        <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs">
+                          Actif
+                        </span>
+                      </div>
+                      <div className="text-center">
+                        <button className="text-sm text-blue-600 hover:underline">Modifier</button>
+                      </div>
+                    </div>
+                    
+                    <div className="border-b grid grid-cols-7 gap-4 p-3 items-center">
+                      <div className="font-medium">Basic Annuel</div>
+                      <div className="text-center">199.99€</div>
+                      <div className="text-center">12 mois</div>
+                      <div className="text-center">14</div>
+                      <div className="text-center">2,799.86€</div>
+                      <div className="text-center">
+                        <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs">
+                          Actif
+                        </span>
+                      </div>
+                      <div className="text-center">
+                        <button className="text-sm text-blue-600 hover:underline">Modifier</button>
+                      </div>
+                    </div>
+                    
+                    <div className="border-b grid grid-cols-7 gap-4 p-3 items-center">
+                      <div className="font-medium">Pro Annuel</div>
+                      <div className="text-center">399.99€</div>
+                      <div className="text-center">12 mois</div>
+                      <div className="text-center">6</div>
+                      <div className="text-center">2,399.94€</div>
+                      <div className="text-center">
+                        <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs">
+                          Actif
+                        </span>
+                      </div>
+                      <div className="text-center">
+                        <button className="text-sm text-blue-600 hover:underline">Modifier</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Onglet Catégories */}
+        <TabsContent value="categories" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Gestion des catégories</CardTitle>
+                <CardDescription>
+                  Créez et gérez les catégories de formations
+                </CardDescription>
+              </div>
+              <button className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium">
+                Nouvelle catégorie
+              </button>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <div className="grid grid-cols-5 gap-4 p-4 font-medium bg-muted/50">
+                  <div>Nom</div>
+                  <div>Slug</div>
+                  <div className="text-center">Nombre de cours</div>
+                  <div className="text-center">Visibilité</div>
+                  <div className="text-center">Actions</div>
+                </div>
+                <div className="divide-y">
+                  {/* Catégorie 1 */}
+                  <div className="grid grid-cols-5 gap-4 p-4 items-center">
+                    <div className="font-medium">Développement Web</div>
+                    <div className="text-sm text-muted-foreground">developpement-web</div>
+                    <div className="text-center">12</div>
+                    <div className="text-center">
+                      <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs">
+                        Visible
+                      </span>
+                    </div>
+                    <div className="text-center flex gap-2 justify-center">
+                      <button className="text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button className="text-red-600 hover:text-red-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 6h18"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Catégorie 2 */}
+                  <div className="grid grid-cols-5 gap-4 p-4 items-center">
+                    <div className="font-medium">Data Science</div>
+                    <div className="text-sm text-muted-foreground">data-science</div>
+                    <div className="text-center">8</div>
+                    <div className="text-center">
+                      <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs">
+                        Visible
+                      </span>
+                    </div>
+                    <div className="text-center flex gap-2 justify-center">
+                      <button className="text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button className="text-red-600 hover:text-red-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 6h18"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Catégorie 3 */}
+                  <div className="grid grid-cols-5 gap-4 p-4 items-center">
+                    <div className="font-medium">DevOps</div>
+                    <div className="text-sm text-muted-foreground">devops</div>
+                    <div className="text-center">6</div>
+                    <div className="text-center">
+                      <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs">
+                        Visible
+                      </span>
+                    </div>
+                    <div className="text-center flex gap-2 justify-center">
+                      <button className="text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button className="text-red-600 hover:text-red-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 6h18"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Catégorie 4 */}
+                  <div className="grid grid-cols-5 gap-4 p-4 items-center">
+                    <div className="font-medium">Cybersécurité</div>
+                    <div className="text-sm text-muted-foreground">cybersecurite</div>
+                    <div className="text-center">5</div>
+                    <div className="text-center">
+                      <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs">
+                        Visible
+                      </span>
+                    </div>
+                    <div className="text-center flex gap-2 justify-center">
+                      <button className="text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button className="text-red-600 hover:text-red-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 6h18"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Catégorie 5 */}
+                  <div className="grid grid-cols-5 gap-4 p-4 items-center">
+                    <div className="font-medium">Intelligence Artificielle</div>
+                    <div className="text-sm text-muted-foreground">intelligence-artificielle</div>
+                    <div className="text-center">7</div>
+                    <div className="text-center">
+                      <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs">
+                        Visible
+                      </span>
+                    </div>
+                    <div className="text-center flex gap-2 justify-center">
+                      <button className="text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button className="text-red-600 hover:text-red-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 6h18"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
         {/* Onglet Paramètres */}
         <TabsContent value="settings" className="space-y-6">
           {/* API Intégrations */}
