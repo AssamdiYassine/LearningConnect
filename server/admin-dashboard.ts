@@ -55,13 +55,78 @@ export function registerAdminDashboard(app: Express, pool: Pool) {
         SELECT COUNT(*) as total_enrollments
         FROM enrollments
       `);
+      
+      // Récupération des données de revenus mensuels pour le graphique
+      const { rows: monthlyRevenue } = await pool.query(`
+        SELECT month, amount 
+        FROM monthly_revenue
+        ORDER BY id ASC
+      `);
+      
+      // Récupération des données d'utilisateurs mensuels pour le graphique
+      const { rows: monthlyUsers } = await pool.query(`
+        SELECT month, user_count, trainer_count
+        FROM monthly_users
+        ORDER BY id ASC
+      `);
+      
+      // Récupération des derniers cours pour vérifier les approbations en attente
+      const { rows: pendingCourses } = await pool.query(`
+        SELECT id, title, is_approved 
+        FROM courses 
+        WHERE is_approved = false 
+        LIMIT 10
+      `);
+      
+      // Récupération des derniers utilisateurs
+      const { rows: recentUsers } = await pool.query(`
+        SELECT id, username, email, role, created_at as "createdAt"
+        FROM users
+        ORDER BY created_at DESC
+        LIMIT 5
+      `);
+      
+      // Récupération des derniers cours
+      const { rows: recentCourses } = await pool.query(`
+        SELECT 
+          c.id, 
+          c.title, 
+          c.is_approved as "isApproved",
+          c.created_at as "createdAt",
+          u.username as "trainerName",
+          cat.name as category
+        FROM courses c
+        JOIN users u ON c.trainer_id = u.id
+        LEFT JOIN categories cat ON c.category_id = cat.id
+        ORDER BY c.created_at DESC
+        LIMIT 5
+      `);
+      
+      // Répartition des revenus pour graphique camembert
+      const { rows: revenueDistribution } = await pool.query(`
+        SELECT 
+          'Formateurs' as label, 
+          COALESCE(SUM(trainer_share), 0) as value 
+        FROM payments
+        UNION ALL
+        SELECT 
+          'Plateforme' as label, 
+          COALESCE(SUM(platform_fee), 0) as value 
+        FROM payments
+      `);
 
       res.json({
         userStats: userStats[0] || { total_users: 0, students: 0, trainers: 0, admins: 0, subscribed_users: 0 },
         courseStats: courseStats[0] || { total_courses: 0, approved_courses: 0, pending_courses: 0 },
         sessionStats: sessionStats[0] || { total_sessions: 0, upcoming_sessions: 0, completed_sessions: 0 },
         revenueStats: revenueStats[0] || { total_revenue: 0, platform_fees: 0, trainer_payout: 0 },
-        enrollmentStats: enrollmentStats[0] || { total_enrollments: 0 }
+        enrollmentStats: enrollmentStats[0] || { total_enrollments: 0 },
+        monthlyRevenue,
+        monthlyUsers,
+        pendingApprovals: pendingCourses.length,
+        recentUsers,
+        recentCourses,
+        revenueDistribution
       });
     } catch (error: any) {
       console.error("Error fetching dashboard stats:", error);

@@ -52,10 +52,40 @@ import { Pie } from '@nivo/pie';
 import { Line } from '@nivo/line';
 
 type DashboardStatistics = {
-  totalUsers: number;
-  totalCourses: number;
-  totalSessions: number;
-  totalSubscriptions: number;
+  userStats: {
+    total_users: string;
+    students: string;
+    trainers: string;
+    admins: string;
+    subscribed_users: string;
+  };
+  courseStats: {
+    total_courses: string;
+    approved_courses: string;
+    pending_courses: string;
+  };
+  sessionStats: {
+    total_sessions: string;
+    upcoming_sessions: string;
+    completed_sessions: string;
+  };
+  revenueStats: {
+    total_revenue: string;
+    platform_fees: string;
+    trainer_payout: string;
+  };
+  enrollmentStats: {
+    total_enrollments: string;
+  };
+  monthlyRevenue: {
+    month: string;
+    amount: number;
+  }[];
+  monthlyUsers: {
+    month: string;
+    user_count: number;
+    trainer_count: number;
+  }[];
   pendingApprovals: number;
   recentUsers: {
     id: number;
@@ -72,9 +102,9 @@ type DashboardStatistics = {
     isApproved: boolean;
     createdAt: string;
   }[];
-  revenue: {
-    amount: number;
-    month: string;
+  revenueDistribution: {
+    label: string;
+    value: number;
   }[];
 };
 
