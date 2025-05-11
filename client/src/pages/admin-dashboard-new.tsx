@@ -8,605 +8,694 @@ import {
   BookOpen,
   FileText,
   Settings,
-  ClipboardList,
+  Bell,
+  Home,
+  User,
+  LogOut,
+  ChevronDown,
+  Menu,
+  LayoutDashboard,
+  PanelTop,
+  CreditCard,
+  BookOpenCheck,
+  Tag,
+  BadgeCheck,
+  Blocks,
+  LineChart,
+  Activity,
+  Search,
+  MessageSquare,
+  BarChart3,
   CheckCircle,
   XCircle,
   Clock,
-  MessageSquare,
-  BarChart3,
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  ArrowRight,
-  Upload,
-  Save,
-  X,
-  Bold,
-  Italic,
-  List,
-  ListOrdered,
-  Link as LinkIcon,
-  Image
+  Plus
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { useAuth } from '@/hooks/use-auth';
 import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem,
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { NotificationBell } from '@/components/notification-bell';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+import { Link } from 'wouter';
+import { Bar } from '@nivo/bar';
+import { Pie } from '@nivo/pie';
+import { Line } from '@nivo/line';
 
-// Type pour les événements de calendrier
-interface CalendarEvent {
-  id: number;
-  title: string;
-  date: Date;
-  type: 'session' | 'service' | 'repair' | 'maintenance' | 'other';
-  status?: 'scheduled' | 'completed' | 'cancelled' | 'in-progress';
-}
+type DashboardStatistics = {
+  totalUsers: number;
+  totalCourses: number;
+  totalSessions: number;
+  totalSubscriptions: number;
+  pendingApprovals: number;
+  recentUsers: {
+    id: number;
+    username: string;
+    email: string;
+    role: string;
+    createdAt: string;
+  }[];
+  recentCourses: {
+    id: number;
+    title: string;
+    trainerName: string;
+    category: string;
+    isApproved: boolean;
+    createdAt: string;
+  }[];
+  revenue: {
+    amount: number;
+    month: string;
+  }[];
+};
 
-// La page principale du tableau de bord
 export default function AdminDashboardNew() {
   const { user, logoutMutation } = useAuth();
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
-  const [showNoteEditor, setShowNoteEditor] = useState(false);
+  const { toast } = useToast();
+  const [activePage, setActivePage] = useState('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
-  // Fonction de déconnexion
+  const { data: statistics, isLoading } = useQuery<DashboardStatistics>({
+    queryKey: ['/api/admin/dashboard-stats'],
+    enabled: user?.role === 'admin',
+  });
+
   const handleLogout = () => {
     logoutMutation.mutate();
   };
-  
-  // Format de la date en français en haut du calendrier
-  const formattedMonth = format(currentMonth, 'MMMM yyyy', { locale: fr }).replace(/^\w/, c => c.toUpperCase());
-  
-  // Récupération des données depuis l'API (à remplacer par vos appels réels)
-  const { data: stats, isLoading: isStatsLoading } = useQuery({
-    queryKey: ['/api/admin/dashboard-stats'],
-  });
 
-  // Récupération des sessions pour le calendrier
-  const { data: sessions, isLoading: isSessionsLoading } = useQuery({
-    queryKey: ['/api/admin/sessions'],
-  });
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
 
-  // Dates pour le calendrier
-  const daysInMonth = Array.from({ length: 35 }, (_, i) => {
-    const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-    const startingDayOfWeek = firstDayOfMonth.getDay() || 7; // 1-7 (lun-dim)
-    const day = i - (startingDayOfWeek - 2) + 1;
-    return new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-  });
+  const currentDate = format(new Date(), "EEEE d MMMM yyyy", { locale: fr });
 
-  // Jours de la semaine en français
-  const weekdays = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-
-  // Événements simulés pour le calendrier
-  const events: CalendarEvent[] = [
-    { id: 1, title: 'Brake pad', date: new Date(2024, currentMonth.getMonth(), 10), type: 'service' },
-    { id: 2, title: 'Engine check', date: new Date(2024, currentMonth.getMonth(), 13), type: 'maintenance' },
-    { id: 3, title: 'Oil filter', date: new Date(2024, currentMonth.getMonth(), 15), type: 'service' },
-    { id: 4, title: 'Wheel alignment', date: new Date(2024, currentMonth.getMonth(), 17), type: 'service' },
-    { id: 5, title: 'Engine oil', date: new Date(2024, currentMonth.getMonth(), 20), type: 'repair' },
-    { id: 6, title: 'Battery check', date: new Date(2024, currentMonth.getMonth(), 23), type: 'maintenance' },
-    { id: 7, title: 'Engine cooling', date: new Date(2024, currentMonth.getMonth(), 26), type: 'repair' },
+  const navigationItems = [
+    { id: 'dashboard', label: 'Tableau de Bord', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { id: 'users', label: 'Utilisateurs', icon: <Users className="h-5 w-5" /> },
+    { id: 'courses', label: 'Formations', icon: <BookOpen className="h-5 w-5" /> },
+    { id: 'sessions', label: 'Sessions', icon: <Calendar className="h-5 w-5" /> },
+    { id: 'approvals', label: 'Approbations', icon: <BadgeCheck className="h-5 w-5" /> },
+    { id: 'subscriptions', label: 'Abonnements', icon: <CreditCard className="h-5 w-5" /> },
+    { id: 'categories', label: 'Catégories', icon: <Tag className="h-5 w-5" /> },
+    { id: 'blog', label: 'Blog', icon: <FileText className="h-5 w-5" /> },
+    { id: 'notifications', label: 'Notifications', icon: <Bell className="h-5 w-5" /> },
+    { id: 'analytics', label: 'Analytiques', icon: <BarChart3 className="h-5 w-5" /> },
+    { id: 'revenue', label: 'Revenus', icon: <LineChart className="h-5 w-5" /> },
+    { id: 'settings', label: 'Paramètres', icon: <Settings className="h-5 w-5" /> },
   ];
 
-  // Changer de mois
-  const goToPreviousMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
-  };
+  // Données d'exemple pour les graphiques
+  const revenueData = [
+    { id: 'revenue', value: 6000, label: 'Revenus', color: '#5F8BFF' },
+    { id: 'costs', value: 2000, label: 'Coûts', color: '#7A6CFF' },
+    { id: 'profit', value: 4000, label: 'Profit', color: '#1D2B6C' },
+  ];
 
-  const goToNextMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
-  };
+  const monthlyData = [
+    { month: 'Jan', revenue: 1200 },
+    { month: 'Fév', revenue: 1500 },
+    { month: 'Mar', revenue: 1800 },
+    { month: 'Avr', revenue: 2200 },
+    { month: 'Mai', revenue: 2500 },
+    { month: 'Jun', revenue: 2800 },
+  ];
 
-  const goToToday = () => {
-    setCurrentMonth(new Date());
-    setSelectedDate(new Date());
-  };
-
-  // Vérifier si une date a des événements
-  const getEventsForDate = (date: Date) => {
-    return events.filter(event => 
-      event.date.getDate() === date.getDate() && 
-      event.date.getMonth() === date.getMonth() && 
-      event.date.getFullYear() === date.getFullYear()
-    );
-  };
-
-  // Vérifier si une date est sélectionnée
-  const isSelectedDate = (date: Date) => {
-    return selectedDate && 
-      date.getDate() === selectedDate.getDate() && 
-      date.getMonth() === selectedDate.getMonth() && 
-      date.getFullYear() === selectedDate.getFullYear();
-  };
-
-  // Rendre un événement dans le calendrier
-  const renderEvent = (event: CalendarEvent) => {
-    const colorMap = {
-      session: 'bg-blue-500',
-      service: 'bg-pink-500',
-      repair: 'bg-yellow-500',
-      maintenance: 'bg-purple-500',
-      other: 'bg-gray-500',
-    };
-
-    return (
-      <div 
-        key={event.id} 
-        className={`text-xs rounded px-1.5 py-0.5 mb-1 text-white truncate ${colorMap[event.type]}`}
-      >
-        {event.title}
-      </div>
-    );
-  };
+  const lineData = [
+    {
+      id: "utilisateurs",
+      color: "#5F8BFF",
+      data: [
+        { x: "Jan", y: 20 },
+        { x: "Fév", y: 35 },
+        { x: "Mar", y: 48 },
+        { x: "Avr", y: 65 },
+        { x: "Mai", y: 78 },
+        { x: "Jun", y: 90 }
+      ]
+    },
+    {
+      id: "formateurs",
+      color: "#7A6CFF",
+      data: [
+        { x: "Jan", y: 5 },
+        { x: "Fév", y: 8 },
+        { x: "Mar", y: 10 },
+        { x: "Avr", y: 12 },
+        { x: "Mai", y: 15 },
+        { x: "Jun", y: 18 }
+      ]
+    }
+  ];
 
   return (
-    <div className="flex h-screen bg-[#1E1E1E] text-white">
-      {/* Barre latérale */}
-      <aside className="w-[240px] border-r border-gray-800 flex flex-col">
-        {/* Logo */}
-        <div className="p-4 flex items-center border-b border-gray-800">
-          <div className="font-bold text-xl text-blue-400">NECFORM</div>
-        </div>
-        
-        {/* Menu principal */}
-        <nav className="p-3 flex-grow">
-          <div className="text-xs uppercase text-gray-500 mb-2 mt-2">Menu</div>
-          
-          <div className="space-y-1">
-            <Button variant="ghost" className="w-full justify-start text-white hover:bg-gray-800 bg-gray-800">
-              <Users className="h-4 w-4 mr-3" />
-              Dashboard
-            </Button>
-            
-            <Button variant="ghost" className="w-full justify-start text-gray-400 hover:bg-gray-800">
-              <Calendar className="h-4 w-4 mr-3" />
-              Upcoming bookings
-            </Button>
-            
-            <Button variant="ghost" className="w-full justify-start text-gray-400 hover:bg-gray-800">
-              <ClipboardList className="h-4 w-4 mr-3" />
-              Active bookings
-            </Button>
-            
-            <Button variant="ghost" className="w-full justify-start text-gray-400 hover:bg-gray-800">
-              <Users className="h-4 w-4 mr-3" />
-              Instructeurs
-            </Button>
-            
-            <Button variant="ghost" className="w-full justify-start text-gray-400 hover:bg-gray-800">
-              <BookOpen className="h-4 w-4 mr-3" />
-              Cours
+    <div className="flex h-screen bg-[#F7F9FC]">
+      {/* Sidebar */}
+      <aside 
+        className={`bg-white shadow-md fixed inset-y-0 left-0 transition-all duration-300 z-10 ${isSidebarOpen ? 'w-64' : 'w-20'}`}
+      >
+        <div className="flex flex-col h-full">
+          {/* Logo et titre */}
+          <div className="p-4 flex items-center justify-between border-b">
+            {isSidebarOpen ? (
+              <h1 className="text-xl font-semibold bg-gradient-to-r from-[#1D2B6C] to-[#5F8BFF] text-transparent bg-clip-text">
+                NecForm Admin
+              </h1>
+            ) : (
+              <span className="text-2xl font-bold text-[#1D2B6C]">N</span>
+            )}
+            <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+              <Menu className="h-5 w-5" />
             </Button>
           </div>
 
-          <div className="text-xs uppercase text-gray-500 mb-2 mt-6">Account settings</div>
-          
-          <div className="space-y-1">
-            <Button variant="ghost" className="w-full justify-start text-gray-400 hover:bg-gray-800">
-              <Settings className="h-4 w-4 mr-3" />
-              Profile settings
-            </Button>
-            
-            <Button variant="ghost" className="w-full justify-start text-gray-400 hover:bg-gray-800">
-              <FileText className="h-4 w-4 mr-3" />
-              Finished bookings
-            </Button>
+          {/* Profil utilisateur */}
+          <div className="p-4 border-b">
+            <div className="flex items-center space-x-3">
+              <Avatar>
+                <AvatarImage src="" />
+                <AvatarFallback className="bg-[#1D2B6C] text-white">
+                  {user?.displayName?.substring(0, 2) || 'AD'}
+                </AvatarFallback>
+              </Avatar>
+              {isSidebarOpen && (
+                <div className="flex-1 overflow-hidden">
+                  <p className="text-sm font-medium truncate">{user?.displayName}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                  <Badge className="mt-1 bg-[#1D2B6C]">Administrateur</Badge>
+                </div>
+              )}
+            </div>
           </div>
-        </nav>
-        
-        {/* Profil utilisateur en bas */}
-        <div className="p-4 border-t border-gray-800 flex items-center space-x-3">
-          <Avatar>
-            <AvatarImage src="/placeholder-avatar.jpg" />
-            <AvatarFallback className="bg-blue-600">
-              {user?.displayName?.substring(0, 2).toUpperCase() || 'AD'}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 overflow-hidden">
-            <h4 className="text-sm font-medium truncate">{user?.displayName || 'Admin'}</h4>
-            <p className="text-xs text-gray-400 truncate">{user?.email || 'admin@necform.fr'}</p>
+
+          {/* Navigation */}
+          <nav className="flex-1 p-2 overflow-y-auto">
+            <div className="space-y-1">
+              {navigationItems.map((item) => (
+                <Button
+                  key={item.id}
+                  variant={activePage === item.id ? "default" : "ghost"}
+                  className={`w-full justify-start ${activePage === item.id ? 'bg-[#1D2B6C] hover:bg-[#1D2B6C]/90' : ''}`}
+                  onClick={() => setActivePage(item.id)}
+                >
+                  {item.icon}
+                  {isSidebarOpen && <span className="ml-3">{item.label}</span>}
+                </Button>
+              ))}
+            </div>
+          </nav>
+
+          {/* Logout */}
+          <div className="p-4 border-t">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-5 w-5" />
+              {isSidebarOpen && <span className="ml-3">Déconnexion</span>}
+            </Button>
           </div>
         </div>
       </aside>
-      
-      {/* Contenu principal */}
-      <main className="flex-1 overflow-auto">
-        {/* En-tête */}
-        <header className="px-6 py-4 border-b border-gray-800 flex justify-between items-center sticky top-0 bg-[#1E1E1E] z-10">
-          <div className="flex items-center">
-            <h1 className="text-lg font-medium mr-4">
-              Mécanicien / <span className="text-blue-400">Profil</span>
-            </h1>
-            <Badge className="bg-blue-600 text-white">95%</Badge>
+
+      {/* Main Content */}
+      <main className={`flex-1 overflow-auto transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-20'}`}>
+        {/* Header */}
+        <header className="bg-white shadow-sm p-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h2 className="text-lg font-semibold">
+              {navigationItems.find(item => item.id === activePage)?.label || 'Tableau de Bord'}
+            </h2>
+            <div className="text-sm text-muted-foreground">{currentDate}</div>
           </div>
-          
-          <div className="flex items-center space-x-4">
+
+          <div className="flex items-center gap-4">
+            {/* Recherche */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
                 placeholder="Rechercher..." 
-                className="w-64 pl-10 bg-gray-900 border-gray-700 focus:border-blue-500"
+                className="pl-10 bg-slate-50 border-slate-200 w-60"
               />
             </div>
+
+            {/* Notifications */}
+            <NotificationBell />
             
-            {/* Menu déroulant de l'administrateur */}
-            <div className="relative">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="bg-gray-900 border-gray-700 text-white hover:bg-gray-800">
-                    Administrator <ChevronLeft className="h-4 w-4 ml-2 rotate-90" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="bg-white w-64 p-0 rounded-xl border-none shadow-xl">
-                  <div className="flex flex-col divide-y divide-gray-100">
-                    <Button variant="ghost" className="justify-start px-4 py-5 text-base font-medium text-white bg-[#8069FF] rounded-t-xl hover:bg-[#6E5BE9]">
-                      Mon tableau de bord
-                    </Button>
-                    <Button variant="ghost" className="justify-start px-4 py-3 text-gray-700 hover:bg-gray-50">
-                      Tableau de bord avancé
-                    </Button>
-                    <Button variant="ghost" className="justify-start px-4 py-3 text-gray-700 hover:bg-gray-50">
-                      Mon profil
-                    </Button>
-                    <Button variant="ghost" className="justify-start px-4 py-3 text-gray-700 hover:bg-gray-50">
-                      Mes réussites
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      className="justify-start px-4 py-3 text-red-500 hover:bg-gray-50 rounded-b-xl"
-                      onClick={handleLogout}
-                    >
-                      Déconnexion
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
-            
-            <Button variant="default" className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Ajouter une session
-            </Button>
-          </div>
-        </header>
-        
-        {/* Contenu principal en deux colonnes */}
-        <div className="grid grid-cols-5 gap-6 p-6">
-          {/* Colonne de gauche */}
-          <div className="col-span-2 space-y-6">
-            {/* Profil utilisateur */}
-            <Card className="bg-gray-900 border-gray-800">
-              <CardContent className="p-0">
-                <div className="flex p-4">
-                  <Avatar className="h-16 w-16 mr-4">
-                    <AvatarImage src="/placeholder-avatar.jpg" />
-                    <AvatarFallback className="bg-blue-600 text-lg">
-                      FM
+            {/* Menu utilisateur */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-[#1D2B6C] text-white text-sm">
+                      {user?.displayName?.substring(0, 2) || 'AD'}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <h2 className="text-lg font-medium">Floyd Miles</h2>
-                    <p className="text-sm text-gray-400">Mécanicien Senior</p>
-                    
-                    <div className="flex mt-2 space-x-2">
-                      <Button variant="outline" size="sm" className="text-xs border-gray-700 hover:bg-gray-800">
-                        Resume
-                      </Button>
-                      <Badge className="bg-gray-800 text-gray-300">CV</Badge>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Spécifications */}
-                <div className="p-4 border-t border-gray-800">
-                  <h3 className="text-sm font-medium mb-3">Spécifications</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Badge className="bg-gray-800 text-gray-300">Brake system</Badge>
-                    <Badge className="bg-gray-800 text-gray-300">Engine repair</Badge>
-                    <Badge className="bg-gray-800 text-gray-300">Lights</Badge>
-                    <Badge className="bg-gray-800 text-gray-300">Air conditions</Badge>
-                  </div>
-                </div>
-                
-                {/* Certifications */}
-                <div className="p-4 border-t border-gray-800">
-                  <h3 className="text-sm font-medium mb-3">Certifications</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-blue-400 text-sm">ASE certificate</span>
-                      <Badge className="bg-gray-800 text-gray-300">PDF</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-blue-400 text-sm">ASE advanced</span>
-                      <Badge className="bg-gray-800 text-gray-300">PDF</Badge>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Général */}
-                <div className="p-4 border-t border-gray-800">
-                  <h3 className="text-sm font-medium mb-3">Général</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-xs text-gray-400">Date de naissance</p>
-                      <p className="text-sm">13 octobre 1985</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400">Zone de service</p>
-                      <p className="text-sm">Paris</p>
-                    </div>
-                    <div className="flex items-center">
-                      <p className="text-xs text-gray-400 mr-2">Évaluation</p>
-                      <div className="flex">
-                        {'★★★★☆'.split('').map((star, index) => (
-                          <span key={index} className="text-yellow-400">{star}</span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Disponibilité */}
-                <div className="p-4 border-t border-gray-800">
-                  <h3 className="text-sm font-medium mb-3">Disponibilité</h3>
-                  <div className="flex justify-between mb-2">
-                    <Button variant="outline" size="sm" className="border-gray-700 hover:bg-gray-800">
-                      Jours off
-                    </Button>
-                    <div className="flex items-center space-x-1">
-                      <span className="text-gray-400 text-xs">6 / 10</span>
-                      <Badge className="bg-gray-800 text-gray-300">Utilisés</Badge>
-                    </div>
-                  </div>
-                  <div className="flex justify-between">
-                    <Button variant="outline" size="sm" className="border-gray-700 hover:bg-gray-800 bg-gray-700">
-                      Vacances
-                    </Button>
-                    <div className="flex items-center space-x-1">
-                      <span className="text-gray-400 text-xs">10 / 20</span>
-                      <Badge className="bg-gray-800 text-gray-300">Utilisés</Badge>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Contacts */}
-                <div className="p-4 border-t border-gray-800">
-                  <h3 className="text-sm font-medium mb-3">Contacts</h3>
-                  <div className="space-y-2">
-                    <div>
-                      <p className="text-xs text-gray-400">Phone</p>
-                      <p className="text-sm">+33 (789) 123-45 • +33 7678 5555</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400">E-mail</p>
-                      <p className="text-sm text-blue-400">floyd.miles@necform.fr</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400">Adresse</p>
-                      <p className="text-sm">Aarhus, Denmark 04, 8000 Midtjylland</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profil</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Paramètres</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Déconnexion</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          
-          {/* Colonne de droite (calendrier) */}
-          <div className="col-span-3 space-y-6">
-            <Card className="bg-gray-900 border-gray-800">
-              <CardHeader className="px-6 py-4 flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <h2 className="text-lg font-medium">{formattedMonth}</h2>
-                  <div className="flex space-x-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-gray-700 hover:bg-gray-800"
-                      onClick={goToPreviousMonth}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-gray-700 hover:bg-gray-800"
-                      onClick={goToNextMonth}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="flex space-x-2">
-                  <Tabs defaultValue="week" className="w-auto">
-                    <TabsList className="bg-gray-800">
-                      <TabsTrigger
-                        value="week"
-                        className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-                      >
-                        Semaine
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="month"
-                        className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-                      >
-                        Mois
-                      </TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-gray-700 hover:bg-gray-800"
-                    onClick={goToToday}
-                  >
-                    Aujourd'hui
-                  </Button>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="p-0">
-                {/* Jours de la semaine */}
-                <div className="grid grid-cols-7 border-b border-gray-800">
-                  {weekdays.map(day => (
-                    <div key={day} className="py-2 text-center text-xs text-gray-400 font-medium">
-                      {day}
+        </header>
+
+        {/* Page Content */}
+        <div className="p-6">
+          {/* Contenu du tableau de bord principal */}
+          {activePage === 'dashboard' && (
+            <div className="space-y-8">
+              {/* KPI Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Utilisateurs
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <div className="text-2xl font-bold">{statistics?.totalUsers || 0}</div>
+                      <Users className="h-8 w-8 text-[#5F8BFF]" />
                     </div>
-                  ))}
-                </div>
-                
-                {/* Grille du calendrier */}
-                <div className="grid grid-cols-7 grid-rows-5 gap-px bg-gray-800">
-                  {daysInMonth.map((date, i) => {
-                    const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
-                    const isToday = new Date().toDateString() === date.toDateString();
-                    const dateEvents = getEventsForDate(date);
-                    const isSelected = isSelectedDate(date);
-                    
-                    return (
-                      <div
-                        key={i}
-                        className={`min-h-[100px] p-1 bg-gray-900 relative ${
-                          !isCurrentMonth ? 'opacity-40' : ''
-                        } ${isSelected ? 'ring-1 ring-blue-500' : ''}`}
-                        onClick={() => setSelectedDate(date)}
-                      >
-                        <div className={`text-right text-xs p-1 ${
-                          isToday ? 'bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center ml-auto' : ''
-                        }`}>
-                          {date.getDate()}
-                        </div>
-                        <div className="mt-1 space-y-1 max-h-[80px] overflow-hidden">
-                          {dateEvents.map(event => renderEvent(event))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* Section Notes */}
-            <Card className="bg-gray-900 border-gray-800">
-              <CardHeader className="px-6 py-4 flex items-center justify-between">
-                <h2 className="text-lg font-medium">Notes</h2>
-                {!showNoteEditor && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="border-gray-700 hover:bg-gray-800"
-                    onClick={() => setShowNoteEditor(true)}
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Ajouter
-                  </Button>
-                )}
-              </CardHeader>
-              
-              <CardContent className="p-4">
-                {showNoteEditor ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-2">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-blue-600 text-xs">
-                          {user?.displayName?.substring(0, 2).toUpperCase() || 'AD'}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      <Select defaultValue="unread">
-                        <SelectTrigger className="w-32 border-gray-700 bg-gray-800">
-                          <SelectValue placeholder="Status" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-gray-800 border-gray-700">
-                          <SelectItem value="unread">Non lu</SelectItem>
-                          <SelectItem value="read">Lu</SelectItem>
-                          <SelectItem value="urgent">Urgent</SelectItem>
-                        </SelectContent>
-                      </Select>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Formations
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <div className="text-2xl font-bold">{statistics?.totalCourses || 0}</div>
+                      <BookOpen className="h-8 w-8 text-[#7A6CFF]" />
                     </div>
-                    
-                    <Textarea 
-                      placeholder="Tapez votre commentaire ici. 30 caractères sont suffisants."
-                      className="border-gray-700 bg-gray-800 min-h-[100px]"
-                    />
-                    
-                    <div className="flex justify-start space-x-4">
-                      <div className="flex space-x-1">
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <Bold className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <Italic className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <List className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <ListOrdered className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <LinkIcon className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <Image className="h-4 w-4" />
-                        </Button>
-                      </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Sessions
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <div className="text-2xl font-bold">{statistics?.totalSessions || 0}</div>
+                      <Calendar className="h-8 w-8 text-[#1D2B6C]" />
                     </div>
-                    
-                    <div className="flex justify-end space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="border-gray-700 hover:bg-gray-800"
-                        onClick={() => setShowNoteEditor(false)}
-                      >
-                        Annuler
-                      </Button>
-                      <Button 
-                        variant="default" 
-                        size="sm"
-                        className="bg-blue-600 hover:bg-blue-700"
-                        onClick={() => setShowNoteEditor(false)}
-                      >
-                        Sauvegarder
-                      </Button>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Abonnements
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <div className="text-2xl font-bold">{statistics?.totalSubscriptions || 0}</div>
+                      <CreditCard className="h-8 w-8 text-[#5F8BFF]" />
                     </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                      <div className="flex items-start">
-                        <Avatar className="h-8 w-8 mr-3 mt-1">
-                          <AvatarImage src="/placeholder-avatar.jpg" />
-                          <AvatarFallback className="bg-red-500 text-xs">AS</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <div className="flex justify-between items-start">
-                            <h4 className="font-medium text-sm">Andrea Sakahoshi</h4>
-                            <span className="text-xs text-gray-400">28/03/2024 14:51</span>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Graphiques */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Revenus mensuels</CardTitle>
+                    <CardDescription>Évolution des revenus sur les 6 derniers mois</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-80">
+                      <Bar
+                        data={monthlyData}
+                        keys={["revenue"]}
+                        indexBy="month"
+                        margin={{ top: 10, right: 10, bottom: 40, left: 60 }}
+                        padding={0.3}
+                        colors={["#5F8BFF"]}
+                        borderRadius={4}
+                        axisBottom={{
+                          tickSize: 0,
+                          tickPadding: 10,
+                        }}
+                        axisLeft={{
+                          tickSize: 0,
+                          tickPadding: 10,
+                          tickValues: 5,
+                          format: (value) => `${value}€`,
+                        }}
+                        gridYValues={5}
+                        enableLabel={false}
+                        tooltip={({ data, value }) => (
+                          <div className="bg-white p-2 text-xs shadow rounded">
+                            <strong>{data.month}:</strong> {value}€
                           </div>
-                          <p className="text-sm mt-2 text-gray-300">
-                            Floyd completed several installations for his client/engine diagnostics from 5 issues and completed one more certification.
-                          </p>
+                        )}
+                        theme={{
+                          tooltip: {
+                            container: {
+                              background: "white",
+                              fontSize: 12,
+                              borderRadius: 4,
+                              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                            },
+                          },
+                        }}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Croissance des utilisateurs</CardTitle>
+                    <CardDescription>Tendance des inscriptions sur 6 mois</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-80">
+                      <Line
+                        data={lineData}
+                        margin={{ top: 20, right: 20, bottom: 40, left: 40 }}
+                        xScale={{ type: 'point' }}
+                        yScale={{ type: 'linear', min: 0, max: 'auto' }}
+                        curve="monotoneX"
+                        axisBottom={{
+                          tickSize: 0,
+                          tickPadding: 10,
+                        }}
+                        axisLeft={{
+                          tickSize: 0,
+                          tickPadding: 10,
+                          tickValues: 5,
+                        }}
+                        enablePoints={true}
+                        pointSize={8}
+                        pointColor={{ theme: 'background' }}
+                        pointBorderWidth={2}
+                        pointBorderColor={{ from: 'serieColor' }}
+                        enableGridX={false}
+                        colors={['#5F8BFF', '#7A6CFF']}
+                        lineWidth={3}
+                        enableSlices="x"
+                        useMesh={true}
+                        legends={[
+                          {
+                            anchor: 'bottom',
+                            direction: 'row',
+                            justify: false,
+                            translateX: 0,
+                            translateY: 40,
+                            itemsSpacing: 10,
+                            itemDirection: 'left-to-right',
+                            itemWidth: 80,
+                            itemHeight: 20,
+                            symbolSize: 12,
+                            symbolShape: 'circle',
+                          }
+                        ]}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Dernières activités */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle>Derniers utilisateurs</CardTitle>
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href="/admin/users">
+                          Voir tous
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {isLoading ? (
+                        <div className="flex items-center justify-center h-40">
+                          <div className="h-6 w-6 border-2 border-t-[#5F8BFF] border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
                         </div>
+                      ) : (
+                        statistics?.recentUsers?.slice(0, 5).map((user) => (
+                          <div key={user.id} className="flex items-center justify-between border-b pb-3">
+                            <div className="flex items-center gap-3">
+                              <Avatar>
+                                <AvatarFallback className="bg-[#1D2B6C] text-white">
+                                  {user.username.substring(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium">{user.username}</p>
+                                <p className="text-sm text-muted-foreground">{user.email}</p>
+                              </div>
+                            </div>
+                            <Badge>{user.role}</Badge>
+                          </div>
+                        )) || (
+                          <div className="text-center py-6 text-muted-foreground">
+                            Aucun utilisateur récent
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle>Approbations en attente</CardTitle>
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href="/admin/approvals">
+                          Voir toutes
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {isLoading ? (
+                        <div className="flex items-center justify-center h-40">
+                          <div className="h-6 w-6 border-2 border-t-[#5F8BFF] border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+                        </div>
+                      ) : (
+                        statistics?.recentCourses?.filter(course => !course.isApproved).slice(0, 5).map((course) => (
+                          <div key={course.id} className="flex items-center justify-between border-b pb-3">
+                            <div>
+                              <p className="font-medium">{course.title}</p>
+                              <p className="text-sm text-muted-foreground">Par {course.trainerName}</p>
+                              <Badge variant="outline" className="mt-1">{course.category}</Badge>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline" className="px-2">
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                              </Button>
+                              <Button size="sm" variant="outline" className="px-2">
+                                <XCircle className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </div>
+                          </div>
+                        )) || (
+                          <div className="text-center py-6 text-muted-foreground">
+                            Aucune approbation en attente
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
+
+          {/* Utilisateurs */}
+          {activePage === 'users' && (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold">Gestion des utilisateurs</h2>
+                <Button className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90">
+                  <Plus className="mr-2 h-4 w-4" /> Ajouter un utilisateur
+                </Button>
+              </div>
+              <Card>
+                <CardContent className="p-0">
+                  <table className="w-full">
+                    <thead className="bg-slate-50">
+                      <tr>
+                        <th className="text-left p-4 font-medium">Utilisateur</th>
+                        <th className="text-left p-4 font-medium">Email</th>
+                        <th className="text-left p-4 font-medium">Rôle</th>
+                        <th className="text-left p-4 font-medium">Statut</th>
+                        <th className="text-right p-4 font-medium">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {/* Exemple de ligne */}
+                      <tr className="border-t">
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <Avatar>
+                              <AvatarFallback className="bg-[#1D2B6C] text-white">YF</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium">Yassine Fadiz</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4">formateur@necform.fr</td>
+                        <td className="p-4"><Badge>formateur</Badge></td>
+                        <td className="p-4"><Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Actif</Badge></td>
+                        <td className="p-4 text-right">
+                          <Button variant="ghost" size="sm">Éditer</Button>
+                        </td>
+                      </tr>
+                      <tr className="border-t">
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <Avatar>
+                              <AvatarFallback className="bg-[#5F8BFF] text-white">ME</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium">Marie Étudiante</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4">etudiant@necform.fr</td>
+                        <td className="p-4"><Badge>étudiant</Badge></td>
+                        <td className="p-4"><Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Actif</Badge></td>
+                        <td className="p-4 text-right">
+                          <Button variant="ghost" size="sm">Éditer</Button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Formations */}
+          {activePage === 'courses' && (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold">Gestion des formations</h2>
+                <div className="flex gap-2">
+                  <Button variant="outline">
+                    Catégories
+                  </Button>
+                  <Button className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90">
+                    <Plus className="mr-2 h-4 w-4" /> Ajouter une formation
+                  </Button>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Exemple de carte de formation */}
+                <Card className="overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1587620962725-abab7fe55159?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&h=250&q=80" 
+                    alt="Formation" className="w-full h-40 object-cover" />
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <Badge className="bg-[#5F8BFF]">Développement Web</Badge>
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        Approuvé
+                      </Badge>
+                    </div>
+                    <h3 className="text-lg font-semibold mb-1">Formation React Avancé</h3>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Apprenez les concepts avancés de React avec cette formation complète.
+                    </p>
+                    <div className="flex justify-between items-center">
+                      <p className="font-semibold">149€</p>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline">Éditer</Button>
+                        <Button size="sm" variant="default" className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90">
+                          Voir
+                        </Button>
                       </div>
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1633356122102-3fe601e05bd2?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&h=250&q=80" 
+                    alt="Formation" className="w-full h-40 object-cover" />
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <Badge className="bg-[#7A6CFF]">DevOps</Badge>
+                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                        En attente
+                      </Badge>
+                    </div>
+                    <h3 className="text-lg font-semibold mb-1">Docker & Kubernetes</h3>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Maîtrisez la conteneurisation et l'orchestration avec Docker et Kubernetes.
+                    </p>
+                    <div className="flex justify-between items-center">
+                      <p className="font-semibold">199€</p>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline">Éditer</Button>
+                        <Button size="sm" variant="default" className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90">
+                          Voir
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
+
+          {/* Contenu pour les autres pages sera similaire */}
+          {activePage !== 'dashboard' && activePage !== 'users' && activePage !== 'courses' && (
+            <div className="flex flex-col items-center justify-center h-64">
+              <div className="text-4xl text-muted-foreground mb-4">
+                {navigationItems.find(item => item.id === activePage)?.icon}
+              </div>
+              <h2 className="text-xl font-semibold mb-2">
+                Gestion des {navigationItems.find(item => item.id === activePage)?.label}
+              </h2>
+              <p className="text-muted-foreground">
+                Cette section est en cours de développement.
+              </p>
+            </div>
+          )}
         </div>
       </main>
     </div>
