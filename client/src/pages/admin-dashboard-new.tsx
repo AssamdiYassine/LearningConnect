@@ -53,10 +53,15 @@ interface CalendarEvent {
 
 // La page principale du tableau de bord
 export default function AdminDashboardNew() {
-  const { user } = useAuth();
+  const { user, logoutMutation } = useAuth();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [showNoteEditor, setShowNoteEditor] = useState(false);
+  
+  // Fonction de déconnexion
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
   
   // Format de la date en français en haut du calendrier
   const formattedMonth = format(currentMonth, 'MMMM yyyy', { locale: fr }).replace(/^\w/, c => c.toUpperCase());
@@ -233,6 +238,41 @@ export default function AdminDashboardNew() {
                 className="w-64 pl-10 bg-gray-900 border-gray-700 focus:border-blue-500"
               />
             </div>
+            
+            {/* Menu déroulant de l'administrateur */}
+            <div className="relative">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="bg-gray-900 border-gray-700 text-white hover:bg-gray-800">
+                    Administrator <ChevronLeft className="h-4 w-4 ml-2 rotate-90" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="bg-white w-64 p-0 rounded-xl border-none shadow-xl">
+                  <div className="flex flex-col divide-y divide-gray-100">
+                    <Button variant="ghost" className="justify-start px-4 py-5 text-base font-medium text-white bg-[#8069FF] rounded-t-xl hover:bg-[#6E5BE9]">
+                      Mon tableau de bord
+                    </Button>
+                    <Button variant="ghost" className="justify-start px-4 py-3 text-gray-700 hover:bg-gray-50">
+                      Tableau de bord avancé
+                    </Button>
+                    <Button variant="ghost" className="justify-start px-4 py-3 text-gray-700 hover:bg-gray-50">
+                      Mon profil
+                    </Button>
+                    <Button variant="ghost" className="justify-start px-4 py-3 text-gray-700 hover:bg-gray-50">
+                      Mes réussites
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      className="justify-start px-4 py-3 text-red-500 hover:bg-gray-50 rounded-b-xl"
+                      onClick={handleLogout}
+                    >
+                      Déconnexion
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+            
             <Button variant="default" className="bg-blue-600 hover:bg-blue-700">
               <Plus className="h-4 w-4 mr-2" />
               Ajouter une session
