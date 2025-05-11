@@ -292,7 +292,7 @@ function Router() {
         <Route path="/admin/edit-category/:id">
           {params => (
             <ProtectedRoute 
-              component={() => <EditBlogCategoryPage />} 
+              component={() => <EditBlogCategoryPage id={params.id} />} 
               allowedRoles={["admin"]} 
             />
           )}
@@ -305,7 +305,7 @@ function Router() {
         <Route path="/admin/edit-post/:id">
           {params => (
             <ProtectedRoute 
-              component={() => <EditBlogPostPage />} 
+              component={() => <EditBlogPostPage id={params.id} />} 
               allowedRoles={["admin"]} 
             />
           )}
