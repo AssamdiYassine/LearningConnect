@@ -1,659 +1,607 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { 
-  PlusCircle, 
-  Search, 
-  Edit, 
-  Trash, 
-  UserPlus,
-  UserX
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Edit, Trash2, Plus, Search } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
-// Types
-type User = {
+// Définition des schémas de validation
+const createUserSchema = z.object({
+  username: z.string().min(3, "Le nom d'utilisateur doit contenir au moins 3 caractères"),
+  email: z.string().email("Email invalide"),
+  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
+  displayName: z.string().optional(),
+  role: z.enum(["student", "trainer", "admin"]),
+});
+
+const updateUserSchema = z.object({
+  username: z.string().min(3, "Le nom d'utilisateur doit contenir au moins 3 caractères").optional(),
+  email: z.string().email("Email invalide").optional(),
+  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères").optional(),
+  displayName: z.string().optional(),
+  role: z.enum(["student", "trainer", "admin"]).optional(),
+});
+
+interface User {
   id: number;
   username: string;
   email: string;
   displayName: string;
-  role: 'admin' | 'trainer' | 'student';
+  role: "student" | "trainer" | "admin";
   isSubscribed: boolean | null;
-};
-
-type UserFormData = {
-  username: string;
-  email: string;
-  displayName: string;
-  password: string;
-  confirmPassword: string;
-  role: string;
-};
+  subscriptionType: string | null;
+  subscriptionEndDate: string | null;
+}
 
 export default function FixedAdminUsers() {
-  // State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [formData, setFormData] = useState<UserFormData>({
-    username: '',
-    email: '',
-    displayName: '',
-    password: '',
-    confirmPassword: '',
-    role: 'student'
-  });
-
-  // Hooks
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // États pour gérer les modales et les utilisateurs
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterRole, setFilterRole] = useState<string | null>(null);
 
-  // Reset form
-  const resetForm = () => {
-    setFormData({
-      username: '',
-      email: '',
-      displayName: '',
-      password: '',
-      confirmPassword: '',
-      role: 'student'
-    });
-  };
-
-  // Fetch users
-  const { data: users = [], isLoading } = useQuery({
-    queryKey: ['/api/admin/users'],
+  // Récupération des utilisateurs
+  const { data: users = [], isLoading, error } = useQuery<User[]>({
+    queryKey: ["/api/admin/users"],
     queryFn: async () => {
-      const res = await fetch('/api/admin/users');
-      if (!res.ok) {
-        throw new Error('Erreur lors de la récupération des utilisateurs');
+      const response = await apiRequest("GET", "/api/admin/users");
+      if (!response.ok) {
+        throw new Error("Erreur lors de la récupération des utilisateurs");
       }
-      return res.json();
-    }
+      return response.json();
+    },
   });
 
-  // Create user mutation
+  // Création d'un nouvel utilisateur
   const createUserMutation = useMutation({
-    mutationFn: async (userData: Omit<UserFormData, 'confirmPassword'>) => {
-      console.log("Création d'utilisateur:", userData);
-      const res = await apiRequest('POST', '/api/admin/users', userData);
-      return await res.json();
+    mutationFn: async (userData: z.infer<typeof createUserSchema>) => {
+      const response = await apiRequest("POST", "/api/admin/users", userData);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erreur lors de la création de l'utilisateur");
+      }
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      setIsAddDialogOpen(false);
       toast({
-        title: "Succès",
-        description: "Utilisateur créé avec succès!",
+        title: "Utilisateur créé",
+        description: "L'utilisateur a été créé avec succès.",
       });
-      setAddDialogOpen(false);
-      resetForm();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Erreur",
-        description: error.message || "Échec de la création d'utilisateur",
+        description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
 
-  // Update user mutation
+  // Mise à jour d'un utilisateur
   const updateUserMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<UserFormData> }) => {
-      console.log("Mise à jour utilisateur:", id, data);
-      const res = await apiRequest('PATCH', `/api/admin/users/${id}`, data);
-      return await res.json();
+    mutationFn: async ({ id, userData }: { id: number; userData: z.infer<typeof updateUserSchema> }) => {
+      const response = await apiRequest("PATCH", `/api/admin/users/${id}`, userData);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erreur lors de la mise à jour de l'utilisateur");
+      }
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      setIsEditDialogOpen(false);
       toast({
-        title: "Succès",
-        description: "Utilisateur mis à jour avec succès!",
+        title: "Utilisateur mis à jour",
+        description: "L'utilisateur a été mis à jour avec succès.",
       });
-      setEditDialogOpen(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Erreur",
-        description: error.message || "Échec de la mise à jour",
+        description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
 
-  // Delete user mutation
+  // Suppression d'un utilisateur
   const deleteUserMutation = useMutation({
     mutationFn: async (id: number) => {
-      console.log("Suppression utilisateur:", id);
-      await apiRequest('DELETE', `/api/admin/users/${id}`);
+      const response = await apiRequest("DELETE", `/api/admin/users/${id}`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erreur lors de la suppression de l'utilisateur");
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      setIsDeleteDialogOpen(false);
       toast({
-        title: "Succès",
-        description: "Utilisateur supprimé avec succès!",
+        title: "Utilisateur supprimé",
+        description: "L'utilisateur a été supprimé avec succès.",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Erreur",
-        description: error.message || "Échec de la suppression",
+        description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
 
-  // Handle input change
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  // Formulaire pour l'ajout d'un utilisateur
+  const addForm = useForm<z.infer<typeof createUserSchema>>({
+    resolver: zodResolver(createUserSchema),
+    defaultValues: {
+      username: "",
+      email: "",
+      password: "",
+      displayName: "",
+      role: "student",
+    },
+  });
 
-  // Handle role change
-  const handleRoleChange = (value: string) => {
-    setFormData(prev => ({ ...prev, role: value }));
-  };
+  // Formulaire pour la mise à jour d'un utilisateur
+  const editForm = useForm<z.infer<typeof updateUserSchema>>({
+    resolver: zodResolver(updateUserSchema),
+    defaultValues: {
+      username: "",
+      email: "",
+      password: "",
+      displayName: "",
+      role: "student",
+    },
+  });
 
-  // Add user
-  const handleAddUser = () => {
-    // Validation
-    if (!formData.username || !formData.email || !formData.displayName || !formData.password) {
-      toast({
-        title: "Erreur de validation",
-        description: "Tous les champs sont obligatoires",
-        variant: "destructive",
+  // Mettre à jour les valeurs par défaut du formulaire d'édition lorsqu'un utilisateur est sélectionné
+  useEffect(() => {
+    if (selectedUser) {
+      editForm.reset({
+        username: selectedUser.username,
+        email: selectedUser.email,
+        displayName: selectedUser.displayName,
+        role: selectedUser.role,
       });
-      return;
     }
+  }, [selectedUser, editForm]);
 
-    if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Erreur de validation",
-        description: "Les mots de passe ne correspondent pas",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const { confirmPassword, ...userData } = formData;
-    createUserMutation.mutate(userData);
+  // Gestion de la soumission du formulaire d'ajout
+  const handleAddSubmit = (data: z.infer<typeof createUserSchema>) => {
+    createUserMutation.mutate(data);
   };
 
-  // Edit user
-  const handleEditUser = () => {
-    if (!selectedUser) return;
-
-    // Validation
-    if (!formData.username || !formData.email || !formData.displayName) {
-      toast({
-        title: "Erreur de validation",
-        description: "Nom d'utilisateur, email et nom affiché sont obligatoires",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate passwords match if provided
-    if (formData.password && formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Erreur de validation",
-        description: "Les mots de passe ne correspondent pas",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Prepare data (only include fields that have changed)
-    const updateData: any = {};
-    
-    if (formData.username !== selectedUser.username) 
-      updateData.username = formData.username;
-    
-    if (formData.email !== selectedUser.email) 
-      updateData.email = formData.email;
-    
-    if (formData.displayName !== selectedUser.displayName) 
-      updateData.displayName = formData.displayName;
-    
-    if (formData.role !== selectedUser.role) 
-      updateData.role = formData.role;
-    
-    if (formData.password) 
-      updateData.password = formData.password;
-
-    // Update user if there are changes
-    if (Object.keys(updateData).length === 0) {
-      toast({
-        title: "Info",
-        description: "Aucune modification détectée",
-      });
-      setEditDialogOpen(false);
-      return;
-    }
-
-    updateUserMutation.mutate({ id: selectedUser.id, data: updateData });
-  };
-
-  // Open edit dialog
-  const handleEditDialogOpen = (user: User) => {
-    setSelectedUser(user);
-    setFormData({
-      username: user.username,
-      email: user.email,
-      displayName: user.displayName || '',
-      password: '',
-      confirmPassword: '',
-      role: user.role
-    });
-    
-    console.log("Ouverture du dialogue d'édition pour", user.username);
-    setEditDialogOpen(true);
-  };
-
-  // Handle delete user
-  const handleDeleteUser = (user: User) => {
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur "${user.username}" ?`)) {
-      deleteUserMutation.mutate(user.id);
+  // Gestion de la soumission du formulaire d'édition
+  const handleEditSubmit = (data: z.infer<typeof updateUserSchema>) => {
+    if (selectedUser) {
+      updateUserMutation.mutate({ id: selectedUser.id, userData: data });
     }
   };
 
-  // Filter users based on search
-  const filteredUsers = users.filter(user => 
-    user.username?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (user.displayName && user.displayName.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  // Gestion de la suppression d'un utilisateur
+  const handleDeleteUser = () => {
+    if (selectedUser) {
+      deleteUserMutation.mutate(selectedUser.id);
+    }
+  };
 
-  // Get role badge
-  const getRoleBadge = (role: string) => {
+  // Traduction des rôles en français
+  const translateRole = (role: string) => {
     switch (role) {
-      case 'admin':
-        return <Badge className="bg-red-500">administrateur</Badge>;
-      case 'trainer':
-        return <Badge className="bg-blue-500">formateur</Badge>;
+      case "admin":
+        return "Administrateur";
+      case "trainer":
+        return "Formateur";
+      case "student":
+        return "Étudiant";
       default:
-        return <Badge className="bg-green-500">étudiant</Badge>;
+        return role;
     }
   };
+
+  // Filtrage des utilisateurs en fonction de la recherche et du filtre de rôle
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
+      user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.displayName.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesRole = filterRole ? user.role === filterRole : true;
+    
+    return matchesSearch && matchesRole;
+  });
 
   return (
-    <div className="p-6 space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Gestion des utilisateurs</CardTitle>
-          <Button 
-            className="bg-[#1D2B6C]"
-            onClick={() => {
-              console.log("Ouverture dialogue ajout utilisateur");
-              resetForm();
-              setAddDialogOpen(true);
-            }}
-          >
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Ajouter un utilisateur
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-4 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Rechercher un utilisateur..." 
-              className="pl-10" 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+    <div className="container mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Gestion des Utilisateurs</h1>
+      
+      {/* Barre d'outils */}
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex gap-4 items-center">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher..."
+              className="pl-8 w-60"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full"></div>
-            </div>
-          ) : filteredUsers.length > 0 ? (
-            <Table>
-              <TableHeader>
+          <Select
+            value={filterRole || ""}
+            onValueChange={(value) => setFilterRole(value === "" ? null : value)}
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Filtrer par rôle" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Tous les rôles</SelectItem>
+              <SelectItem value="admin">Administrateur</SelectItem>
+              <SelectItem value="trainer">Formateur</SelectItem>
+              <SelectItem value="student">Étudiant</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" /> Ajouter un utilisateur
+        </Button>
+      </div>
+      
+      {/* Tableau des utilisateurs */}
+      {isLoading ? (
+        <div className="text-center py-10">Chargement...</div>
+      ) : error ? (
+        <div className="text-center py-10 text-red-500">Erreur: {error.toString()}</div>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID</TableHead>
+                <TableHead>Nom d'utilisateur</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Nom affiché</TableHead>
+                <TableHead>Rôle</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableHead>Utilisateur</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Rôle</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableCell colSpan={6} className="text-center py-4">
+                    Aucun utilisateur trouvé
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user) => (
+              ) : (
+                filteredUsers.map((user) => (
                   <TableRow key={user.id}>
-                    <TableCell className="flex items-center space-x-3">
-                      <Avatar>
-                        <AvatarFallback className="bg-primary">
-                          {user.displayName 
-                            ? user.displayName.substring(0, 2).toUpperCase() 
-                            : user.username.substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{user.displayName || user.username}</p>
-                        <p className="text-sm text-muted-foreground">{user.username}</p>
-                      </div>
-                    </TableCell>
+                    <TableCell>{user.id}</TableCell>
+                    <TableCell>{user.username}</TableCell>
                     <TableCell>{user.email}</TableCell>
-                    <TableCell>{getRoleBadge(user.role)}</TableCell>
+                    <TableCell>{user.displayName}</TableCell>
                     <TableCell>
-                      <Badge variant={user.isSubscribed ? "default" : "outline"}>
-                        {user.isSubscribed ? 'Actif' : 'Inactif'}
-                      </Badge>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          user.role === "admin"
+                            ? "bg-purple-100 text-purple-800"
+                            : user.role === "trainer"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-green-100 text-green-800"
+                        }`}
+                      >
+                        {translateRole(user.role)}
+                      </span>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => handleEditDialogOpen(user)}
-                          className="text-blue-600"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => handleDeleteUser(user)}
-                          className="text-red-600"
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
+                    <TableCell className="text-right space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setIsEditDialogOpen(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600"
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setIsDeleteDialogOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-64 text-center">
-              <UserX className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-2">Aucun utilisateur trouvé</p>
-              {searchQuery && (
-                <p className="text-sm text-muted-foreground mb-4">
-                  Essayez de modifier votre recherche ou créez un nouvel utilisateur
-                </p>
+                ))
               )}
-              <Button 
-                onClick={() => {
-                  resetForm();
-                  setAddDialogOpen(true);
-                }}
-                className="bg-[#1D2B6C]"
-              >
-                <UserPlus className="mr-2 h-4 w-4" />
-                Ajouter un utilisateur
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </TableBody>
+          </Table>
+        </div>
+      )}
       
-      {/* Add User Dialog */}
-      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+      {/* Dialogue d'ajout d'utilisateur */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Ajouter un utilisateur</DialogTitle>
             <DialogDescription>
-              Créez un nouvel utilisateur en remplissant le formulaire ci-dessous.
+              Créez un nouvel utilisateur dans le système.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="username" className="text-right">
-                Nom d'utilisateur*
-              </label>
-              <Input
-                id="username"
+          <Form {...addForm}>
+            <form onSubmit={addForm.handleSubmit(handleAddSubmit)} className="space-y-4">
+              <FormField
+                control={addForm.control}
                 name="username"
-                value={formData.username}
-                onChange={handleInputChange}
-                className="col-span-3"
-                required
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nom d'utilisateur</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="nom_utilisateur" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="email" className="text-right">
-                Email*
-              </label>
-              <Input
-                id="email"
+              
+              <FormField
+                control={addForm.control}
                 name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className="col-span-3"
-                required
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="email@exemple.com" type="email" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="displayName" className="text-right">
-                Nom affiché*
-              </label>
-              <Input
-                id="displayName"
-                name="displayName"
-                value={formData.displayName}
-                onChange={handleInputChange}
-                className="col-span-3"
-                required
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="password" className="text-right">
-                Mot de passe*
-              </label>
-              <Input
-                id="password"
+              
+              <FormField
+                control={addForm.control}
                 name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                className="col-span-3"
-                required
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mot de passe</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="••••••••" type="password" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="confirmPassword" className="text-right">
-                Confirmation*
-              </label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                className="col-span-3"
-                required
+              
+              <FormField
+                control={addForm.control}
+                name="displayName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nom affiché</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Prénom Nom" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="role" className="text-right">
-                Rôle*
-              </label>
-              <Select
-                value={formData.role}
-                onValueChange={handleRoleChange}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Sélectionner un rôle" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student">Étudiant</SelectItem>
-                  <SelectItem value="trainer">Formateur</SelectItem>
-                  <SelectItem value="admin">Administrateur</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setAddDialogOpen(false)}
-            >
-              Annuler
-            </Button>
-            <Button 
-              onClick={handleAddUser}
-              disabled={createUserMutation.isPending}
-              className="bg-[#1D2B6C]"
-            >
-              {createUserMutation.isPending ? "Création..." : "Créer l'utilisateur"}
-            </Button>
-          </DialogFooter>
+              
+              <FormField
+                control={addForm.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Rôle</FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionnez un rôle" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="student">Étudiant</SelectItem>
+                        <SelectItem value="trainer">Formateur</SelectItem>
+                        <SelectItem value="admin">Administrateur</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => setIsAddDialogOpen(false)}
+                >
+                  Annuler
+                </Button>
+                <Button type="submit" disabled={createUserMutation.isPending}>
+                  {createUserMutation.isPending ? "Création..." : "Créer"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
       
-      {/* Edit User Dialog */}
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+      {/* Dialogue d'édition d'utilisateur */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Modifier l'utilisateur</DialogTitle>
             <DialogDescription>
-              {selectedUser && `Modifier les informations pour ${selectedUser.username}`}
+              Modifiez les informations de l'utilisateur.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="edit-username" className="text-right">
-                Nom d'utilisateur
-              </label>
-              <Input
-                id="edit-username"
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4">
+              <FormField
+                control={editForm.control}
                 name="username"
-                value={formData.username}
-                onChange={handleInputChange}
-                className="col-span-3"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nom d'utilisateur</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="nom_utilisateur" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="edit-email" className="text-right">
-                Email
-              </label>
-              <Input
-                id="edit-email"
+              
+              <FormField
+                control={editForm.control}
                 name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className="col-span-3"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="email@exemple.com" type="email" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="edit-displayName" className="text-right">
-                Nom affiché
-              </label>
-              <Input
-                id="edit-displayName"
-                name="displayName"
-                value={formData.displayName}
-                onChange={handleInputChange}
-                className="col-span-3"
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="edit-password" className="text-right">
-                Mot de passe
-              </label>
-              <Input
-                id="edit-password"
+              
+              <FormField
+                control={editForm.control}
                 name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                className="col-span-3"
-                placeholder="Laisser vide pour ne pas modifier"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mot de passe (laisser vide pour ne pas modifier)</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="••••••••" type="password" />
+                    </FormControl>
+                    <FormDescription>
+                      Laissez ce champ vide si vous ne souhaitez pas changer le mot de passe.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="edit-confirmPassword" className="text-right">
-                Confirmation
-              </label>
-              <Input
-                id="edit-confirmPassword"
-                name="confirmPassword"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                className="col-span-3"
-                placeholder="Confirmer le nouveau mot de passe"
+              
+              <FormField
+                control={editForm.control}
+                name="displayName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nom affiché</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Prénom Nom" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="edit-role" className="text-right">
-                Rôle
-              </label>
-              <Select
-                value={formData.role}
-                onValueChange={handleRoleChange}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Sélectionner un rôle" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student">Étudiant</SelectItem>
-                  <SelectItem value="trainer">Formateur</SelectItem>
-                  <SelectItem value="admin">Administrateur</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              
+              <FormField
+                control={editForm.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Rôle</FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionnez un rôle" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="student">Étudiant</SelectItem>
+                        <SelectItem value="trainer">Formateur</SelectItem>
+                        <SelectItem value="admin">Administrateur</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => setIsEditDialogOpen(false)}
+                >
+                  Annuler
+                </Button>
+                <Button type="submit" disabled={updateUserMutation.isPending}>
+                  {updateUserMutation.isPending ? "Mise à jour..." : "Mettre à jour"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Dialogue de confirmation de suppression */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmer la suppression</DialogTitle>
+            <DialogDescription>
+              Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action ne peut pas être annulée.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
+            <p className="text-yellow-800">
+              <strong>Attention :</strong> Supprimer cet utilisateur supprimera également toutes ses données associées.
+            </p>
           </div>
           
+          {selectedUser && (
+            <div className="mb-4 space-y-2">
+              <p><strong>ID :</strong> {selectedUser.id}</p>
+              <p><strong>Nom d'utilisateur :</strong> {selectedUser.username}</p>
+              <p><strong>Email :</strong> {selectedUser.email}</p>
+              <p><strong>Rôle :</strong> {translateRole(selectedUser.role)}</p>
+            </div>
+          )}
+          
           <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setEditDialogOpen(false)}
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
             >
               Annuler
             </Button>
-            <Button 
-              onClick={handleEditUser}
-              disabled={updateUserMutation.isPending}
-              className="bg-[#1D2B6C]"
+            <Button
+              variant="destructive"
+              onClick={handleDeleteUser}
+              disabled={deleteUserMutation.isPending}
             >
-              {updateUserMutation.isPending ? "Mise à jour..." : "Mettre à jour"}
+              {deleteUserMutation.isPending ? "Suppression..." : "Supprimer"}
             </Button>
           </DialogFooter>
         </DialogContent>

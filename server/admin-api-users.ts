@@ -1,13 +1,11 @@
 import { Express, Request, Response } from "express";
 import { storage } from "./storage";
+import { z } from "zod";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { z } from "zod";
 
-// Promisify scrypt pour utiliser async/await
 const scryptAsync = promisify(scrypt);
 
-// Fonction pour hacher les mots de passe
 async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
   const buf = (await scryptAsync(password, salt, 64)) as Buffer;
@@ -19,11 +17,11 @@ export function hasAdminRole(req: any, res: any, next: any) {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Non authentifié" });
   }
-  
+
   if (req.user.role !== "admin") {
     return res.status(403).json({ message: "Accès refusé. Rôle d'administrateur requis." });
   }
-  
+
   next();
 }
 
@@ -47,11 +45,6 @@ export function registerAdminUserRoutes(app: Express) {
   app.get("/api/admin/users/role/:role", hasAdminRole, async (req: Request, res: Response) => {
     try {
       const { role } = req.params;
-      
-      if (!["student", "trainer", "admin"].includes(role)) {
-        return res.status(400).json({ message: "Rôle invalide" });
-      }
-      
       const users = await storage.getUsersByRole(role);
       
       // Retirer les mots de passe avant d'envoyer les données
@@ -84,7 +77,7 @@ export function registerAdminUserRoutes(app: Express) {
     }
   });
 
-  // Route pour créer un nouvel utilisateur (admin)
+  // Route pour créer un nouvel utilisateur
   app.post("/api/admin/users", hasAdminRole, async (req: Request, res: Response) => {
     try {
       // Validation des données
@@ -96,31 +89,32 @@ export function registerAdminUserRoutes(app: Express) {
         role: z.enum(["student", "trainer", "admin"]).optional(),
         isSubscribed: z.boolean().nullable().optional(),
         subscriptionType: z.enum(["monthly", "annual"]).nullable().optional(),
-        subscriptionEndDate: z.date().nullable().optional(),
+        subscriptionEndDate: z.date().nullable().optional()
       });
       
       const validatedData = schema.parse(req.body);
       
-      // Vérifier si l'utilisateur existe déjà
+      // Vérifier si un utilisateur avec le même nom d'utilisateur existe déjà
       const existingUser = await storage.getUserByUsername(validatedData.username);
       if (existingUser) {
-        return res.status(409).json({ message: "Ce nom d'utilisateur est déjà utilisé" });
+        return res.status(409).json({ message: "Un utilisateur avec ce nom d'utilisateur existe déjà" });
       }
       
+      // Vérifier si un utilisateur avec le même email existe déjà
       const existingEmail = await storage.getUserByEmail(validatedData.email);
       if (existingEmail) {
-        return res.status(409).json({ message: "Cet email est déjà utilisé" });
+        return res.status(409).json({ message: "Un utilisateur avec cet email existe déjà" });
       }
       
       // Hacher le mot de passe
       const hashedPassword = await hashPassword(validatedData.password);
       
-      // Créer l'utilisateur avec des valeurs par défaut pour les champs optionnels non fournis
-      const newUser = await storage.createUser({
+      // Créer l'utilisateur
+      const user = await storage.createUser({
         ...validatedData,
         password: hashedPassword,
-        displayName: validatedData.displayName || validatedData.username,
         role: validatedData.role || "student",
+        displayName: validatedData.displayName || validatedData.username,
         isSubscribed: validatedData.isSubscribed || null,
         subscriptionType: validatedData.subscriptionType || null,
         subscriptionEndDate: validatedData.subscriptionEndDate || null,
@@ -128,8 +122,8 @@ export function registerAdminUserRoutes(app: Express) {
         stripeSubscriptionId: null
       });
       
-      // Retirer le mot de passe de la réponse
-      const { password, ...safeUser } = newUser;
+      // Retirer le mot de passe avant d'envoyer les données
+      const { password, ...safeUser } = user;
       
       res.status(201).json(safeUser);
     } catch (error) {
@@ -156,38 +150,38 @@ export function registerAdminUserRoutes(app: Express) {
       
       // Validation des données
       const schema = z.object({
-        username: z.string().min(3).optional(),
-        email: z.string().email().optional(),
-        password: z.string().min(6).optional(),
+        username: z.string().min(3, "Le nom d'utilisateur doit contenir au moins 3 caractères").optional(),
+        email: z.string().email("Email invalide").optional(),
+        password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères").optional(),
         displayName: z.string().optional(),
         role: z.enum(["student", "trainer", "admin"]).optional(),
         isSubscribed: z.boolean().nullable().optional(),
         subscriptionType: z.enum(["monthly", "annual"]).nullable().optional(),
-        subscriptionEndDate: z.string().transform(val => new Date(val)).nullable().optional(),
+        subscriptionEndDate: z.date().nullable().optional()
       });
       
       const validatedData = schema.parse(req.body);
       
-      // Vérifier si le nom d'utilisateur est déjà pris
-      if (validatedData.username) {
-        const userWithUsername = await storage.getUserByUsername(validatedData.username);
-        if (userWithUsername && userWithUsername.id !== userId) {
-          return res.status(409).json({ message: "Ce nom d'utilisateur est déjà utilisé" });
+      // Vérifier si le nom d'utilisateur mis à jour est déjà utilisé
+      if (validatedData.username && validatedData.username !== existingUser.username) {
+        const userWithSameUsername = await storage.getUserByUsername(validatedData.username);
+        if (userWithSameUsername) {
+          return res.status(409).json({ message: "Un utilisateur avec ce nom d'utilisateur existe déjà" });
         }
       }
       
-      // Vérifier si l'email est déjà pris
-      if (validatedData.email) {
-        const userWithEmail = await storage.getUserByEmail(validatedData.email);
-        if (userWithEmail && userWithEmail.id !== userId) {
-          return res.status(409).json({ message: "Cet email est déjà utilisé" });
+      // Vérifier si l'email mis à jour est déjà utilisé
+      if (validatedData.email && validatedData.email !== existingUser.email) {
+        const userWithSameEmail = await storage.getUserByEmail(validatedData.email);
+        if (userWithSameEmail) {
+          return res.status(409).json({ message: "Un utilisateur avec cet email existe déjà" });
         }
       }
       
       // Préparer les données à mettre à jour
       const updateData: any = { ...validatedData };
       
-      // Hacher le mot de passe si nécessaire
+      // Hacher le mot de passe s'il est fourni
       if (updateData.password) {
         updateData.password = await hashPassword(updateData.password);
       }
@@ -195,7 +189,7 @@ export function registerAdminUserRoutes(app: Express) {
       // Mettre à jour l'utilisateur
       const updatedUser = await storage.updateUser(userId, updateData);
       
-      // Retirer le mot de passe de la réponse
+      // Retirer le mot de passe avant d'envoyer les données
       const { password, ...safeUser } = updatedUser;
       
       res.json(safeUser);
@@ -221,9 +215,12 @@ export function registerAdminUserRoutes(app: Express) {
         return res.status(404).json({ message: "Utilisateur non trouvé" });
       }
       
-      // Empêcher la suppression de son propre compte
-      if (userId === req.user!.id) {
-        return res.status(400).json({ message: "Vous ne pouvez pas supprimer votre propre compte" });
+      // Ne pas permettre de supprimer le dernier administrateur
+      if (user.role === "admin") {
+        const admins = await storage.getUsersByRole("admin");
+        if (admins.length <= 1) {
+          return res.status(400).json({ message: "Impossible de supprimer le dernier administrateur" });
+        }
       }
       
       // Supprimer l'utilisateur

@@ -1,50 +1,54 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { 
-  PlusCircle, 
-  Search, 
-  Edit, 
-  Trash, 
-  BookOpen,
-  BookX
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Edit, Trash2, Plus, Search, ThumbsUp, ThumbsDown, Filter } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
-// Types
-type Course = {
+// Schémas de validation
+const createCourseSchema = z.object({
+  title: z.string().min(3, "Le titre doit contenir au moins 3 caractères"),
+  description: z.string().min(10, "La description doit contenir au moins 10 caractères"),
+  level: z.enum(["beginner", "intermediate", "advanced"]),
+  categoryId: z.number().int().positive(),
+  trainerId: z.number().int().positive(),
+  duration: z.number().int().positive(),
+  maxStudents: z.number().int().positive(),
+  price: z.number().nonnegative().nullable().optional(),
+  thumbnail: z.string().url().nullable().optional(),
+  isApproved: z.boolean().nullable().optional(),
+});
+
+const updateCourseSchema = z.object({
+  title: z.string().min(3, "Le titre doit contenir au moins 3 caractères").optional(),
+  description: z.string().min(10, "La description doit contenir au moins 10 caractères").optional(),
+  level: z.enum(["beginner", "intermediate", "advanced"]).optional(),
+  categoryId: z.number().int().positive().optional(),
+  trainerId: z.number().int().positive().optional(),
+  duration: z.number().int().positive().optional(),
+  maxStudents: z.number().int().positive().optional(),
+  price: z.number().nonnegative().nullable().optional(),
+  thumbnail: z.string().url().nullable().optional(),
+  isApproved: z.boolean().nullable().optional(),
+});
+
+interface Course {
   id: number;
   title: string;
   description: string;
-  level: 'beginner' | 'intermediate' | 'advanced';
+  level: "beginner" | "intermediate" | "advanced";
   categoryId: number;
   trainerId: number;
   duration: number;
@@ -52,854 +56,1147 @@ type Course = {
   isApproved: boolean | null;
   price: number | null;
   thumbnail: string | null;
-  
-  // Relations (peuvent être absentes)
+  createdAt: string;
+  updatedAt: string;
+  category?: {
+    id: number;
+    name: string;
+  };
   trainer?: {
     id: number;
     username: string;
     displayName: string;
   };
-  category?: {
-    id: number;
-    name: string;
-  };
-};
+}
 
-type Category = {
+interface Trainer {
+  id: number;
+  username: string;
+  email: string;
+  displayName: string;
+}
+
+interface Category {
   id: number;
   name: string;
   slug: string;
-};
-
-type Trainer = {
-  id: number;
-  username: string;
-  displayName: string;
-};
-
-type CourseFormData = {
-  title: string;
-  description: string;
-  level: string;
-  categoryId: string;
-  trainerId: string;
-  duration: string;
-  maxStudents: string;
-  price: string;
-  thumbnail: string;
-};
+  description: string | null;
+}
 
 export default function FixedAdminCourses() {
-  // State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [formData, setFormData] = useState<CourseFormData>({
-    title: '',
-    description: '',
-    level: 'beginner',
-    categoryId: '',
-    trainerId: '',
-    duration: '60',
-    maxStudents: '20',
-    price: '0',
-    thumbnail: ''
-  });
-
-  // Hooks
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // États
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterLevel, setFilterLevel] = useState<string | null>(null);
+  const [filterApproval, setFilterApproval] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
 
-  // Reset form
-  const resetForm = () => {
-    setFormData({
-      title: '',
-      description: '',
-      level: 'beginner',
-      categoryId: '',
-      trainerId: '',
-      duration: '60',
-      maxStudents: '20',
-      price: '0',
-      thumbnail: ''
-    });
-  };
-
-  // Fetch courses
-  const { data: courses = [], isLoading: isLoadingCourses } = useQuery({
-    queryKey: ['/api/admin/courses'],
+  // Récupération des formations
+  const { data: courses = [], isLoading: isLoadingCourses } = useQuery<Course[]>({
+    queryKey: ["/api/admin/courses"],
     queryFn: async () => {
-      const res = await fetch('/api/admin/courses');
-      if (!res.ok) {
-        throw new Error('Erreur lors de la récupération des formations');
+      const response = await apiRequest("GET", "/api/admin/courses");
+      if (!response.ok) {
+        throw new Error("Erreur lors de la récupération des formations");
       }
-      return await res.json();
-    }
+      return response.json();
+    },
   });
 
-  // Fetch categories
-  const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
-    queryKey: ['/api/admin/categories'],
+  // Récupération des formateurs
+  const { data: trainers = [], isLoading: isLoadingTrainers } = useQuery<Trainer[]>({
+    queryKey: ["/api/admin/trainers"],
     queryFn: async () => {
-      const res = await fetch('/api/admin/categories');
-      if (!res.ok) {
-        throw new Error('Erreur lors de la récupération des catégories');
+      const response = await apiRequest("GET", "/api/admin/trainers");
+      if (!response.ok) {
+        throw new Error("Erreur lors de la récupération des formateurs");
       }
-      return await res.json();
-    }
+      return response.json();
+    },
   });
 
-  // Fetch trainers
-  const { data: trainers = [], isLoading: isLoadingTrainers } = useQuery({
-    queryKey: ['/api/admin/trainers'],
+  // Récupération des catégories
+  const { data: categories = [], isLoading: isLoadingCategories } = useQuery<Category[]>({
+    queryKey: ["/api/admin/categories"],
     queryFn: async () => {
-      const res = await fetch('/api/admin/users?role=trainer');
-      if (!res.ok) {
-        throw new Error('Erreur lors de la récupération des formateurs');
+      const response = await apiRequest("GET", "/api/admin/categories");
+      if (!response.ok) {
+        throw new Error("Erreur lors de la récupération des catégories");
       }
-      return await res.json();
-    }
+      return response.json();
+    },
   });
 
-  // Create course mutation
+  // Création d'une formation
   const createCourseMutation = useMutation({
-    mutationFn: async (courseData: any) => {
-      console.log("Création de formation:", courseData);
-      const res = await apiRequest('POST', '/api/admin/courses', courseData);
-      return await res.json();
+    mutationFn: async (courseData: z.infer<typeof createCourseSchema>) => {
+      const response = await apiRequest("POST", "/api/admin/courses", courseData);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erreur lors de la création de la formation");
+      }
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/courses'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/courses"] });
+      setIsAddDialogOpen(false);
       toast({
-        title: "Succès",
-        description: "Formation créée avec succès!",
+        title: "Formation créée",
+        description: "La formation a été créée avec succès.",
       });
-      setAddDialogOpen(false);
-      resetForm();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Erreur",
-        description: error.message || "Échec de la création de formation",
+        description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
 
-  // Update course mutation
+  // Mise à jour d'une formation
   const updateCourseMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      console.log("Mise à jour formation:", id, data);
-      const res = await apiRequest('PATCH', `/api/admin/courses/${id}`, data);
-      return await res.json();
+    mutationFn: async ({ id, courseData }: { id: number; courseData: z.infer<typeof updateCourseSchema> }) => {
+      const response = await apiRequest("PATCH", `/api/admin/courses/${id}`, courseData);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erreur lors de la mise à jour de la formation");
+      }
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/courses'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/courses"] });
+      setIsEditDialogOpen(false);
       toast({
-        title: "Succès",
-        description: "Formation mise à jour avec succès!",
+        title: "Formation mise à jour",
+        description: "La formation a été mise à jour avec succès.",
       });
-      setEditDialogOpen(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Erreur",
-        description: error.message || "Échec de la mise à jour",
+        description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
 
-  // Delete course mutation
+  // Suppression d'une formation
   const deleteCourseMutation = useMutation({
     mutationFn: async (id: number) => {
-      console.log("Suppression formation:", id);
-      await apiRequest('DELETE', `/api/admin/courses/${id}`);
+      const response = await apiRequest("DELETE", `/api/admin/courses/${id}`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erreur lors de la suppression de la formation");
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/courses'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/courses"] });
+      setIsDeleteDialogOpen(false);
       toast({
-        title: "Succès",
-        description: "Formation supprimée avec succès!",
+        title: "Formation supprimée",
+        description: "La formation a été supprimée avec succès.",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Erreur",
-        description: error.message || "Échec de la suppression",
+        description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
 
-  // Toggle approval mutation
-  const toggleApprovalMutation = useMutation({
-    mutationFn: async ({ id, isApproved }: { id: number; isApproved: boolean }) => {
-      console.log("Changement statut approbation:", id, isApproved);
-      const res = await apiRequest('PATCH', `/api/admin/courses/${id}/approval`, { isApproved });
-      return await res.json();
+  // Approbation d'une formation
+  const approveCourseMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest("PATCH", `/api/admin/courses/${id}/approve`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erreur lors de l'approbation de la formation");
+      }
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/courses'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/courses"] });
+      setIsApproveDialogOpen(false);
       toast({
-        title: "Succès",
-        description: "Statut d'approbation mis à jour avec succès!",
+        title: "Formation approuvée",
+        description: "La formation a été approuvée avec succès.",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Erreur",
-        description: error.message || "Échec de la mise à jour du statut",
+        description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
 
-  // Handle input change
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  // Handle select change
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  // Add course
-  const handleAddCourse = () => {
-    // Validation
-    if (!formData.title || !formData.description || !formData.categoryId || !formData.trainerId) {
+  // Rejet d'une formation
+  const rejectCourseMutation = useMutation({
+    mutationFn: async ({ id, reason }: { id: number; reason: string }) => {
+      const response = await apiRequest("PATCH", `/api/admin/courses/${id}/reject`, { reason });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erreur lors du rejet de la formation");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/courses"] });
+      setIsRejectDialogOpen(false);
+      setRejectionReason("");
       toast({
-        title: "Erreur de validation",
-        description: "Veuillez remplir tous les champs obligatoires",
+        title: "Formation rejetée",
+        description: "La formation a été rejetée avec succès.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: error.message,
         variant: "destructive",
       });
-      return;
-    }
+    },
+  });
 
-    // Prepare data
-    const courseData = {
-      title: formData.title,
-      description: formData.description,
-      level: formData.level,
-      categoryId: parseInt(formData.categoryId),
-      trainerId: parseInt(formData.trainerId),
-      duration: parseInt(formData.duration),
-      maxStudents: parseInt(formData.maxStudents),
-      price: formData.price ? parseFloat(formData.price) : 0,
-      thumbnail: formData.thumbnail || null
-    };
+  // Formulaire pour l'ajout d'une formation
+  const addForm = useForm<z.infer<typeof createCourseSchema>>({
+    resolver: zodResolver(createCourseSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      level: "beginner",
+      categoryId: 0,
+      trainerId: 0,
+      duration: 60,
+      maxStudents: 20,
+      price: 0,
+      thumbnail: "",
+      isApproved: null,
+    },
+  });
 
-    createCourseMutation.mutate(courseData);
-  };
+  // Formulaire pour la mise à jour d'une formation
+  const editForm = useForm<z.infer<typeof updateCourseSchema>>({
+    resolver: zodResolver(updateCourseSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      level: "beginner",
+      categoryId: 0,
+      trainerId: 0,
+      duration: 60,
+      maxStudents: 20,
+      price: 0,
+      thumbnail: "",
+      isApproved: null,
+    },
+  });
 
-  // Edit course
-  const handleEditCourse = () => {
-    if (!selectedCourse) return;
-
-    // Validation
-    if (!formData.title || !formData.description || !formData.categoryId || !formData.trainerId) {
-      toast({
-        title: "Erreur de validation",
-        description: "Veuillez remplir tous les champs obligatoires",
-        variant: "destructive",
+  // Mettre à jour les valeurs par défaut du formulaire d'édition lorsqu'une formation est sélectionnée
+  useEffect(() => {
+    if (selectedCourse) {
+      editForm.reset({
+        title: selectedCourse.title,
+        description: selectedCourse.description,
+        level: selectedCourse.level,
+        categoryId: selectedCourse.categoryId,
+        trainerId: selectedCourse.trainerId,
+        duration: selectedCourse.duration,
+        maxStudents: selectedCourse.maxStudents,
+        price: selectedCourse.price,
+        thumbnail: selectedCourse.thumbnail,
+        isApproved: selectedCourse.isApproved,
       });
-      return;
     }
+  }, [selectedCourse, editForm]);
 
-    // Prepare data (only include fields that have changed)
-    const updateData: any = {};
-    
-    if (formData.title !== selectedCourse.title) 
-      updateData.title = formData.title;
-    
-    if (formData.description !== selectedCourse.description) 
-      updateData.description = formData.description;
-    
-    if (formData.level !== selectedCourse.level) 
-      updateData.level = formData.level;
-    
-    if (formData.categoryId !== selectedCourse.categoryId.toString()) 
-      updateData.categoryId = parseInt(formData.categoryId);
-    
-    if (formData.trainerId !== selectedCourse.trainerId.toString()) 
-      updateData.trainerId = parseInt(formData.trainerId);
-    
-    if (formData.duration !== selectedCourse.duration.toString()) 
-      updateData.duration = parseInt(formData.duration);
-    
-    if (formData.maxStudents !== selectedCourse.maxStudents.toString()) 
-      updateData.maxStudents = parseInt(formData.maxStudents);
-    
-    const coursePrice = selectedCourse.price?.toString() || '0';
-    if (formData.price !== coursePrice) 
-      updateData.price = parseFloat(formData.price) || 0;
-    
-    if (formData.thumbnail !== (selectedCourse.thumbnail || '')) 
-      updateData.thumbnail = formData.thumbnail || null;
-
-    // Update course if there are changes
-    if (Object.keys(updateData).length === 0) {
-      toast({
-        title: "Info",
-        description: "Aucune modification détectée",
-      });
-      setEditDialogOpen(false);
-      return;
-    }
-
-    updateCourseMutation.mutate({ id: selectedCourse.id, data: updateData });
+  // Gestion de la soumission du formulaire d'ajout
+  const handleAddSubmit = (data: z.infer<typeof createCourseSchema>) => {
+    createCourseMutation.mutate(data);
   };
 
-  // Open edit dialog
-  const handleEditDialogOpen = (course: Course) => {
-    setSelectedCourse(course);
-    setFormData({
-      title: course.title,
-      description: course.description,
-      level: course.level,
-      categoryId: course.categoryId.toString(),
-      trainerId: course.trainerId.toString(),
-      duration: course.duration.toString(),
-      maxStudents: course.maxStudents.toString(),
-      price: course.price?.toString() || '0',
-      thumbnail: course.thumbnail || ''
-    });
-    
-    console.log("Ouverture du dialogue d'édition pour", course.title);
-    setEditDialogOpen(true);
-  };
-
-  // Handle delete course
-  const handleDeleteCourse = (course: Course) => {
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer la formation "${course.title}" ?`)) {
-      deleteCourseMutation.mutate(course.id);
+  // Gestion de la soumission du formulaire d'édition
+  const handleEditSubmit = (data: z.infer<typeof updateCourseSchema>) => {
+    if (selectedCourse) {
+      updateCourseMutation.mutate({ id: selectedCourse.id, courseData: data });
     }
   };
 
-  // Handle toggle approval
-  const handleToggleApproval = (course: Course) => {
-    toggleApprovalMutation.mutate({ 
-      id: course.id, 
-      isApproved: course.isApproved === null || course.isApproved === false 
-    });
+  // Gestion de la suppression d'une formation
+  const handleDeleteCourse = () => {
+    if (selectedCourse) {
+      deleteCourseMutation.mutate(selectedCourse.id);
+    }
   };
 
-  // Filter courses based on search
-  const filteredCourses = courses.filter((course: Course) => 
-    course.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    course.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    course.trainer?.displayName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    course.category?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Gestion de l'approbation d'une formation
+  const handleApproveCourse = () => {
+    if (selectedCourse) {
+      approveCourseMutation.mutate(selectedCourse.id);
+    }
+  };
 
-  // Get level badge
-  const getLevelBadge = (level: string) => {
+  // Gestion du rejet d'une formation
+  const handleRejectCourse = () => {
+    if (selectedCourse) {
+      rejectCourseMutation.mutate({ id: selectedCourse.id, reason: rejectionReason });
+    }
+  };
+
+  // Traduction des niveaux en français
+  const translateLevel = (level: string) => {
     switch (level) {
-      case 'advanced':
-        return <Badge className="bg-red-500">avancé</Badge>;
-      case 'intermediate':
-        return <Badge className="bg-orange-500">intermédiaire</Badge>;
+      case "beginner":
+        return "Débutant";
+      case "intermediate":
+        return "Intermédiaire";
+      case "advanced":
+        return "Avancé";
       default:
-        return <Badge className="bg-green-500">débutant</Badge>;
+        return level;
     }
   };
 
-  // Get approval badge
-  const getApprovalBadge = (isApproved: boolean | null) => {
+  // Formater le statut d'approbation
+  const formatApprovalStatus = (isApproved: boolean | null) => {
     if (isApproved === true) {
-      return <Badge className="bg-green-500">Approuvé</Badge>;
+      return <Badge className="bg-green-500">Approuvée</Badge>;
     } else if (isApproved === false) {
-      return <Badge className="bg-red-500">Rejeté</Badge>;
+      return <Badge className="bg-red-500">Rejetée</Badge>;
     } else {
-      return <Badge variant="outline">En attente</Badge>;
+      return <Badge className="bg-yellow-500">En attente</Badge>;
     }
   };
 
-  // Format price
-  const formatPrice = (price: number | null) => {
-    if (price === null || price === 0) return "Gratuit";
-    return `${price.toFixed(2)} €`;
+  // Filtrage des formations
+  const filteredCourses = courses.filter((course) => {
+    const matchesSearch =
+      course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      course.description.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesLevel = filterLevel ? course.level === filterLevel : true;
+    
+    const matchesApproval = 
+      filterApproval === "approved" ? course.isApproved === true :
+      filterApproval === "rejected" ? course.isApproved === false :
+      filterApproval === "pending" ? course.isApproved === null :
+      true;
+    
+    const matchesTab =
+      activeTab === "all" ? true :
+      activeTab === "pending" ? course.isApproved === null :
+      activeTab === "approved" ? course.isApproved === true :
+      activeTab === "rejected" ? course.isApproved === false :
+      true;
+    
+    return matchesSearch && matchesLevel && matchesApproval && matchesTab;
+  });
+
+  // Obtenir le nom de la catégorie à partir de son ID
+  const getCategoryName = (categoryId: number) => {
+    const category = categories.find(cat => cat.id === categoryId);
+    return category ? category.name : "Catégorie inconnue";
   };
 
-  // Loading state
-  const isLoading = isLoadingCourses || isLoadingCategories || isLoadingTrainers;
+  // Obtenir le nom du formateur à partir de son ID
+  const getTrainerName = (trainerId: number) => {
+    const trainer = trainers.find(t => t.id === trainerId);
+    return trainer ? trainer.displayName : "Formateur inconnu";
+  };
 
   return (
-    <div className="p-6 space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Gestion des formations</CardTitle>
-          <Button 
-            className="bg-[#1D2B6C]"
-            onClick={() => {
-              console.log("Ouverture dialogue ajout formation");
-              resetForm();
-              setAddDialogOpen(true);
-            }}
-          >
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Ajouter une formation
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-4 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Rechercher une formation..." 
-              className="pl-10" 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+    <div className="container mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Gestion des Formations</h1>
+      
+      {/* Onglets */}
+      <Tabs defaultValue="all" className="mb-6" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="all">Toutes</TabsTrigger>
+          <TabsTrigger value="pending">En attente</TabsTrigger>
+          <TabsTrigger value="approved">Approuvées</TabsTrigger>
+          <TabsTrigger value="rejected">Rejetées</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      
+      {/* Barre d'outils */}
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex gap-4 items-center">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher..."
+              className="pl-8 w-60"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full"></div>
-            </div>
-          ) : filteredCourses.length > 0 ? (
-            <Table>
-              <TableHeader>
+          <Select
+            value={filterLevel || ""}
+            onValueChange={(value) => setFilterLevel(value === "" ? null : value)}
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Niveau" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Tous les niveaux</SelectItem>
+              <SelectItem value="beginner">Débutant</SelectItem>
+              <SelectItem value="intermediate">Intermédiaire</SelectItem>
+              <SelectItem value="advanced">Avancé</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" /> Ajouter une formation
+        </Button>
+      </div>
+      
+      {/* Tableau des formations */}
+      {isLoadingCourses || isLoadingTrainers || isLoadingCategories ? (
+        <div className="text-center py-10">Chargement...</div>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID</TableHead>
+                <TableHead>Titre</TableHead>
+                <TableHead>Formateur</TableHead>
+                <TableHead>Catégorie</TableHead>
+                <TableHead>Niveau</TableHead>
+                <TableHead>Prix</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredCourses.length === 0 ? (
                 <TableRow>
-                  <TableHead>Formation</TableHead>
-                  <TableHead>Catégorie</TableHead>
-                  <TableHead>Formateur</TableHead>
-                  <TableHead>Niveau</TableHead>
-                  <TableHead>Durée</TableHead>
-                  <TableHead>Prix</TableHead>
-                  <TableHead>Approbation</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableCell colSpan={8} className="text-center py-4">
+                    Aucune formation trouvée
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCourses.map((course: Course) => (
+              ) : (
+                filteredCourses.map((course) => (
                   <TableRow key={course.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{course.title}</p>
-                        <p className="text-sm text-muted-foreground truncate max-w-[200px]">
-                          {course.description}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell>{course.category?.name || "Non catégorisé"}</TableCell>
-                    <TableCell>{course.trainer?.displayName || course.trainer?.username || "Non assigné"}</TableCell>
-                    <TableCell>{getLevelBadge(course.level)}</TableCell>
-                    <TableCell>{course.duration} min</TableCell>
-                    <TableCell>{formatPrice(course.price)}</TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="ghost" 
+                    <TableCell>{course.id}</TableCell>
+                    <TableCell>{course.title}</TableCell>
+                    <TableCell>{course.trainer ? course.trainer.displayName : getTrainerName(course.trainerId)}</TableCell>
+                    <TableCell>{course.category ? course.category.name : getCategoryName(course.categoryId)}</TableCell>
+                    <TableCell>{translateLevel(course.level)}</TableCell>
+                    <TableCell>{course.price ? `${course.price}€` : "Gratuit"}</TableCell>
+                    <TableCell>{formatApprovalStatus(course.isApproved)}</TableCell>
+                    <TableCell className="text-right space-x-1">
+                      <Button
+                        variant="outline"
                         size="sm"
-                        onClick={() => handleToggleApproval(course)}
+                        onClick={() => {
+                          setSelectedCourse(course);
+                          setIsEditDialogOpen(true);
+                        }}
                       >
-                        {getApprovalBadge(course.isApproved)}
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      {course.isApproved === null && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-green-600"
+                            onClick={() => {
+                              setSelectedCourse(course);
+                              setIsApproveDialogOpen(true);
+                            }}
+                          >
+                            <ThumbsUp className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600"
+                            onClick={() => {
+                              setSelectedCourse(course);
+                              setIsRejectDialogOpen(true);
+                            }}
+                          >
+                            <ThumbsDown className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600"
+                        onClick={() => {
+                          setSelectedCourse(course);
+                          setIsDeleteDialogOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => handleEditDialogOpen(course)}
-                          className="text-blue-600"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => handleDeleteCourse(course)}
-                          className="text-red-600"
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-64 text-center">
-              <BookX className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-2">Aucune formation trouvée</p>
-              {searchQuery && (
-                <p className="text-sm text-muted-foreground mb-4">
-                  Essayez de modifier votre recherche ou créez une nouvelle formation
-                </p>
+                ))
               )}
-              <Button 
-                onClick={() => {
-                  resetForm();
-                  setAddDialogOpen(true);
-                }}
-                className="bg-[#1D2B6C]"
-              >
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Ajouter une formation
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </TableBody>
+          </Table>
+        </div>
+      )}
       
-      {/* Add Course Dialog */}
-      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-        <DialogContent className="sm:max-w-[625px]">
+      {/* Dialogue d'ajout de formation */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Ajouter une formation</DialogTitle>
             <DialogDescription>
-              Créez une nouvelle formation en remplissant le formulaire ci-dessous.
+              Créez une nouvelle formation dans le système.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="title" className="text-right">
-                Titre*
-              </label>
-              <Input
-                id="title"
+          <Form {...addForm}>
+            <form onSubmit={addForm.handleSubmit(handleAddSubmit)} className="space-y-4">
+              <FormField
+                control={addForm.control}
                 name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                className="col-span-3"
-                required
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Titre</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Titre de la formation" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="description" className="text-right">
-                Description*
-              </label>
-              <Textarea
-                id="description"
+              
+              <FormField
+                control={addForm.control}
                 name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                className="col-span-3"
-                rows={4}
-                required
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} placeholder="Description de la formation" rows={4} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="level" className="text-right">
-                Niveau*
-              </label>
-              <Select
-                value={formData.level}
-                onValueChange={(value) => handleSelectChange('level', value)}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Sélectionner un niveau" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="beginner">Débutant</SelectItem>
-                  <SelectItem value="intermediate">Intermédiaire</SelectItem>
-                  <SelectItem value="advanced">Avancé</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="categoryId" className="text-right">
-                Catégorie*
-              </label>
-              <Select
-                value={formData.categoryId}
-                onValueChange={(value) => handleSelectChange('categoryId', value)}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Sélectionner une catégorie" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category: Category) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="trainerId" className="text-right">
-                Formateur*
-              </label>
-              <Select
-                value={formData.trainerId}
-                onValueChange={(value) => handleSelectChange('trainerId', value)}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Sélectionner un formateur" />
-                </SelectTrigger>
-                <SelectContent>
-                  {trainers.map((trainer: Trainer) => (
-                    <SelectItem key={trainer.id} value={trainer.id.toString()}>
-                      {trainer.displayName || trainer.username}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="duration" className="text-right">
-                Durée (min)*
-              </label>
-              <Input
-                id="duration"
-                name="duration"
-                type="number"
-                min="30"
-                value={formData.duration}
-                onChange={handleInputChange}
-                className="col-span-3"
-                required
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="maxStudents" className="text-right">
-                Max étudiants*
-              </label>
-              <Input
-                id="maxStudents"
-                name="maxStudents"
-                type="number"
-                min="1"
-                value={formData.maxStudents}
-                onChange={handleInputChange}
-                className="col-span-3"
-                required
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="price" className="text-right">
-                Prix (€)
-              </label>
-              <Input
-                id="price"
-                name="price"
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.price}
-                onChange={handleInputChange}
-                className="col-span-3"
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="thumbnail" className="text-right">
-                URL image
-              </label>
-              <Input
-                id="thumbnail"
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={addForm.control}
+                  name="categoryId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Catégorie</FormLabel>
+                      <Select
+                        value={field.value.toString()}
+                        onValueChange={(value) => field.onChange(parseInt(value))}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionnez une catégorie" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id.toString()}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={addForm.control}
+                  name="trainerId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Formateur</FormLabel>
+                      <Select
+                        value={field.value.toString()}
+                        onValueChange={(value) => field.onChange(parseInt(value))}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionnez un formateur" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {trainers.map((trainer) => (
+                            <SelectItem key={trainer.id} value={trainer.id.toString()}>
+                              {trainer.displayName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={addForm.control}
+                  name="level"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Niveau</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionnez un niveau" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="beginner">Débutant</SelectItem>
+                          <SelectItem value="intermediate">Intermédiaire</SelectItem>
+                          <SelectItem value="advanced">Avancé</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={addForm.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Prix (€)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder="0.00"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.value === "" ? null : parseFloat(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={addForm.control}
+                  name="duration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Durée (minutes)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1"
+                          placeholder="60"
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={addForm.control}
+                  name="maxStudents"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre max d'étudiants</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1"
+                          placeholder="20"
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={addForm.control}
                 name="thumbnail"
-                value={formData.thumbnail}
-                onChange={handleInputChange}
-                className="col-span-3"
-                placeholder="https://example.com/image.jpg"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>URL de l'image</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="https://exemple.com/image.jpg"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.value === "" ? null : e.target.value)}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Lien URL vers une image pour cette formation
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
+              
+              <FormField
+                control={addForm.control}
+                name="isApproved"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Statut d'approbation</FormLabel>
+                    <Select
+                      value={field.value === null ? "null" : field.value.toString()}
+                      onValueChange={(value) => {
+                        if (value === "null") {
+                          field.onChange(null);
+                        } else {
+                          field.onChange(value === "true");
+                        }
+                      }}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionnez un statut" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="null">En attente</SelectItem>
+                        <SelectItem value="true">Approuvée</SelectItem>
+                        <SelectItem value="false">Rejetée</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => setIsAddDialogOpen(false)}
+                >
+                  Annuler
+                </Button>
+                <Button type="submit" disabled={createCourseMutation.isPending}>
+                  {createCourseMutation.isPending ? "Création..." : "Créer"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Dialogue d'édition de formation */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Modifier la formation</DialogTitle>
+            <DialogDescription>
+              Modifiez les informations de la formation.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4">
+              <FormField
+                control={editForm.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Titre</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Titre de la formation" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={editForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} placeholder="Description de la formation" rows={4} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="categoryId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Catégorie</FormLabel>
+                      <Select
+                        value={field.value?.toString() || ""}
+                        onValueChange={(value) => field.onChange(parseInt(value))}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionnez une catégorie" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id.toString()}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editForm.control}
+                  name="trainerId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Formateur</FormLabel>
+                      <Select
+                        value={field.value?.toString() || ""}
+                        onValueChange={(value) => field.onChange(parseInt(value))}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionnez un formateur" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {trainers.map((trainer) => (
+                            <SelectItem key={trainer.id} value={trainer.id.toString()}>
+                              {trainer.displayName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="level"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Niveau</FormLabel>
+                      <Select
+                        value={field.value || ""}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionnez un niveau" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="beginner">Débutant</SelectItem>
+                          <SelectItem value="intermediate">Intermédiaire</SelectItem>
+                          <SelectItem value="advanced">Avancé</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editForm.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Prix (€)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={field.value === null ? "" : field.value}
+                          onChange={(e) => field.onChange(e.target.value === "" ? null : parseFloat(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="duration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Durée (minutes)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1"
+                          placeholder="60"
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editForm.control}
+                  name="maxStudents"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre max d'étudiants</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1"
+                          placeholder="20"
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={editForm.control}
+                name="thumbnail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>URL de l'image</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="https://exemple.com/image.jpg"
+                        value={field.value === null ? "" : field.value}
+                        onChange={(e) => field.onChange(e.target.value === "" ? null : e.target.value)}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Lien URL vers une image pour cette formation
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={editForm.control}
+                name="isApproved"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Statut d'approbation</FormLabel>
+                    <Select
+                      value={field.value === null ? "null" : field.value.toString()}
+                      onValueChange={(value) => {
+                        if (value === "null") {
+                          field.onChange(null);
+                        } else {
+                          field.onChange(value === "true");
+                        }
+                      }}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionnez un statut" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="null">En attente</SelectItem>
+                        <SelectItem value="true">Approuvée</SelectItem>
+                        <SelectItem value="false">Rejetée</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => setIsEditDialogOpen(false)}
+                >
+                  Annuler
+                </Button>
+                <Button type="submit" disabled={updateCourseMutation.isPending}>
+                  {updateCourseMutation.isPending ? "Mise à jour..." : "Mettre à jour"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Dialogue de confirmation de suppression */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmer la suppression</DialogTitle>
+            <DialogDescription>
+              Êtes-vous sûr de vouloir supprimer cette formation ? Cette action ne peut pas être annulée.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
+            <p className="text-yellow-800">
+              <strong>Attention :</strong> Supprimer cette formation supprimera également toutes les sessions associées.
+            </p>
           </div>
           
+          {selectedCourse && (
+            <div className="mb-4 space-y-2">
+              <p><strong>ID :</strong> {selectedCourse.id}</p>
+              <p><strong>Titre :</strong> {selectedCourse.title}</p>
+              <p><strong>Formateur :</strong> {selectedCourse.trainer ? selectedCourse.trainer.displayName : getTrainerName(selectedCourse.trainerId)}</p>
+              <p><strong>Catégorie :</strong> {selectedCourse.category ? selectedCourse.category.name : getCategoryName(selectedCourse.categoryId)}</p>
+            </div>
+          )}
+          
           <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setAddDialogOpen(false)}
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
             >
               Annuler
             </Button>
-            <Button 
-              onClick={handleAddCourse}
-              disabled={createCourseMutation.isPending}
-              className="bg-[#1D2B6C]"
+            <Button
+              variant="destructive"
+              onClick={handleDeleteCourse}
+              disabled={deleteCourseMutation.isPending}
             >
-              {createCourseMutation.isPending ? "Création..." : "Créer la formation"}
+              {deleteCourseMutation.isPending ? "Suppression..." : "Supprimer"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
       
-      {/* Edit Course Dialog */}
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-[625px]">
+      {/* Dialogue de confirmation d'approbation */}
+      <Dialog open={isApproveDialogOpen} onOpenChange={setIsApproveDialogOpen}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>Modifier la formation</DialogTitle>
+            <DialogTitle>Confirmer l'approbation</DialogTitle>
             <DialogDescription>
-              {selectedCourse && `Modifier les informations pour ${selectedCourse.title}`}
+              Êtes-vous sûr de vouloir approuver cette formation ? Une notification sera envoyée au formateur.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="edit-title" className="text-right">
-                Titre
-              </label>
-              <Input
-                id="edit-title"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                className="col-span-3"
-              />
+          {selectedCourse && (
+            <div className="mb-4 space-y-2">
+              <p><strong>ID :</strong> {selectedCourse.id}</p>
+              <p><strong>Titre :</strong> {selectedCourse.title}</p>
+              <p><strong>Formateur :</strong> {selectedCourse.trainer ? selectedCourse.trainer.displayName : getTrainerName(selectedCourse.trainerId)}</p>
             </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="edit-description" className="text-right">
-                Description
-              </label>
+          )}
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsApproveDialogOpen(false)}
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="default"
+              onClick={handleApproveCourse}
+              disabled={approveCourseMutation.isPending}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {approveCourseMutation.isPending ? "Approbation..." : "Approuver"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Dialogue de confirmation de rejet */}
+      <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmer le rejet</DialogTitle>
+            <DialogDescription>
+              Veuillez indiquer la raison du rejet de cette formation. Cette raison sera incluse dans la notification envoyée au formateur.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedCourse && (
+            <div className="mb-4 space-y-2">
+              <p><strong>ID :</strong> {selectedCourse.id}</p>
+              <p><strong>Titre :</strong> {selectedCourse.title}</p>
+              <p><strong>Formateur :</strong> {selectedCourse.trainer ? selectedCourse.trainer.displayName : getTrainerName(selectedCourse.trainerId)}</p>
+            </div>
+          )}
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="rejection-reason">Raison du rejet</Label>
               <Textarea
-                id="edit-description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                className="col-span-3"
+                id="rejection-reason"
+                placeholder="Veuillez indiquer pourquoi cette formation est rejetée..."
                 rows={4}
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="edit-level" className="text-right">
-                Niveau
-              </label>
-              <Select
-                value={formData.level}
-                onValueChange={(value) => handleSelectChange('level', value)}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Sélectionner un niveau" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="beginner">Débutant</SelectItem>
-                  <SelectItem value="intermediate">Intermédiaire</SelectItem>
-                  <SelectItem value="advanced">Avancé</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="edit-categoryId" className="text-right">
-                Catégorie
-              </label>
-              <Select
-                value={formData.categoryId}
-                onValueChange={(value) => handleSelectChange('categoryId', value)}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Sélectionner une catégorie" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category: Category) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="edit-trainerId" className="text-right">
-                Formateur
-              </label>
-              <Select
-                value={formData.trainerId}
-                onValueChange={(value) => handleSelectChange('trainerId', value)}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Sélectionner un formateur" />
-                </SelectTrigger>
-                <SelectContent>
-                  {trainers.map((trainer: Trainer) => (
-                    <SelectItem key={trainer.id} value={trainer.id.toString()}>
-                      {trainer.displayName || trainer.username}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="edit-duration" className="text-right">
-                Durée (min)
-              </label>
-              <Input
-                id="edit-duration"
-                name="duration"
-                type="number"
-                min="30"
-                value={formData.duration}
-                onChange={handleInputChange}
-                className="col-span-3"
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="edit-maxStudents" className="text-right">
-                Max étudiants
-              </label>
-              <Input
-                id="edit-maxStudents"
-                name="maxStudents"
-                type="number"
-                min="1"
-                value={formData.maxStudents}
-                onChange={handleInputChange}
-                className="col-span-3"
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="edit-price" className="text-right">
-                Prix (€)
-              </label>
-              <Input
-                id="edit-price"
-                name="price"
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.price}
-                onChange={handleInputChange}
-                className="col-span-3"
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="edit-thumbnail" className="text-right">
-                URL image
-              </label>
-              <Input
-                id="edit-thumbnail"
-                name="thumbnail"
-                value={formData.thumbnail}
-                onChange={handleInputChange}
-                className="col-span-3"
-                placeholder="https://example.com/image.jpg"
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
               />
             </div>
           </div>
           
           <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setEditDialogOpen(false)}
+            <Button
+              variant="outline"
+              onClick={() => setIsRejectDialogOpen(false)}
             >
               Annuler
             </Button>
-            <Button 
-              onClick={handleEditCourse}
-              disabled={updateCourseMutation.isPending}
-              className="bg-[#1D2B6C]"
+            <Button
+              variant="destructive"
+              onClick={handleRejectCourse}
+              disabled={rejectCourseMutation.isPending || !rejectionReason.trim()}
             >
-              {updateCourseMutation.isPending ? "Mise à jour..." : "Mettre à jour"}
+              {rejectCourseMutation.isPending ? "Rejet..." : "Rejeter"}
             </Button>
           </DialogFooter>
         </DialogContent>

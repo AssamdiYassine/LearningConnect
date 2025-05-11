@@ -1,182 +1,161 @@
-import { DatabaseStorage } from "./db-storage";
+import { eq, and, like, desc, sql } from "drizzle-orm";
+import { Pool } from "pg";
 import { db } from "./db";
-import { eq, and, desc, asc, like, isNull, isNotNull, or, ne } from "drizzle-orm";
-import { 
-  users, 
-  categories, 
-  courses, 
-  sessions, 
-  enrollments, 
-  notifications,
-  settings,
-  approvalRequests,
-  userOnboarding,
-  blogCategories,
-  blogPosts,
-  blogComments,
-  ratings,
-  trainerEarnings
-} from "@shared/schema";
+import { users, courses, categories, approvalRequests, notifications } from "@shared/schema";
+import { DatabaseStorage } from "./storage";
 
-// Cette extension ajoute les méthodes qui sont définies dans l'interface IStorage 
-// mais qui n'ont pas encore été implémentées dans DatabaseStorage
+export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
+  // Extension pour les méthodes liées aux utilisateurs
+  dbStorage.getUsersByRole = async function(role: string) {
+    const usersFound = await db
+      .select()
+      .from(users)
+      .where(eq(users.role, role as "admin" | "trainer" | "student"));
+    return usersFound;
+  };
 
-// Extension pour getUsersByRole
-DatabaseStorage.prototype.getUsersByRole = async function(role: string) {
-  // Utilisation d'une requête SQL brute pour éviter les problèmes de type avec eq()
-  const result = await db.execute(`
-    SELECT * FROM users WHERE role = $1
-  `, [role]);
-  return result.rows.map(row => ({
-    id: row.id,
-    username: row.username,
-    email: row.email,
-    password: row.password,
-    displayName: row.display_name,
-    role: row.role,
-    isSubscribed: row.is_subscribed,
-    subscriptionType: row.subscription_type,
-    subscriptionEndDate: row.subscription_end_date,
-    stripeCustomerId: row.stripe_customer_id,
-    stripeSubscriptionId: row.stripe_subscription_id
-  }));
-};
+  dbStorage.updateUser = async function(id: number, userData: any) {
+    // S'assurer que nous n'écrasions pas les valeurs existantes avec undefined
+    const updateData: Record<string, any> = {};
+    for (const [key, value] of Object.entries(userData)) {
+      if (value !== undefined) {
+        updateData[key] = value;
+      }
+    }
 
-// Extension pour updateUser
-DatabaseStorage.prototype.updateUser = async function(id: number, data: any) {
-  const [updatedUser] = await db
-    .update(users)
-    .set(data)
-    .where(eq(users.id, id))
-    .returning();
-  return updatedUser;
-};
+    const [updatedUser] = await db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  };
 
-// Extension pour deleteUser
-DatabaseStorage.prototype.deleteUser = async function(id: number) {
-  await db.delete(users).where(eq(users.id, id));
-};
+  dbStorage.deleteUser = async function(id: number) {
+    await db
+      .delete(users)
+      .where(eq(users.id, id));
+    return true;
+  };
 
-// Extension pour updateCourse
-DatabaseStorage.prototype.updateCourse = async function(id: number, data: any) {
-  const [updatedCourse] = await db
-    .update(courses)
-    .set(data)
-    .where(eq(courses.id, id))
-    .returning();
-  return updatedCourse;
-};
+  // Extension pour les méthodes liées aux formations
+  dbStorage.getAllCoursesWithDetails = async function() {
+    const allCourses = await db.select().from(courses);
 
-// Extension pour deleteCourse
-DatabaseStorage.prototype.deleteCourse = async function(id: number) {
-  await db.delete(courses).where(eq(courses.id, id));
-};
+    // Pour chaque formation, récupérer les détails du formateur et de la catégorie
+    const coursesWithDetails = await Promise.all(
+      allCourses.map(async (course) => {
+        const [trainer] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, course.trainerId));
 
-// Extension pour createApprovalRequest
-DatabaseStorage.prototype.createApprovalRequest = async function(data: any) {
-  const [approvalRequest] = await db
-    .insert(approvalRequests)
-    .values(data)
-    .returning();
-  return approvalRequest;
-};
+        const [category] = await db
+          .select()
+          .from(categories)
+          .where(eq(categories.id, course.categoryId));
 
-// Extension pour getApprovalRequest
-DatabaseStorage.prototype.getApprovalRequest = async function(id: number) {
-  const [approvalRequest] = await db
-    .select()
-    .from(approvalRequests)
-    .where(eq(approvalRequests.id, id));
-  return approvalRequest;
-};
+        return {
+          ...course,
+          trainer: trainer ? {
+            id: trainer.id,
+            username: trainer.username,
+            displayName: trainer.displayName
+          } : undefined,
+          category: category ? {
+            id: category.id,
+            name: category.name
+          } : undefined
+        };
+      })
+    );
 
-// Extension pour getPendingApprovals
-DatabaseStorage.prototype.getPendingApprovals = async function() {
-  return await db
-    .select()
-    .from(approvalRequests)
-    .where(eq(approvalRequests.status, 'pending'))
-    .orderBy(desc(approvalRequests.createdAt));
-};
+    return coursesWithDetails;
+  };
 
-// Extension pour updateApprovalRequest
-DatabaseStorage.prototype.updateApprovalRequest = async function(id: number, data: any) {
-  const [updatedRequest] = await db
-    .update(approvalRequests)
-    .set(data)
-    .where(eq(approvalRequests.id, id))
-    .returning();
-  return updatedRequest;
-};
+  dbStorage.getCourseWithDetails = async function(id: number) {
+    const [course] = await db
+      .select()
+      .from(courses)
+      .where(eq(courses.id, id));
 
-// Extension pour getAllApprovalRequests
-DatabaseStorage.prototype.getAllApprovalRequests = async function() {
-  return await db
-    .select()
-    .from(approvalRequests)
-    .orderBy(desc(approvalRequests.createdAt));
-};
+    if (!course) {
+      return null;
+    }
 
-// Extension pour getApprovalRequestsWithDetails
-DatabaseStorage.prototype.getApprovalRequestsWithDetails = async function() {
-  const requests = await db
-    .select()
-    .from(approvalRequests)
-    .orderBy(desc(approvalRequests.createdAt));
-  
-  const requestsWithDetails = await Promise.all(
-    requests.map(async (request) => {
-      // Utilise itemId au lieu de entityId pour correspondre à la structure actuelle
-      const course = await this.getCourse(request.itemId);
-      const requester = await this.getUser(request.requesterId);
-      const reviewer = request.reviewerId ? await this.getUser(request.reviewerId) : null;
-      
-      return {
-        ...request,
-        requester: requester ? {
-          id: requester.id,
-          username: requester.username,
-          email: requester.email,
-          displayName: requester.displayName,
-          role: requester.role,
-          password: requester.password, // Ne sera pas renvoyé au client
-          isSubscribed: requester.isSubscribed,
-          subscriptionType: requester.subscriptionType,
-          subscriptionEndDate: requester.subscriptionEndDate,
-          stripeCustomerId: requester.stripeCustomerId,
-          stripeSubscriptionId: requester.stripeSubscriptionId
-        } : null,
-        reviewer: reviewer ? {
-          id: reviewer.id,
-          username: reviewer.username,
-          email: reviewer.email,
-          displayName: reviewer.displayName,
-          role: reviewer.role,
-          password: reviewer.password, // Ne sera pas renvoyé au client
-          isSubscribed: reviewer.isSubscribed,
-          subscriptionType: reviewer.subscriptionType,
-          subscriptionEndDate: reviewer.subscriptionEndDate,
-          stripeCustomerId: reviewer.stripeCustomerId,
-          stripeSubscriptionId: reviewer.stripeSubscriptionId
-        } : null,
-        entity: course ? {
-          id: course.id,
-          title: course.title,
-          description: course.description,
-          trainerId: course.trainerId,
-          categoryId: course.categoryId,
-          level: course.level,
-          duration: course.duration,
-          maxStudents: course.maxStudents,
-          isApproved: course.isApproved,
-          price: course.price,
-          thumbnail: course.thumbnail,
-          createdAt: course.createdAt,
-          updatedAt: course.updatedAt
-        } : null
-      };
-    })
-  );
-  
-  return requestsWithDetails;
-};
+    const [trainer] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, course.trainerId));
+
+    const [category] = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.id, course.categoryId));
+
+    return {
+      ...course,
+      trainer: trainer ? {
+        id: trainer.id,
+        username: trainer.username,
+        displayName: trainer.displayName
+      } : undefined,
+      category: category ? {
+        id: category.id,
+        name: category.name
+      } : undefined
+    };
+  };
+
+  dbStorage.getCoursesByTrainer = async function(trainerId: number) {
+    const trainerCourses = await db
+      .select()
+      .from(courses)
+      .where(eq(courses.trainerId, trainerId));
+
+    return trainerCourses;
+  };
+
+  dbStorage.getCoursesByCategory = async function(categoryId: number) {
+    const categoryCourses = await db
+      .select()
+      .from(courses)
+      .where(eq(courses.categoryId, categoryId));
+
+    return categoryCourses;
+  };
+
+  dbStorage.deleteCourse = async function(id: number) {
+    await db
+      .delete(courses)
+      .where(eq(courses.id, id));
+    return true;
+  };
+
+  // Extensions pour les méthodes liées aux notifications
+  dbStorage.createNotification = async function(notificationData) {
+    const [notification] = await db
+      .insert(notifications)
+      .values({
+        userId: notificationData.userId,
+        message: notificationData.message,
+        type: notificationData.type,
+        isRead: notificationData.isRead ?? false,
+        createdAt: new Date(),
+      })
+      .returning();
+    return notification;
+  };
+
+  // Extension pour les méthodes liées à la catégorie
+  dbStorage.getCategoryBySlug = async function(slug: string) {
+    const [category] = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.slug, slug));
+    
+    return category;
+  };
+
+  return dbStorage;
+}
