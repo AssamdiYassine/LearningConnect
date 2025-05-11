@@ -43,7 +43,8 @@ import AdminDashboardLayout from "@/components/admin-dashboard-layout";
 import { ThemeProvider } from "@/components/theme-provider";
 
 // Admin pages
-import AdminUsers from "@/pages/admin/admin-users";
+import AdminUsers from "@/pages/admin/admin-users-fixed";
+// Import avec le suffixe "fixed" pour notre version corrigée
 import AdminCourses from "@/pages/admin/admin-courses";
 import AdminSessions from "@/pages/admin/admin-sessions";
 import AdminPendingCourses from "@/pages/admin/admin-pending-courses";
