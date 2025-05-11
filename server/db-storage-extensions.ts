@@ -1,8 +1,8 @@
-import { Pool } from "@neondatabase/serverless";
 import { eq, sql, desc, and, isNull, like, inArray } from "drizzle-orm";
 import { users, courses, sessions, enrollments, categories, notifications, approvalRequests } from "@shared/schema";
-import { drizzle } from "drizzle-orm/neon-serverless";
 import { DatabaseStorage } from "./db-storage";
+import { pool } from "./db";
+import { db } from "./db";
 
 /**
  * Étend la classe DatabaseStorage avec des méthodes supplémentaires pour l'interface IStorage
@@ -11,35 +11,30 @@ import { DatabaseStorage } from "./db-storage";
 export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
   // Méthodes étendues pour les utilisateurs
   dbStorage.getUsersByRole = async function(role: string) {
-    const db = drizzle({ client: this.pool, schema: { users } });
-    const result = await db.select().from(users).where(eq(users.role, role));
+    const result = await db.select().from(users).where(eq(users.role, role as any));
     return result;
   };
 
   dbStorage.updateUser = async function(id: number, data: Partial<typeof users.$inferSelect>) {
-    const db = drizzle({ client: this.pool, schema: { users } });
     const [updatedUser] = await db
       .update(users)
-      .set({ ...data, updatedAt: new Date() })
+      .set(data)
       .where(eq(users.id, id))
       .returning();
     return updatedUser;
   };
 
   dbStorage.deleteUser = async function(id: number) {
-    const db = drizzle({ client: this.pool, schema: { users } });
     await db.delete(users).where(eq(users.id, id));
   };
 
   // Méthodes étendues pour les cours
   dbStorage.deleteCourse = async function(id: number) {
-    const db = drizzle({ client: this.pool, schema: { courses } });
     await db.delete(courses).where(eq(courses.id, id));
   };
 
   // Méthodes étendues pour les notifications
   dbStorage.getNotificationsByUser = async function(userId: number) {
-    const db = drizzle({ client: this.pool, schema: { notifications } });
     const result = await db
       .select()
       .from(notifications)
@@ -49,10 +44,9 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
   };
 
   dbStorage.updateNotificationStatus = async function(id: number, isRead: boolean) {
-    const db = drizzle({ client: this.pool, schema: { notifications } });
     const [updatedNotification] = await db
       .update(notifications)
-      .set({ isRead, updatedAt: new Date() })
+      .set({ isRead })
       .where(eq(notifications.id, id))
       .returning();
     return updatedNotification;
@@ -60,7 +54,6 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
 
   // Fonction pour récupérer les courses qui ont besoin d'approbation
   dbStorage.getCoursesNeedingApproval = async function() {
-    const db = drizzle({ client: this.pool, schema: { courses, users, categories } });
     const results = await db
       .select({
         course: courses,
@@ -89,7 +82,6 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
 
   // Extension pour les statistiques du tableau de bord d'administration
   dbStorage.getAdminDashboardStats = async function() {
-    const db = drizzle({ client: this.pool });
     const userStats = await db.execute(sql`
       SELECT 
         COUNT(*) as total_users,
@@ -145,13 +137,10 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
 
   // Création et mise à jour des notifications
   dbStorage.createNotification = async function(notificationData) {
-    const db = drizzle({ client: this.pool, schema: { notifications } });
     const [notification] = await db
       .insert(notifications)
       .values({
         ...notificationData,
-        createdAt: new Date(),
-        updatedAt: new Date(),
         isRead: notificationData.isRead || false
       })
       .returning();
