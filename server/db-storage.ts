@@ -8,7 +8,9 @@ import {
   Notification, InsertNotification, 
   Setting, InsertSetting,
   UserOnboarding, InsertUserOnboarding,
-  users, courses, categories, sessions, enrollments, notifications, settings, userOnboarding,
+  ApprovalRequest, InsertApprovalRequest,
+  ApprovalRequestWithDetails,
+  users, courses, categories, sessions, enrollments, notifications, settings, userOnboarding, approvalRequests,
   CourseWithDetails, SessionWithDetails
 } from "@shared/schema";
 import { eq, and, gte, desc, sql } from "drizzle-orm";
@@ -620,4 +622,156 @@ export class DatabaseStorage implements IStorage {
     
     return updated;
   }
+
+  // Approval operations
+  async createApprovalRequest(request: InsertApprovalRequest): Promise<ApprovalRequest> {
+    const [newRequest] = await db.insert(approvalRequests).values(request).returning();
+    return newRequest;
+  }
+
+  async getApprovalRequest(id: number): Promise<ApprovalRequest | undefined> {
+    const [request] = await db
+      .select()
+      .from(approvalRequests)
+      .where(eq(approvalRequests.id, id));
+    return request;
+  }
+
+  async getPendingApprovals(): Promise<ApprovalRequestWithDetails[]> {
+    const results = await db
+      .select({
+        request: approvalRequests,
+        requester: users,
+        reviewer: users,
+      })
+      .from(approvalRequests)
+      .leftJoin(users, eq(approvalRequests.requesterId, users.id))
+      .leftJoin(users, eq(approvalRequests.reviewerId, users.id))
+      .where(eq(approvalRequests.status, "pending"));
+
+    return results.map(({ request, requester, reviewer }) => ({
+      ...request,
+      requester,
+      reviewer,
+      course: undefined, // Ces champs seront remplis si nécessaire par des appels supplémentaires
+      session: undefined
+    }));
+  }
+
+  async updateApprovalStatus(id: number, status: 'approved' | 'rejected', reviewerId: number, notes?: string): Promise<ApprovalRequest> {
+    const [updated] = await db
+      .update(approvalRequests)
+      .set({
+        status,
+        reviewerId,
+        notes,
+        updatedAt: new Date()
+      })
+      .where(eq(approvalRequests.id, id))
+      .returning();
+    
+    if (!updated) {
+      throw new Error("Demande d'approbation non trouvée");
+    }
+    
+    // Si c'est un cours qui est approuvé/rejeté, mettre à jour l'état du cours
+    if (updated.type === "course" && updated.itemId) {
+      await db
+        .update(courses)
+        .set({
+          isApproved: status === "approved",
+          updatedAt: new Date()
+        })
+        .where(eq(courses.id, updated.itemId));
+      
+      // Créer une notification pour le formateur
+      const course = await this.getCourse(updated.itemId);
+      if (course) {
+        await this.createNotification({
+          userId: course.trainerId,
+          title: status === "approved" ? "Formation approuvée" : "Formation rejetée",
+          message: status === "approved" 
+            ? `Votre formation ${course.title} a été approuvée.` 
+            : `Votre formation ${course.title} a été rejetée. ${notes || ""}`,
+          type: "approval",
+          isRead: false
+        });
+      }
+    }
+    
+    return updated;
+  }
+
+  async getApprovalRequestsByType(type: string, status?: string): Promise<ApprovalRequestWithDetails[]> {
+    let query = db
+      .select({
+        request: approvalRequests,
+        requester: users,
+        reviewer: users,
+      })
+      .from(approvalRequests)
+      .leftJoin(users, eq(approvalRequests.requesterId, users.id))
+      .leftJoin(users, eq(approvalRequests.reviewerId, users.id))
+      .where(eq(approvalRequests.type, type));
+      
+    if (status) {
+      query = query.where(eq(approvalRequests.status, status));
+    }
+    
+    const results = await query;
+    
+    return results.map(({ request, requester, reviewer }) => ({
+      ...request,
+      requester,
+      reviewer,
+      course: undefined, // Ces champs seront remplis si nécessaire par des appels supplémentaires
+      session: undefined
+    }));
+  }
+
+  async getApprovalRequestsByRequester(requesterId: number): Promise<ApprovalRequestWithDetails[]> {
+    const results = await db
+      .select({
+        request: approvalRequests,
+        requester: users,
+        reviewer: users,
+      })
+      .from(approvalRequests)
+      .leftJoin(users, eq(approvalRequests.requesterId, users.id))
+      .leftJoin(users, eq(approvalRequests.reviewerId, users.id))
+      .where(eq(approvalRequests.requesterId, requesterId));
+    
+    return results.map(({ request, requester, reviewer }) => ({
+      ...request,
+      requester,
+      reviewer,
+      course: undefined, // Ces champs seront remplis si nécessaire par des appels supplémentaires
+      session: undefined
+    }));
+  }
+
+  // Implémentations des méthodes manquantes pour le Blog
+  async createBlogCategory(): Promise<any> { throw new Error("Not implemented"); }
+  async getAllBlogCategories(): Promise<any[]> { throw new Error("Not implemented"); }
+  async getBlogCategory(): Promise<any | undefined> { throw new Error("Not implemented"); }
+  async getBlogCategoryBySlug(): Promise<any | undefined> { throw new Error("Not implemented"); }
+  async updateBlogCategory(): Promise<any> { throw new Error("Not implemented"); }
+  async deleteBlogCategory(): Promise<void> { throw new Error("Not implemented"); }
+  
+  async createBlogPost(): Promise<any> { throw new Error("Not implemented"); }
+  async getBlogPost(): Promise<any | undefined> { throw new Error("Not implemented"); }
+  async getBlogPostWithDetails(): Promise<any | undefined> { throw new Error("Not implemented"); }
+  async getBlogPostBySlugWithDetails(): Promise<any | undefined> { throw new Error("Not implemented"); }
+  async getAllBlogPostsWithDetails(): Promise<any[]> { throw new Error("Not implemented"); }
+  async getBlogPostsByAuthor(): Promise<any[]> { throw new Error("Not implemented"); }
+  async getBlogPostsByCategory(): Promise<any[]> { throw new Error("Not implemented"); }
+  async updateBlogPost(): Promise<any> { throw new Error("Not implemented"); }
+  async deleteBlogPost(): Promise<void> { throw new Error("Not implemented"); }
+  async incrementBlogPostViewCount(): Promise<void> { throw new Error("Not implemented"); }
+  
+  async createBlogComment(): Promise<any> { throw new Error("Not implemented"); }
+  async getBlogComment(): Promise<any | undefined> { throw new Error("Not implemented"); }
+  async getBlogPostComments(): Promise<any[]> { throw new Error("Not implemented"); }
+  async approveBlogComment(): Promise<any> { throw new Error("Not implemented"); }
+  async deleteBlogComment(): Promise<void> { throw new Error("Not implemented"); }
 }
