@@ -174,6 +174,17 @@ function Router() {
       <Route path="/create-session">
         <ProtectedRoute component={CreateSession} allowedRoles={["trainer", "admin"]} />
       </Route>
+      
+      {/* Route de redirection pour compatibilité avec le chemin /trainer/sessions/create */}
+      <Route path="/trainer/sessions/create">
+        <ProtectedRoute 
+          component={() => {
+            window.location.href = "/create-session";
+            return <div className="flex justify-center items-center h-screen">Redirection vers le formulaire de création de session...</div>;
+          }} 
+          allowedRoles={["trainer", "admin"]} 
+        />
+      </Route>
 
       <Route path="/edit-course/:id">
         {params => (
