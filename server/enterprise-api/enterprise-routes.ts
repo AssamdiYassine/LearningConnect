@@ -218,55 +218,72 @@ router.delete("/employees/:id", isEnterprise, async (req, res) => {
 // Obtenez les cours accessibles à l'entreprise
 router.get("/courses", isEnterprise, async (req, res) => {
   try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: "Utilisateur non authentifié" });
+    }
+    
     const enterpriseId = req.user.id;
     
-    const courses = await db.execute(
-      sql`
-      SELECT 
-        c.id, 
-        c.title, 
-        cat.name as "categoryName",
-        (
-          SELECT u.display_name 
-          FROM ${users} u 
-          WHERE u.id = c.trainer_id
-        ) as "trainerName",
-        (
-          SELECT COUNT(*) 
-          FROM sessions s 
-          WHERE s.course_id = c.id
-        ) as "sessionCount",
-        (
-          SELECT COUNT(*) 
-          FROM ${enterpriseEmployeeCourseAccess} eeca 
-          WHERE eeca.course_id = c.id
-        ) as "enrolledEmployees",
-        CASE 
-          WHEN eca.enterprise_id IS NOT NULL THEN true 
-          ELSE false 
-        END as "isActive",
-        (
-          SELECT MIN(s.date) 
-          FROM sessions s 
-          WHERE s.course_id = c.id AND s.date > NOW()
-        ) as "nextSession"
-      FROM ${courses} c
-      JOIN categories cat ON c.category_id = cat.id
-      LEFT JOIN ${enterpriseCourseAccess} eca ON eca.course_id = c.id AND eca.enterprise_id = ${enterpriseId}
-      ORDER BY c.title ASC
-      `
-    );
-    
-    res.json(courses.rows);
+    try {
+      // Requête SQL directe pour éviter les conflits de noms
+      const coursesData = await db.execute(
+        sql`
+        SELECT 
+          c.id, 
+          c.title, 
+          cat.name as "categoryName",
+          (
+            SELECT u.display_name 
+            FROM users u 
+            WHERE u.id = c.trainer_id
+          ) as "trainerName",
+          (
+            SELECT COUNT(*) 
+            FROM sessions s 
+            WHERE s.course_id = c.id
+          ) as "sessionCount",
+          (
+            SELECT COUNT(*) 
+            FROM enterprise_employee_course_access eeca 
+            WHERE eeca.course_id = c.id
+          ) as "enrolledEmployees",
+          CASE 
+            WHEN eca.enterprise_id IS NOT NULL THEN true 
+            ELSE false 
+          END as "isActive",
+          (
+            SELECT MIN(s.date) 
+            FROM sessions s 
+            WHERE s.course_id = c.id AND s.date > NOW()
+          ) as "nextSession"
+        FROM courses c
+        JOIN categories cat ON c.category_id = cat.id
+        LEFT JOIN enterprise_course_access eca ON eca.course_id = c.id AND eca.enterprise_id = ${enterpriseId}
+        ORDER BY c.title ASC
+        `
+      );
+      
+      res.json(coursesData.rows || []);
+    } catch (dbError) {
+      console.error("Erreur de base de données:", dbError);
+      res.json([]);
+    }
   } catch (error) {
     console.error("Erreur lors de la récupération des cours:", error);
-    res.status(500).json({ message: "Erreur interne du serveur" });
+    res.status(500).json({ 
+      message: "Erreur interne du serveur",
+      error: error instanceof Error ? error.message : String(error)
+    });
   }
 });
 
 // Activer/désactiver l'accès à un cours
 router.patch("/courses/:id", isEnterprise, async (req, res) => {
   try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: "Utilisateur non authentifié" });
+    }
+    
     const enterpriseId = req.user.id;
     const courseId = parseInt(req.params.id);
     const { isActive } = req.body;
@@ -275,169 +292,217 @@ router.patch("/courses/:id", isEnterprise, async (req, res) => {
       return res.status(400).json({ message: "État d'activation requis" });
     }
     
-    // Vérifier que le cours existe
-    const course = await db.query.courses.findFirst({
-      where: eq(courses.id, courseId),
-    });
-    
-    if (!course) {
-      return res.status(404).json({ message: "Cours non trouvé" });
-    }
-    
-    if (isActive) {
-      // Activer l'accès au cours
-      await db
-        .insert(enterpriseCourseAccess)
-        .values({
-          enterpriseId,
-          courseId,
-        })
-        .onConflictDoNothing();
-    } else {
-      // Désactiver l'accès au cours
-      await db
-        .delete(enterpriseCourseAccess)
-        .where(
-          and(
-            eq(enterpriseCourseAccess.enterpriseId, enterpriseId),
-            eq(enterpriseCourseAccess.courseId, courseId)
-          )
+    try {
+      // Vérifier que le cours existe avec SQL brut
+      const courseExists = await db.execute(
+        sql`SELECT id FROM courses WHERE id = ${courseId} LIMIT 1`
+      );
+      
+      if (!courseExists.rows || courseExists.rows.length === 0) {
+        return res.status(404).json({ message: "Cours non trouvé" });
+      }
+      
+      if (isActive) {
+        // Activer l'accès au cours avec SQL brut
+        await db.execute(
+          sql`
+          INSERT INTO enterprise_course_access (enterprise_id, course_id) 
+          VALUES (${enterpriseId}, ${courseId})
+          ON CONFLICT DO NOTHING
+          `
         );
+      } else {
+        // Désactiver l'accès au cours avec SQL brut
+        await db.execute(
+          sql`
+          DELETE FROM enterprise_course_access 
+          WHERE enterprise_id = ${enterpriseId} AND course_id = ${courseId}
+          `
+        );
+      }
+      
+      res.status(200).json({ message: "Accès au cours mis à jour avec succès" });
+    } catch (dbError) {
+      console.error("Erreur de base de données:", dbError);
+      res.status(500).json({ message: "Erreur lors de l'opération sur la base de données" });
     }
-    
-    res.status(200).json({ message: "Accès au cours mis à jour avec succès" });
   } catch (error) {
     console.error("Erreur lors de la mise à jour de l'accès au cours:", error);
-    res.status(500).json({ message: "Erreur interne du serveur" });
+    res.status(500).json({ 
+      message: "Erreur interne du serveur",
+      error: error instanceof Error ? error.message : String(error)
+    });
   }
 });
 
 // Obtenez les données d'analyse pour l'entreprise
 router.get("/analytics", isEnterprise, async (req, res) => {
   try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: "Utilisateur non authentifié" });
+    }
+    
     const enterpriseId = req.user.id;
     
-    // Obtenir le taux de complétion global
-    const overallCompletionResult = await db.execute(
-      sql`
-      SELECT AVG(ecp.progress) as avg_progress
-      FROM ${employeeCourseProgress} ecp
-      JOIN ${users} u ON ecp.employee_id = u.id
-      WHERE u.enterprise_id = ${enterpriseId}
-      `
-    );
-    const overallCompletion = Math.round(
-      parseFloat(overallCompletionResult.rows[0].avg_progress) || 0
-    );
-    
-    // Obtenir le taux de complétion par catégorie
-    const categoryCompletionResult = await db.execute(
-      sql`
-      SELECT 
-        cat.name, 
-        AVG(ecp.progress) as avg_progress
-      FROM ${employeeCourseProgress} ecp
-      JOIN ${courses} c ON ecp.course_id = c.id
-      JOIN categories cat ON c.category_id = cat.id
-      JOIN ${users} u ON ecp.employee_id = u.id
-      WHERE u.enterprise_id = ${enterpriseId}
-      GROUP BY cat.name
-      ORDER BY avg_progress DESC
-      `
-    );
-    
-    const categoryCompletion = categoryCompletionResult.rows.map((row) => ({
-      name: row.name,
-      percentage: Math.round(parseFloat(row.avg_progress) || 0),
-    }));
-    
-    // Obtenir le taux de présence global
-    const overallAttendanceResult = await db.execute(
-      sql`
-      SELECT AVG(CASE WHEN esa.attended THEN 100 ELSE 0 END) as avg_attendance
-      FROM ${employeeSessionAttendance} esa
-      JOIN ${users} u ON esa.employee_id = u.id
-      WHERE u.enterprise_id = ${enterpriseId}
-      `
-    );
-    const overallAttendance = Math.round(
-      parseFloat(overallAttendanceResult.rows[0].avg_attendance) || 0
-    );
-    
-    // Obtenir le taux de présence par mois
-    const monthlyAttendanceResult = await db.execute(
-      sql`
-      SELECT 
-        TO_CHAR(esa.created_at, 'Month') as month, 
-        AVG(CASE WHEN esa.attended THEN 100 ELSE 0 END) as avg_attendance
-      FROM ${employeeSessionAttendance} esa
-      JOIN ${users} u ON esa.employee_id = u.id
-      WHERE u.enterprise_id = ${enterpriseId}
-      GROUP BY TO_CHAR(esa.created_at, 'Month'), EXTRACT(MONTH FROM esa.created_at)
-      ORDER BY EXTRACT(MONTH FROM esa.created_at)
-      `
-    );
-    
-    const monthlyAttendance = monthlyAttendanceResult.rows.map((row) => {
-      let monthName = "Inconnu";
-      if (row.month && typeof row.month === 'string') {
-        monthName = row.month.trim();
-      }
-      return {
-        month: monthName,
-        percentage: Math.round(parseFloat(row.avg_attendance as string) || 0),
-      };
-    });
-    
-    // Obtenir le temps total passé en formation
-    const totalTimeResult = await db.execute(
-      sql`
-      SELECT SUM(ecp.time_spent_minutes) as total_time
-      FROM ${employeeCourseProgress} ecp
-      JOIN ${users} u ON ecp.employee_id = u.id
-      WHERE u.enterprise_id = ${enterpriseId}
-      `
-    );
-    const totalTimeMinutes = parseInt(totalTimeResult.rows[0].total_time) || 0;
-    const totalTimeHours = Math.round(totalTimeMinutes / 60);
-    
-    // Obtenir le temps passé par employé
-    const employeeTimeResult = await db.execute(
-      sql`
-      SELECT 
-        u.display_name, 
-        SUM(ecp.time_spent_minutes) as total_time
-      FROM ${employeeCourseProgress} ecp
-      JOIN ${users} u ON ecp.employee_id = u.id
-      WHERE u.enterprise_id = ${enterpriseId}
-      GROUP BY u.id, u.display_name
-      ORDER BY total_time DESC
-      LIMIT 10
-      `
-    );
-    
-    const employeeTime = employeeTimeResult.rows.map((row) => ({
-      name: row.display_name,
-      hours: Math.round(parseInt(row.total_time) / 60),
-    }));
-    
-    res.json({
+    // Structure de réponse par défaut pour éviter les erreurs null
+    const defaultResponse = {
       completion: {
-        overall: overallCompletion,
-        byCategory: categoryCompletion,
+        overall: 0,
+        byCategory: [],
       },
       attendance: {
-        overall: overallAttendance,
-        byMonth: monthlyAttendance,
+        overall: 0,
+        byMonth: [],
       },
       timeSpent: {
-        total: totalTimeHours,
-        byEmployee: employeeTime,
+        total: 0,
+        byEmployee: [],
       },
-    });
+    };
+    
+    try {
+      // Obtenir le taux de complétion global
+      const overallCompletionResult = await db.execute(
+        sql`
+        SELECT AVG(ecp.progress) as avg_progress
+        FROM ${employeeCourseProgress} ecp
+        JOIN ${users} u ON ecp.employee_id = u.id
+        WHERE u.enterprise_id = ${enterpriseId}
+        `
+      );
+      
+      if (overallCompletionResult.rows && overallCompletionResult.rows.length > 0) {
+        const progress = overallCompletionResult.rows[0].avg_progress;
+        defaultResponse.completion.overall = Math.round(parseFloat(progress as string) || 0);
+      }
+      
+      // Obtenir le taux de complétion par catégorie
+      const categoryCompletionResult = await db.execute(
+        sql`
+        SELECT 
+          cat.name, 
+          AVG(ecp.progress) as avg_progress
+        FROM ${employeeCourseProgress} ecp
+        JOIN ${courses} c ON ecp.course_id = c.id
+        JOIN categories cat ON c.category_id = cat.id
+        JOIN ${users} u ON ecp.employee_id = u.id
+        WHERE u.enterprise_id = ${enterpriseId}
+        GROUP BY cat.name
+        ORDER BY avg_progress DESC
+        `
+      );
+      
+      if (categoryCompletionResult.rows && categoryCompletionResult.rows.length > 0) {
+        const categoryCompletion = categoryCompletionResult.rows.map((row) => {
+          return {
+            name: row.name ? String(row.name) : "Autre",
+            percentage: Math.round(parseFloat(row.avg_progress as string) || 0),
+          };
+        });
+        defaultResponse.completion.byCategory = categoryCompletion;
+      }
+      
+      // Obtenir le taux de présence global
+      const overallAttendanceResult = await db.execute(
+        sql`
+        SELECT AVG(CASE WHEN esa.attended THEN 100 ELSE 0 END) as avg_attendance
+        FROM ${employeeSessionAttendance} esa
+        JOIN ${users} u ON esa.employee_id = u.id
+        WHERE u.enterprise_id = ${enterpriseId}
+        `
+      );
+      
+      if (overallAttendanceResult.rows && overallAttendanceResult.rows.length > 0) {
+        const attendance = overallAttendanceResult.rows[0].avg_attendance;
+        defaultResponse.attendance.overall = Math.round(parseFloat(attendance as string) || 0);
+      }
+      
+      // Obtenir le taux de présence par mois
+      const monthlyAttendanceResult = await db.execute(
+        sql`
+        SELECT 
+          TO_CHAR(esa.created_at, 'Month') as month, 
+          AVG(CASE WHEN esa.attended THEN 100 ELSE 0 END) as avg_attendance
+        FROM ${employeeSessionAttendance} esa
+        JOIN ${users} u ON esa.employee_id = u.id
+        WHERE u.enterprise_id = ${enterpriseId}
+        GROUP BY TO_CHAR(esa.created_at, 'Month'), EXTRACT(MONTH FROM esa.created_at)
+        ORDER BY EXTRACT(MONTH FROM esa.created_at)
+        `
+      );
+      
+      if (monthlyAttendanceResult.rows && monthlyAttendanceResult.rows.length > 0) {
+        const monthlyAttendance = monthlyAttendanceResult.rows.map((row) => {
+          let monthName = "Inconnu";
+          let percentage = 0;
+          
+          if (row.month && typeof row.month === 'string') {
+            monthName = row.month.trim();
+          }
+          
+          if (row.avg_attendance !== null && row.avg_attendance !== undefined) {
+            percentage = Math.round(parseFloat(String(row.avg_attendance)) || 0);
+          }
+          
+          return { month: monthName, percentage };
+        });
+        
+        defaultResponse.attendance.byMonth = monthlyAttendance;
+      }
+      
+      // Obtenir le temps total passé en formation
+      const totalTimeResult = await db.execute(
+        sql`
+        SELECT SUM(ecp.time_spent_minutes) as total_time
+        FROM ${employeeCourseProgress} ecp
+        JOIN ${users} u ON ecp.employee_id = u.id
+        WHERE u.enterprise_id = ${enterpriseId}
+        `
+      );
+      
+      if (totalTimeResult.rows && totalTimeResult.rows.length > 0 && totalTimeResult.rows[0].total_time) {
+        const totalTime = totalTimeResult.rows[0].total_time;
+        const totalTimeMinutes = parseInt(String(totalTime)) || 0;
+        defaultResponse.timeSpent.total = Math.round(totalTimeMinutes / 60);
+      }
+      
+      // Obtenir le temps passé par employé
+      const employeeTimeResult = await db.execute(
+        sql`
+        SELECT 
+          u.display_name, 
+          SUM(ecp.time_spent_minutes) as total_time
+        FROM ${employeeCourseProgress} ecp
+        JOIN ${users} u ON ecp.employee_id = u.id
+        WHERE u.enterprise_id = ${enterpriseId}
+        GROUP BY u.id, u.display_name
+        ORDER BY total_time DESC
+        LIMIT 10
+        `
+      );
+      
+      if (employeeTimeResult.rows && employeeTimeResult.rows.length > 0) {
+        const employeeTime = employeeTimeResult.rows.map((row) => {
+          return {
+            name: row.display_name ? String(row.display_name) : "Employé inconnu",
+            hours: Math.round(parseInt(String(row.total_time)) || 0) / 60,
+          };
+        });
+        
+        defaultResponse.timeSpent.byEmployee = employeeTime;
+      }
+      
+      res.json(defaultResponse);
+    } catch (dbError) {
+      console.error("Erreur de base de données:", dbError);
+      res.json(defaultResponse);
+    }
   } catch (error) {
     console.error("Erreur lors de la récupération des données d'analyse:", error);
-    res.status(500).json({ message: "Erreur interne du serveur" });
+    res.status(500).json({ 
+      message: "Erreur interne du serveur",
+      error: error instanceof Error ? error.message : String(error)
+    });
   }
 });
 
