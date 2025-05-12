@@ -96,7 +96,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async updateUserProfile(id: number, data: { displayName?: string, email?: string }): Promise<User> {
+  async updateUserProfile(id: number, data: { displayName?: string, email?: string, username?: string }): Promise<User> {
     const updateData: Partial<User> = {};
     
     if (data.displayName) {
@@ -105,6 +105,10 @@ export class DatabaseStorage implements IStorage {
     
     if (data.email) {
       updateData.email = data.email;
+    }
+    
+    if (data.username) {
+      updateData.username = data.username;
     }
     
     const [user] = await db

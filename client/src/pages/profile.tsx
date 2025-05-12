@@ -60,6 +60,9 @@ import CourseCard from "@/components/course-card";
 const profileUpdateSchema = z.object({
   displayName: z.string().min(2, "Le nom d'affichage doit contenir au moins 2 caractères"),
   email: z.string().email("Veuillez entrer une adresse email valide"),
+  username: z.string().min(3, "Le nom d'utilisateur doit contenir au moins 3 caractères")
+    .max(30, "Le nom d'utilisateur ne doit pas dépasser 30 caractères")
+    .regex(/^[a-zA-Z0-9._-]+$/, "Le nom d'utilisateur ne peut contenir que des lettres, chiffres, points, tirets et underscores"),
 });
 
 // Password update schema
@@ -121,6 +124,7 @@ export default function ProfilePage() {
     defaultValues: {
       displayName: user?.displayName || "",
       email: user?.email || "",
+      username: user?.username || "",
     },
   });
 

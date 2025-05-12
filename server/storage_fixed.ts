@@ -34,7 +34,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
-  updateUserProfile(id: number, data: { displayName?: string, email?: string }): Promise<User>;
+  updateUserProfile(id: number, data: { displayName?: string, email?: string, username?: string }): Promise<User>;
   updateUserPassword(id: number, newPassword: string): Promise<User>;
   updateUserRole(id: number, role: string): Promise<User>;
   updateSubscription(id: number, isSubscribed: boolean, type?: string, endDate?: Date): Promise<User>;
