@@ -11,6 +11,7 @@ import { registerAdminCourseRoutes } from "./admin-api-courses";
 import { registerAdminNotificationRoutes } from "./admin-notifications-routes";
 import { registerAdminSubscriptionPlansRoutes } from "./admin-subscription-plans-routes";
 import { registerResetPasswordRoutes } from "./reset-password-routes";
+import { registerAdminBlogCategoriesRoutes } from "./admin-blog-categories-routes";
 // Import des extensions pour les méthodes de stockage manquantes
 import "./db-storage-extensions";
 import { pool } from "./db";
