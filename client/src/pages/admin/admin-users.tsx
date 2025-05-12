@@ -65,10 +65,10 @@ export default function AdminUsers() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
-  const [dialogState, setDialogState] = useState({
-    isAddOpen: false,
-    isEditOpen: false
-  });
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
+  const [isAssignSubscriptionDialogOpen, setIsAssignSubscriptionDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [formData, setFormData] = useState<UserFormData>({
     username: '',
@@ -77,6 +77,10 @@ export default function AdminUsers() {
     password: '',
     confirmPassword: '',
     role: 'student'
+  });
+  const [resetPasswordData, setResetPasswordData] = useState({
+    password: '',
+    confirmPassword: ''
   });
 
   // Fetch users
@@ -183,6 +187,78 @@ export default function AdminUsers() {
       toast({
         title: "Erreur",
         description: "Echec de mise a jour du statut: " + error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Reset password mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ 
+      id, 
+      password, 
+      confirmPassword 
+    }: { 
+      id: number, 
+      password: string, 
+      confirmPassword: string 
+    }) => {
+      const res = await apiRequest('POST', `/api/admin/users/${id}/reset-password`, { 
+        password, 
+        confirmPassword 
+      });
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      toast({
+        title: "Mot de passe réinitialisé",
+        description: "Le mot de passe de l'utilisateur a été réinitialisé avec succès",
+      });
+      setIsResetPasswordDialogOpen(false);
+      setResetPasswordData({ password: '', confirmPassword: '' });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: "Échec de réinitialisation du mot de passe: " + error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Assign subscription mutation
+  const assignSubscriptionMutation = useMutation({
+    mutationFn: async ({ 
+      id, 
+      isSubscribed,
+      subscriptionType,
+      subscriptionEndDate
+    }: { 
+      id: number, 
+      isSubscribed: boolean,
+      subscriptionType: string | null,
+      subscriptionEndDate: string | null
+    }) => {
+      const res = await apiRequest('PATCH', `/api/admin/users/${id}`, { 
+        isSubscribed, 
+        subscriptionType,
+        subscriptionEndDate
+      });
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      toast({
+        title: "Abonnement mis à jour",
+        description: "L'abonnement de l'utilisateur a été mis à jour avec succès",
+      });
+      setIsAssignSubscriptionDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: "Échec de mise à jour de l'abonnement: " + error.message,
         variant: "destructive",
       });
     }
