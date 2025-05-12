@@ -46,7 +46,9 @@ function FunctionalAdminUsers() {
     username: "",
     email: "",
     displayName: "",
-    role: "student" as "student" | "trainer" | "admin"
+    password: "",
+    role: "student" as "student" | "trainer" | "admin",
+    courseAccess: [] as number[]
   });
 
   // Récupération des utilisateurs
@@ -177,13 +179,27 @@ function FunctionalAdminUsers() {
     }
   };
 
+  // Pour récupérer les formations disponibles
+  const { data: courses = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/courses"],
+    enabled: isEditDialogOpen,
+  });
+
+  // Pour récupérer les accès aux formations de l'utilisateur
+  const { data: userCourseAccess = [] } = useQuery<number[]>({
+    queryKey: ["/api/admin/users", selectedUser?.id, "course-access"],
+    enabled: !!selectedUser && isEditDialogOpen,
+  });
+
   const openEditDialog = (user: User) => {
     setSelectedUser(user);
     setEditFormData({
       username: user.username,
       email: user.email,
       displayName: user.displayName || "",
+      password: "", // Champ vide pour le mot de passe
       role: user.role,
+      courseAccess: [], // Sera rempli quand les données seront chargées
     });
     setIsEditDialogOpen(true);
   };
