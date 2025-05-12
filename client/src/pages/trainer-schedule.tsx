@@ -160,33 +160,43 @@ export default function TrainerSchedule() {
 
   // Fonction pour obtenir toutes les journées du mois avec leurs sessions
   const getDaysWithSessions = (): DayWithSessions[] => {
-    if (view === "month") {
-      const monthStart = startOfMonth(currentMonth);
-      const monthEnd = endOfMonth(currentMonth);
-      const startDate = startOfWeek(monthStart);
-      const endDate = endOfWeek(monthEnd);
+    try {
+      // Vérifier que les dates sont valides avant de les utiliser
+      const validCurrentMonth = isNaN(currentMonth.getTime()) ? new Date() : currentMonth;
+      const validSelectedDate = isNaN(selectedDate.getTime()) ? new Date() : selectedDate;
+      
+      if (view === "month") {
+        const monthStart = startOfMonth(validCurrentMonth);
+        const monthEnd = endOfMonth(validCurrentMonth);
+        const startDate = startOfWeek(monthStart);
+        const endDate = endOfWeek(monthEnd);
 
-      return eachDayOfInterval({ start: startDate, end: endDate }).map(date => ({
-        date,
-        sessions: getSessionsForDate(date),
-        isCurrentMonth: isSameMonth(date, currentMonth)
-      }));
-    } else if (view === "week") {
-      const weekStart = startOfWeek(selectedDate);
-      const weekEnd = endOfWeek(selectedDate);
+        return eachDayOfInterval({ start: startDate, end: endDate }).map(date => ({
+          date,
+          sessions: getSessionsForDate(date),
+          isCurrentMonth: isSameMonth(date, validCurrentMonth)
+        }));
+      } else if (view === "week") {
+        const weekStart = startOfWeek(validSelectedDate);
+        const weekEnd = endOfWeek(validSelectedDate);
 
-      return eachDayOfInterval({ start: weekStart, end: weekEnd }).map(date => ({
-        date,
-        sessions: getSessionsForDate(date),
-        isCurrentMonth: true
-      }));
-    } else {
-      // Vue journalière
-      return [{
-        date: selectedDate,
-        sessions: getSessionsForDate(selectedDate),
-        isCurrentMonth: true
-      }];
+        return eachDayOfInterval({ start: weekStart, end: weekEnd }).map(date => ({
+          date,
+          sessions: getSessionsForDate(date),
+          isCurrentMonth: true
+        }));
+      } else {
+        // Vue journalière
+        return [{
+          date: validSelectedDate,
+          sessions: getSessionsForDate(validSelectedDate),
+          isCurrentMonth: true
+        }];
+      }
+    } catch (error) {
+      console.error("Erreur dans getDaysWithSessions:", error);
+      // En cas d'erreur, retourner un tableau vide
+      return [];
     }
   };
 
@@ -488,14 +498,24 @@ export default function TrainerSchedule() {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => setSelectedDate(new Date(selectedDate.setDate(selectedDate.getDate() - 1)))}
+                      onClick={() => {
+                        // Création d'une nouvelle date au lieu de modifier l'existante
+                        const prevDay = new Date(selectedDate);
+                        prevDay.setDate(prevDay.getDate() - 1);
+                        setSelectedDate(prevDay);
+                      }}
                     >
                       <ChevronLeft className="h-4 w-4 mr-1" /> Jour précédent
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => setSelectedDate(new Date(selectedDate.setDate(selectedDate.getDate() + 1)))}
+                      onClick={() => {
+                        // Création d'une nouvelle date au lieu de modifier l'existante
+                        const nextDay = new Date(selectedDate);
+                        nextDay.setDate(nextDay.getDate() + 1);
+                        setSelectedDate(nextDay);
+                      }}
                     >
                       Jour suivant <ChevronRight className="h-4 w-4 ml-1" />
                     </Button>
