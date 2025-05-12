@@ -98,8 +98,17 @@ export const courses = pgTable("courses", {
 export const sessions = pgTable("sessions", {
   id: serial("id").primaryKey(),
   courseId: integer("course_id").notNull(),
+  title: text("title"),
+  description: text("description"),
   date: timestamp("date").notNull(),
+  endDate: timestamp("end_date"),
   zoomLink: text("zoom_link").notNull(),
+  recordingLink: text("recording_link"),
+  maxParticipants: integer("max_participants"),
+  materialsLink: text("materials_link"),
+  isPublished: boolean("is_published").default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 // Enrollments table
