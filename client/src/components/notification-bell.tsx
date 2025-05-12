@@ -27,11 +27,13 @@ export function NotificationBell() {
     if (unreadCount === 0) return;
     
     markAllAsRead.mutate(undefined, {
-      onSuccess: (data: { success: boolean; count: number }) => {
+      onSuccess: (data: any) => {
         toast({
           title: "Notifications lues",
           description: `${data.count} notification(s) marquée(s) comme lue(s)`,
         });
+        // Fermer le popover après avoir marqué toutes les notifications comme lues
+        setIsOpen(false);
       },
       onError: () => {
         toast({
@@ -84,8 +86,17 @@ export function NotificationBell() {
                 onClick={handleMarkAllAsRead}
                 disabled={markAllAsRead.isPending}
               >
-                <CheckIcon className="h-3 w-3 mr-1" />
-                Tout marquer comme lu
+                {markAllAsRead.isPending ? (
+                  <>
+                    <span className="animate-spin h-3 w-3 mr-1 border-t-2 border-blue-600 border-r-2 border-transparent rounded-full"></span>
+                    En cours...
+                  </>
+                ) : (
+                  <>
+                    <CheckIcon className="h-3 w-3 mr-1" />
+                    Tout marquer comme lu
+                  </>
+                )}
               </Button>
             </div>
           )}
