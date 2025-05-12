@@ -102,16 +102,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Profile update route
   app.patch("/api/user/profile", isAuthenticated, async (req, res) => {
     try {
-      const { displayName, email } = req.body;
+      const { displayName, email, username } = req.body;
       
       if (!req.user || !req.user.id) {
         return res.status(401).json({ message: "Utilisateur non authentifié" });
       }
       
+      // Si l'utilisateur veut changer son nom d'utilisateur, vérifier qu'il n'est pas déjà pris
+      if (username && username !== req.user.username) {
+        const existingUser = await storage.getUserByUsername(username);
+        if (existingUser && existingUser.id !== req.user.id) {
+          return res.status(400).json({ message: "Ce nom d'utilisateur est déjà pris" });
+        }
+      }
+      
+      // Si l'utilisateur veut changer son email, vérifier qu'il n'est pas déjà pris
+      if (email && email !== req.user.email) {
+        const existingUser = await storage.getUserByEmail(email);
+        if (existingUser && existingUser.id !== req.user.id) {
+          return res.status(400).json({ message: "Cet email est déjà utilisé par un autre compte" });
+        }
+      }
+      
       // Update user using the storage method
       const updatedUser = await storage.updateUserProfile(req.user.id, {
         displayName,
-        email
+        email,
+        username
       });
       
       // Remove password from response
@@ -134,21 +151,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Utilisateur non authentifié" });
       }
       
+      // Validation du nouveau mot de passe
+      if (!newPassword || newPassword.length < 8) {
+        return res.status(400).json({ 
+          message: "Le nouveau mot de passe doit comporter au moins 8 caractères" 
+        });
+      }
+      
       // Get the current user
       const user = await storage.getUser(req.user.id);
       if (!user) {
         return res.status(404).json({ message: "Utilisateur non trouvé" });
       }
       
-      // In a real application, you would verify the current password here
-      // For simplicity in this demo, we'll skip verification but in production
-      // You would use a function like comparePasswords(currentPassword, user.password)
+      // Vérifier le mot de passe actuel (hashé) avec bcrypt
+      const bcrypt = require('bcryptjs');
+      const passwordValid = await bcrypt.compare(currentPassword, user.password);
       
-      // Update the password using the storage method
-      // In a real application, you would hash the new password before saving
-      // For example: const hashedPassword = await hashPassword(newPassword);
-      // For demo purposes, we'll just store the plain text password
-      await storage.updateUserPassword(req.user.id, newPassword);
+      if (!passwordValid) {
+        return res.status(400).json({ message: "Le mot de passe actuel est incorrect" });
+      }
+      
+      // Hasher le nouveau mot de passe avec bcrypt
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+      
+      // Mettre à jour le mot de passe avec la version hashée
+      await storage.updateUserPassword(req.user.id, hashedPassword);
       
       res.json({ message: "Mot de passe mis à jour avec succès" });
     } catch (error) {

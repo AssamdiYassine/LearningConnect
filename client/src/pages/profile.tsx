@@ -346,30 +346,36 @@ export default function ProfilePage() {
                       </FormItem>
                     )}
                   />
-                  <div className="grid gap-4 grid-cols-2">
-                    <div>
-                      <Label>Nom d'utilisateur</Label>
-                      <Input 
-                        value={user.username} 
-                        disabled 
-                        className="mt-1"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Le nom d'utilisateur ne peut pas être modifié
-                      </p>
-                    </div>
-                    <div>
-                      <Label>Rôle</Label>
-                      <Input 
-                        value={user.role === 'student' ? 'Étudiant' : 
-                              user.role === 'trainer' ? 'Formateur' : 'Administrateur'} 
-                        disabled 
-                        className="mt-1"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Le rôle est défini par l'administrateur
-                      </p>
-                    </div>
+                  <FormField
+                    control={profileForm.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nom d'utilisateur</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            disabled={!isEditing || updateProfileMutation.isPending}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Identifiant unique utilisé pour la connexion
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div>
+                    <Label>Rôle</Label>
+                    <Input 
+                      value={user.role === 'student' ? 'Étudiant' : 
+                            user.role === 'trainer' ? 'Formateur' : 'Administrateur'} 
+                      disabled 
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Le rôle est défini par l'administrateur
+                    </p>
                   </div>
                   
                   {isEditing && (
