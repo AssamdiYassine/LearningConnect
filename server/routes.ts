@@ -1283,6 +1283,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enregistrement des routes pour les plans d'abonnement
   registerAdminSubscriptionPlansRoutes(app);
   
+  // Enregistrement des routes pour les catégories de blog
+  registerAdminBlogCategoriesRoutes(app);
+  
   // Create HTTP server
   const httpServer = createServer(app);
 
