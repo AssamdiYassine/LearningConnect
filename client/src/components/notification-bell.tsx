@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, CheckIcon } from 'lucide-react';
 import { useNotifications } from '@/hooks/use-notifications';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,13 +12,35 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { useToast } from "@/hooks/use-toast";
 
 export function NotificationBell() {
-  const { notifications, unreadCount, markAsRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
+  const { toast } = useToast();
 
   const handleMarkAsRead = (id: number) => {
     markAsRead.mutate(id);
+  };
+
+  const handleMarkAllAsRead = () => {
+    if (unreadCount === 0) return;
+    
+    markAllAsRead.mutate(undefined, {
+      onSuccess: (data: { success: boolean; count: number }) => {
+        toast({
+          title: "Notifications lues",
+          description: `${data.count} notification(s) marquée(s) comme lue(s)`,
+        });
+      },
+      onError: () => {
+        toast({
+          title: "Erreur",
+          description: "Impossible de marquer les notifications comme lues",
+          variant: "destructive",
+        });
+      }
+    });
   };
 
   const handleClose = () => {
@@ -53,6 +75,20 @@ export function NotificationBell() {
               <TabsTrigger value="unread" className="text-xs px-2">Non lues</TabsTrigger>
             </TabsList>
           </div>
+          {unreadCount > 0 && (
+            <div className="px-4 py-2 border-b bg-blue-50/30">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="w-full text-xs text-blue-600 hover:text-blue-800 flex items-center justify-center" 
+                onClick={handleMarkAllAsRead}
+                disabled={markAllAsRead.isPending}
+              >
+                <CheckIcon className="h-3 w-3 mr-1" />
+                Tout marquer comme lu
+              </Button>
+            </div>
+          )}
           
           <TabsContent value="all" className="mt-0">
             <ScrollArea className="h-[300px]">
