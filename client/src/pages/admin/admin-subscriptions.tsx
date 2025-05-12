@@ -24,6 +24,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -104,6 +111,7 @@ function AdminSubscriptions() {
     price: 0,
     duration: 30, // En jours
     features: [""],
+    planType: "monthly" as "monthly" | "annual" | "business",
   });
 
   // Couleurs pour les graphiques
@@ -146,6 +154,7 @@ function AdminSubscriptions() {
         price: 0,
         duration: 30,
         features: [""],
+        planType: "monthly",
       });
     },
     onError: (error: Error) => {
@@ -463,6 +472,22 @@ function AdminSubscriptions() {
                 onChange={(e) => setNewPlan({...newPlan, duration: Number(e.target.value)})}
                 placeholder="30"
               />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="plan-type" className="text-right">Type de plan</Label>
+              <Select 
+                value={newPlan.planType || "monthly"} 
+                onValueChange={(value) => setNewPlan({...newPlan, planType: value as "monthly" | "annual" | "business"})}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Sélectionnez un type de plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">Mensuel</SelectItem>
+                  <SelectItem value="annual">Annuel</SelectItem>
+                  <SelectItem value="business">Entreprise</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="grid grid-cols-4 items-start gap-4">
