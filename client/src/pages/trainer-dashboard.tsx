@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Loader2, ChevronRight, Users, Calendar, Book, Star, Plus, Bell } from "lucide-react";
+import { Loader2, ChevronRight, Users, Calendar, Book, Star, Plus, Bell, Clock, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import CreateCourseForm from "@/components/create-course-form";
 import { useState } from "react";
@@ -11,6 +11,8 @@ import { SessionWithDetails } from "@shared/schema";
 import { useNotifications } from "@/hooks/use-notifications";
 import { formatDate, formatTime } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, 
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function TrainerDashboard() {
   const { user } = useAuth();
@@ -38,6 +40,12 @@ export default function TrainerDashboard() {
   // Récupérer toutes les inscriptions aux cours du formateur
   const { data: enrollments = [], isLoading: isEnrollmentsLoading } = useQuery<any[]>({
     queryKey: [`/api/trainer/${user?.id}/enrollments`],
+    enabled: !!user
+  });
+  
+  // Récupérer les demandes d'approbation du formateur
+  const { data: approvalRequests = [], isLoading: isApprovalsLoading } = useQuery<any[]>({
+    queryKey: [`/api/trainer/approval-requests`],
     enabled: !!user
   });
 
@@ -349,6 +357,53 @@ export default function TrainerDashboard() {
           </div>
         )}
       </div>
+      
+      {/* Section des demandes d'approbation en attente */}
+      {approvalRequests.length > 0 && (
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-gray-900 font-heading">Demandes d'approbation en attente</h2>
+          </div>
+          
+          <div className="space-y-4">
+            {approvalRequests
+              .filter(request => request.status === 'pending')
+              .map((request) => (
+                <Card key={request.id} className="border-l-4 border-l-amber-500">
+                  <CardContent className="p-5">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 mt-1">
+                        <Clock className="h-6 w-6 text-amber-500" />
+                      </div>
+                      <div className="ml-4 flex-1">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {request.type === 'course' && request.course && request.course.title}
+                            {request.type === 'session' && 'Session'}
+                          </h3>
+                          <Badge className="bg-amber-100 text-amber-800 border-amber-200">
+                            En attente
+                          </Badge>
+                        </div>
+                        <p className="mt-1 text-sm text-gray-600">
+                          Soumis le {new Date(request.requestDate).toLocaleDateString('fr-FR')}
+                        </p>
+                        {request.notes && (
+                          <div className="mt-2 p-3 bg-gray-50 rounded-md text-sm text-gray-600">
+                            {request.notes}
+                          </div>
+                        )}
+                        <div className="mt-4 text-sm text-gray-500 italic">
+                          Un administrateur examinera votre demande prochainement.
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+          </div>
+        </div>
+      )}
 
       {/* Formulaire de création de cours */}
       <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
