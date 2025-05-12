@@ -156,6 +156,17 @@ export default function AuthPage() {
                           "Se connecter"
                         )}
                       </Button>
+                      
+                      <div className="mt-4 text-center">
+                        <Button 
+                          variant="link" 
+                          className="text-sm"
+                          type="button"
+                          onClick={() => window.location.href = '/forgot-password'}
+                        >
+                          Mot de passe oublié ?
+                        </Button>
+                      </div>
                     </form>
                   </Form>
                   

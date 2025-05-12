@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
+import ForgotPasswordPage from "@/pages/forgot-password";
+import ResetPasswordPage from "@/pages/reset-password";
 import StudentDashboard from "@/pages/student-dashboard";
 import TrainerDashboard from "@/pages/trainer-dashboard";
 import TrainerDashboardNew from "@/pages/trainer-dashboard-new";
@@ -69,6 +71,8 @@ function Router() {
       <Route path="/" component={LandingPage} />
       <Route path="/about" component={AboutPage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/forgot-password" component={ForgotPasswordPage} />
+      <Route path="/reset-password" component={ResetPasswordPage} />
       
       {/* Student routes */}
       <Route path="/student">
