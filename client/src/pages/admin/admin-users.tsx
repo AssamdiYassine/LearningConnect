@@ -818,6 +818,17 @@ export default function AdminUsers() {
                             <Button 
                               variant="outline" 
                               size="sm" 
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setIsManageCourseAccessDialogOpen(true);
+                              }}
+                              className="text-indigo-600 border-indigo-600 hover:bg-indigo-50"
+                            >
+                              <BookOpen className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
                               onClick={() => handleDeleteUser(user)}
                               className="text-red-600 border-red-600 hover:bg-red-50"
                             >
@@ -965,6 +976,13 @@ export default function AdminUsers() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Course Access Dialog */}
+      <CourseAccessDialog 
+        isOpen={isManageCourseAccessDialogOpen} 
+        onOpenChange={setIsManageCourseAccessDialogOpen}
+        user={selectedUser}
+      />
     </div>
   );
 }
