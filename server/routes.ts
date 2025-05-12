@@ -645,6 +645,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Subscription plans routes - Pour afficher les plans aux utilisateurs normaux
+  app.get("/api/subscription-plans", async (req, res) => {
+    try {
+      const plans = await storage.getAllSubscriptionPlans();
+      // Ne renvoyer que les plans actifs aux utilisateurs réguliers
+      const activePlans = plans.filter(plan => plan.isActive);
+      res.json(activePlans);
+    } catch (error) {
+      console.error("Failed to fetch subscription plans:", error);
+      res.status(500).json({ message: "Failed to fetch subscription plans" });
+    }
+  });
+
   app.patch("/api/notifications/:id/read", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
