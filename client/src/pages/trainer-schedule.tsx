@@ -100,17 +100,34 @@ export default function TrainerSchedule() {
     let parsedDate: Date;
     
     try {
+      console.log("Type de date:", typeof session.date, "Valeur:", session.date);
+      
       // Si la date est déjà un objet Date
       if (session.date instanceof Date) {
         parsedDate = session.date;
+        console.log("C'est un objet Date", parsedDate);
       } 
       // Si c'est une chaîne ISO
       else if (typeof session.date === 'string') {
-        parsedDate = parseISO(session.date);
-      } 
-      // Si c'est un timestamp ou autre format
-      else {
         parsedDate = new Date(session.date);
+        console.log("C'est une chaîne ISO", parsedDate);
+      } 
+      // Si c'est un objet avec un timestamp
+      else if (session.date && typeof session.date === 'object') {
+        // Pour les objets Date sérialisés/désérialisés par JSON
+        parsedDate = new Date(session.date.toString());
+        console.log("C'est un objet avec timestamp", parsedDate);
+      }
+      // Dernier recours
+      else {
+        console.log("Format non reconnu, utilisation de new Date()", session.date);
+        parsedDate = new Date();
+      }
+      
+      // Vérifier que la date est valide
+      if (isNaN(parsedDate.getTime())) {
+        console.error("Date invalide après parsing:", session.date);
+        parsedDate = new Date(); // Fallback à la date actuelle
       }
       
       return {
