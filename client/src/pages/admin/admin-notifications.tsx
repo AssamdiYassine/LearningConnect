@@ -257,52 +257,40 @@ function AdminNotificationsPage() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Type de notification</FormLabel>
-                <div className="grid grid-cols-2 gap-2">
-                  <FormControl>
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem
-                          id="type-admin"
-                          value="admin"
-                          {...field}
-                          checked={field.value === 'admin'}
-                        />
-                        <Label htmlFor="type-admin">Administration</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem
-                          id="type-system"
-                          value="system"
-                          {...field}
-                          checked={field.value === 'system'}
-                        />
-                        <Label htmlFor="type-system">Système</Label>
-                      </div>
+                <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-2 gap-2">
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem
+                        id="type-admin"
+                        value="admin"
+                      />
+                      <Label htmlFor="type-admin">Administration</Label>
                     </div>
-                  </FormControl>
-                  <FormControl>
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem
-                          id="type-enrollment"
-                          value="enrollment"
-                          {...field}
-                          checked={field.value === 'enrollment'}
-                        />
-                        <Label htmlFor="type-enrollment">Inscription</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem
-                          id="type-comment"
-                          value="comment"
-                          {...field}
-                          checked={field.value === 'comment'}
-                        />
-                        <Label htmlFor="type-comment">Commentaire</Label>
-                      </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem
+                        id="type-system"
+                        value="system"
+                      />
+                      <Label htmlFor="type-system">Système</Label>
                     </div>
-                  </FormControl>
-                </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem
+                        id="type-enrollment"
+                        value="enrollment"
+                      />
+                      <Label htmlFor="type-enrollment">Inscription</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem
+                        id="type-comment"
+                        value="comment"
+                      />
+                      <Label htmlFor="type-comment">Commentaire</Label>
+                    </div>
+                  </div>
+                </RadioGroup>
                 <FormMessage />
               </FormItem>
             )}
@@ -438,15 +426,46 @@ function AdminNotificationsPage() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-xl flex items-center">
+              <div className="flex items-center">
                 <BellIcon className="mr-2 h-5 w-5" />
-                Notifications
+                <CardTitle className="text-xl">
+                  Notifications
+                  {unreadCount > 0 && (
+                    <Badge variant="default" className="ml-2 bg-primary">
+                      {unreadCount} non lues
+                    </Badge>
+                  )}
+                </CardTitle>
                 {unreadCount > 0 && (
-                  <Badge variant="default" className="ml-2 bg-primary">
-                    {unreadCount} non lues
-                  </Badge>
+                  <Button 
+                    variant="ghost"
+                    size="sm"
+                    className="ml-4"
+                    onClick={() => {
+                      const confirmMark = window.confirm(`Êtes-vous sûr de vouloir marquer toutes les notifications comme lues?`);
+                      if (confirmMark) {
+                        apiRequest('POST', '/api/admin/notifications/mark-all-read')
+                          .then(() => {
+                            queryClient.invalidateQueries({ queryKey: ['/api/admin/notifications'] });
+                            toast({
+                              title: "Notifications marquées comme lues",
+                              description: `${unreadCount} notification(s) ont été marquées comme lues.`,
+                            });
+                          })
+                          .catch(() => {
+                            toast({
+                              title: "Erreur",
+                              description: "Impossible de marquer les notifications comme lues.",
+                              variant: "destructive",
+                            });
+                          });
+                      }
+                    }}
+                  >
+                    Tout marquer comme lu
+                  </Button>
                 )}
-              </CardTitle>
+              </div>
               <CardDescription>
                 Gérez les notifications système et utilisateurs
               </CardDescription>

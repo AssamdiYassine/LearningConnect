@@ -33,8 +33,24 @@ export function registerAdminNotificationRoutes(app: Express) {
   // Route pour marquer toutes les notifications comme lues (uniquement admin)
   app.post("/api/admin/notifications/mark-all-read", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const result = await storage.markAllNotificationsAsRead();
-      res.json({ success: true, count: result });
+      // Récupérer toutes les notifications
+      const users = await storage.getAllUsers();
+      let totalMarked = 0;
+      
+      // Pour chaque utilisateur, marquer ses notifications comme lues
+      for (const user of users) {
+        const userNotifications = await storage.getNotificationsByUser(user.id);
+        
+        // Marquer chaque notification comme lue
+        for (const notification of userNotifications) {
+          if (!notification.isRead) {
+            await storage.markNotificationAsRead(notification.id);
+            totalMarked++;
+          }
+        }
+      }
+      
+      res.json({ success: true, count: totalMarked });
     } catch (error) {
       console.error("Erreur lors du marquage des notifications comme lues:", error);
       res.status(500).json({ message: "Erreur lors du marquage des notifications comme lues" });
