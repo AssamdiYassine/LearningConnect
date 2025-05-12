@@ -144,7 +144,9 @@ export default function CreateSession() {
 
   // Mutation pour créer une session
   const createMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof createSessionSchema>) => {
+    mutationFn: async (values: any) => {
+      // Assurez-vous que les dates sont envoyées dans le format attendu par le serveur
+      console.log("Données envoyées au serveur:", values);
       const res = await apiRequest("POST", "/api/sessions", values);
       return res.json();
     },
@@ -168,13 +170,17 @@ export default function CreateSession() {
 
   // Fonction de soumission du formulaire
   const onSubmit = (values: z.infer<typeof createSessionSchema>) => {
-    // Assurez-vous que nous avons des valeurs pour les nouveaux champs
+    // Convertir les chaînes de date en objets Date pour la validation côté serveur
     const sessionData = {
       ...values,
+      // Convertir les chaînes ISO en objets Date
+      date: new Date(values.date),
+      endDate: values.endDate ? new Date(values.endDate) : undefined,
+      // Assurez-vous que nous avons des valeurs pour les nouveaux champs
       title: values.title || null,
       description: values.description || null,
       materialsLink: values.materialsLink || null,
-      maxParticipants: values.maxParticipants || null
+      maxParticipants: values.maxParticipants ? Number(values.maxParticipants) : null
     };
     
     createMutation.mutate(sessionData);
