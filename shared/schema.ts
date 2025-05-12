@@ -8,6 +8,9 @@ export const roleEnum = pgEnum("role", ["student", "trainer", "admin"]);
 // Enum for subscription types
 export const subscriptionTypeEnum = pgEnum("subscription_type", ["monthly", "annual"]);
 
+// Enum for subscription status
+export const subscriptionStatusEnum = pgEnum("subscription_status", ["active", "cancelled", "expired"]);
+
 // Enum for course levels
 export const courseLevelEnum = pgEnum("course_level", ["beginner", "intermediate", "advanced"]);
 
@@ -16,6 +19,30 @@ export const settingTypeEnum = pgEnum("setting_type", ["api", "system", "email"]
 
 // Blog post status enum
 export const postStatusEnum = pgEnum("post_status", ["draft", "published", "archived"]);
+
+// Subscription plans table
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  price: integer("price").notNull(), // price in euros
+  duration: integer("duration").notNull(), // in days
+  features: text("features").array().notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Types pour les plans d'abonnement
+export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({
+  id: true,
+  isActive: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
 
 // Approval status enum
 export const approvalStatusEnum = pgEnum("approval_status", ["pending", "approved", "rejected"]);
