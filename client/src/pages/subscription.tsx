@@ -27,7 +27,7 @@ interface SubscriptionPlan {
 export default function Subscription() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual">("monthly");
+  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual" | "business">("monthly");
   const [, setLocation] = useLocation();
 
   // Récupérer les plans d'abonnement depuis l'API
@@ -40,18 +40,30 @@ export default function Subscription() {
     }
   });
   
-  // Filtrer les plans par type
-  const monthlyPlans = useMemo(() => 
-    plans?.filter(plan => plan.planType === "monthly" && plan.isActive) || [],
-  [plans]);
+  // Filtrer les plans par type et ajouter des logs pour le débogage
+  useEffect(() => {
+    if (plans) {
+      console.log("Plans récupérés:", plans);
+    }
+  }, [plans]);
+
+  const monthlyPlans = useMemo(() => {
+    const filtered = plans?.filter(plan => plan.planType === "monthly" && plan.isActive) || [];
+    console.log("Plans mensuels filtrés:", filtered);
+    return filtered;
+  }, [plans]);
   
-  const annualPlans = useMemo(() => 
-    plans?.filter(plan => plan.planType === "annual" && plan.isActive) || [],
-  [plans]);
+  const annualPlans = useMemo(() => {
+    const filtered = plans?.filter(plan => plan.planType === "annual" && plan.isActive) || [];
+    console.log("Plans annuels filtrés:", filtered);
+    return filtered;
+  }, [plans]);
   
-  const businessPlans = useMemo(() => 
-    plans?.filter(plan => plan.planType === "business" && plan.isActive) || [],
-  [plans]);
+  const businessPlans = useMemo(() => {
+    const filtered = plans?.filter(plan => plan.planType === "business" && plan.isActive) || [];
+    console.log("Plans business filtrés:", filtered);
+    return filtered;
+  }, [plans]);
 
   // Mettre à jour l'onglet sélectionné si aucun plan n'est disponible pour le type actuel
   useEffect(() => {
@@ -193,12 +205,13 @@ export default function Subscription() {
       {!isSubscribed && (
         <Tabs 
           defaultValue={selectedPlan} 
-          onValueChange={(value) => setSelectedPlan(value as "monthly" | "annual")}
+          onValueChange={(value) => setSelectedPlan(value as "monthly" | "annual" | "business")}
           className="space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-2 mb-8">
+          <TabsList className="grid w-full grid-cols-3 mb-8">
             <TabsTrigger value="monthly" disabled={monthlyPlans.length === 0}>Mensuel</TabsTrigger>
             <TabsTrigger value="annual" disabled={annualPlans.length === 0}>Annuel (Économisez 20%)</TabsTrigger>
+            <TabsTrigger value="business" disabled={businessPlans.length === 0}>Business</TabsTrigger>
           </TabsList>
           
           {plans && plans.length === 0 && (
@@ -278,6 +291,52 @@ export default function Subscription() {
                         <span className="text-3xl font-bold text-gray-900">{plan.price}€</span>
                         <span className="text-gray-500 ml-1">/ an</span>
                         <Badge className="ml-2 bg-green-100 text-green-800">Économisez 20%</Badge>
+                      </div>
+                      <ul className="space-y-3">
+                        {plan.features.map((feature, index) => (
+                          <li key={index} className="flex items-center text-gray-700">
+                            <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button 
+                      className="w-full" 
+                      onClick={() => handleSubscribe(plan.id)}
+                    >
+                      S'abonner maintenant
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))
+            )}
+          </TabsContent>
+
+          <TabsContent value="business" className="space-y-6">
+            {businessPlans.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-center text-gray-500">
+                    Aucun plan business n'est disponible actuellement.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              businessPlans.map(plan => (
+                <Card key={plan.id}>
+                  <CardHeader>
+                    <CardTitle>{plan.name}</CardTitle>
+                    <CardDescription>{plan.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-baseline">
+                        <span className="text-3xl font-bold text-gray-900">{plan.price}€</span>
+                        <span className="text-gray-500 ml-1">/ mois</span>
+                        <Badge className="ml-2 bg-blue-100 text-blue-800">Entreprise</Badge>
                       </div>
                       <ul className="space-y-3">
                         {plan.features.map((feature, index) => (
