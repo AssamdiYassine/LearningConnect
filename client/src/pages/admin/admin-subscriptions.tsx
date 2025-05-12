@@ -81,8 +81,9 @@ interface SubscriptionStats {
 function AdminSubscriptions() {
   const { toast } = useToast();
   const [currentTab, setCurrentTab] = useState<string>("actifs");
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
+  const [isSubscriptionEditDialogOpen, setIsSubscriptionEditDialogOpen] = useState<boolean>(false);
   const [isPlanDialogOpen, setIsPlanDialogOpen] = useState<boolean>(false);
+  const [isPlanEditDialogOpen, setIsPlanEditDialogOpen] = useState<boolean>(false);
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [editForm, setEditForm] = useState({
@@ -242,7 +243,7 @@ function AdminSubscriptions() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/subscriptions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/subscriptions/stats"] });
-      setIsEditDialogOpen(false);
+      setIsSubscriptionEditDialogOpen(false);
     },
     onError: (error: Error) => {
       toast({
@@ -306,7 +307,7 @@ function AdminSubscriptions() {
       endDate: new Date(subscription.endDate).toISOString().split('T')[0],
       status: subscription.status,
     });
-    setIsEditDialogOpen(true);
+    setIsSubscriptionEditDialogOpen(true);
   };
 
   const handleUpdateSubscription = () => {
@@ -513,7 +514,7 @@ function AdminSubscriptions() {
       </Dialog>
 
       {/* Dialog pour modifier un plan d'abonnement */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog open={isPlanEditDialogOpen} onOpenChange={setIsPlanEditDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Modifier le plan d'abonnement</DialogTitle>
@@ -620,7 +621,7 @@ function AdminSubscriptions() {
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setIsPlanEditDialogOpen(false)}>Annuler</Button>
             <Button 
               className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"
               onClick={() => {
@@ -946,7 +947,7 @@ function AdminSubscriptions() {
       </Card>
 
       {/* Boîte de dialogue de modification */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog open={isSubscriptionEditDialogOpen} onOpenChange={setIsSubscriptionEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Modifier l'abonnement</DialogTitle>
