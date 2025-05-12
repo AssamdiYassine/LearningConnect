@@ -595,6 +595,22 @@ function AdminSubscriptions() {
               />
             </div>
             
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-plan-type" className="text-right">Type de plan</Label>
+              <Select 
+                value={editPlan.planType || "monthly"} 
+                onValueChange={(value) => setEditPlan({...editPlan, planType: value as "monthly" | "annual" | "business"})}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Sélectionnez un type de plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">Mensuel</SelectItem>
+                  <SelectItem value="annual">Annuel</SelectItem>
+                  <SelectItem value="business">Entreprise</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
             <div className="grid grid-cols-4 items-start gap-4">
               <Label className="text-right pt-2">Fonctionnalités</Label>
               <div className="col-span-3 space-y-2">
@@ -723,7 +739,8 @@ function AdminSubscriptions() {
                           description: plan.description,
                           price: plan.price,
                           duration: plan.duration,
-                          features: [...plan.features]
+                          features: [...plan.features],
+                          planType: plan.planType || "monthly"
                         });
                         setIsPlanEditDialogOpen(true);
                       }}
