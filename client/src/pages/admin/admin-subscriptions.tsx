@@ -104,6 +104,7 @@ function AdminSubscriptions() {
     price: 0,
     duration: 30,
     features: [""],
+    planType: "monthly" as "monthly" | "annual" | "business",
   });
   const [newPlan, setNewPlan] = useState({
     name: "",
@@ -714,7 +715,15 @@ function AdminSubscriptions() {
               {subscriptionPlans.map((plan: any) => (
                 <Card key={plan.id} className="overflow-hidden border-2 hover:border-[#5F8BFF] transition-all">
                   <CardHeader className="bg-gradient-to-r from-[#1D2B6C] to-[#5F8BFF] text-white">
-                    <CardTitle>{plan.name}</CardTitle>
+                    <div className="flex justify-between items-start">
+                      <CardTitle>{plan.name}</CardTitle>
+                      <Badge variant="outline" className="text-white border-white">
+                        {plan.planType === "monthly" ? "Mensuel" : 
+                         plan.planType === "annual" ? "Annuel" : 
+                         plan.planType === "business" ? "Entreprise" : 
+                         "Standard"}
+                      </Badge>
+                    </div>
                     <div className="text-2xl font-bold">{plan.price} € {plan.duration === 30 ? '/mois' : plan.duration === 365 ? '/an' : `/${plan.duration}j`}</div>
                   </CardHeader>
                   <CardContent className="pt-4">
