@@ -119,6 +119,15 @@ export const enrollments = pgTable("enrollments", {
   enrolledAt: timestamp("enrolled_at").notNull().defaultNow(),
 });
 
+// User Course Access table (pour les accès accordés manuellement, ex: paiements hors ligne)
+export const userCourseAccess = pgTable("user_course_access", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  courseId: integer("course_id").notNull().references(() => courses.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Notifications table
 export const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),

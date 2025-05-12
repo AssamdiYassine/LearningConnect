@@ -9,7 +9,8 @@ import {
   approvalRequests,
   blogCategories,
   blogPosts,
-  blogComments
+  blogComments,
+  userCourseAccess
 } from "@shared/schema";
 import { DatabaseStorage } from "./db-storage";
 import { pool } from "./db";
@@ -498,21 +499,15 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
     await db.delete(blogComments).where(eq(blogComments.id, id));
   };
 
-  // Méthodes d'accès aux formations pour les utilisateurs
+  // Méthodes d'accès aux formations pour les utilisateurs (gestion des accès manuels)
   dbStorage.getUserCourseAccess = async function(userId: number) {
     try {
-      // Utiliser une requête SQL directe pour récupérer les accès aux cours
-      const result = await db.execute(`
-        SELECT course_id 
-        FROM user_course_access 
-        WHERE user_id = ${userId}
-      `);
+      const accesses = await db
+        .select({ courseId: userCourseAccess.courseId })
+        .from(userCourseAccess)
+        .where(eq(userCourseAccess.userId, userId));
       
-      if (!result.rows) {
-        return [];
-      }
-      
-      return result.rows.map(row => parseInt(row.course_id));
+      return accesses.map(access => access.courseId);
     } catch (error) {
       console.error("Erreur lors de la récupération des accès aux cours:", error);
       return [];
@@ -521,21 +516,22 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
 
   dbStorage.updateUserCourseAccess = async function(userId: number, courseIds: number[]) {
     try {
-      // D'abord, supprimer tous les accès existants
-      await db.execute(`
-        DELETE FROM user_course_access 
-        WHERE user_id = ${userId}
-      `);
-      
-      // Ensuite, insérer les nouveaux accès
-      if (courseIds.length > 0) {
-        const values = courseIds.map(courseId => `(${userId}, ${courseId})`).join(', ');
+      // Transaction pour garantir l'atomicité
+      await db.transaction(async (tx) => {
+        // D'abord, supprimer tous les accès existants
+        await tx.delete(userCourseAccess)
+          .where(eq(userCourseAccess.userId, userId));
         
-        await db.execute(`
-          INSERT INTO user_course_access (user_id, course_id)
-          VALUES ${values}
-        `);
-      }
+        // Ensuite, insérer les nouveaux accès
+        if (courseIds.length > 0) {
+          const values = courseIds.map(courseId => ({
+            userId,
+            courseId
+          }));
+          
+          await tx.insert(userCourseAccess).values(values);
+        }
+      });
     } catch (error) {
       console.error("Erreur lors de la mise à jour des accès aux cours:", error);
       throw error;
