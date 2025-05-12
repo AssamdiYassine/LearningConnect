@@ -370,18 +370,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/sessions", hasRole(["trainer", "admin"]), async (req, res) => {
     try {
       // Convertir les chaînes de dates en objets Date
-      let sessionData = { ...req.body };
+      let sessionData = { 
+        courseId: req.body.courseId,
+        zoomLink: req.body.zoomLink,
+        date: typeof req.body.date === 'string' ? new Date(req.body.date) : req.body.date
+      };
       
-      // Convertir explicitement les champs de date
-      if (sessionData.date && typeof sessionData.date === 'string') {
-        sessionData.date = new Date(sessionData.date);
-      }
+      console.log("Données de session à enregistrer:", sessionData);
       
-      if (sessionData.endDate && typeof sessionData.endDate === 'string') {
-        sessionData.endDate = new Date(sessionData.endDate);
-      }
+      // On définit un schéma de validation simplifié qui correspond à la structure réelle de la table
+      const sessionSchema = z.object({
+        courseId: z.number(),
+        zoomLink: z.string(),
+        date: z.date()
+      });
       
-      const validatedData = insertSessionSchema.parse(sessionData);
+      const validatedData = sessionSchema.parse(sessionData);
       
       // Check if the course exists and belongs to the trainer
       const course = await storage.getCourse(validatedData.courseId);

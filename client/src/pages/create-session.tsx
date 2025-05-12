@@ -170,23 +170,19 @@ export default function CreateSession() {
 
   // Fonction de soumission du formulaire
   const onSubmit = (values: z.infer<typeof createSessionSchema>) => {
-    // Convertir les chaînes de date en chaînes ISO pour la validation côté serveur
-    // Note: Le schéma côté serveur attend des dates sous forme de chaînes ISO
+    // N'envoyer que les colonnes qui existent réellement dans la base de données
+    // D'après la structure réelle de la table, nous n'avons que:
+    // id, course_id, date, zoom_link, created_at, updated_at, is_completed
     const sessionData = {
       courseId: values.courseId,
       zoomLink: values.zoomLink,
-      // Champs optionnels avec valeurs par défaut
-      title: values.title || null,
-      description: values.description || null,
-      materialsLink: values.materialsLink || null,
-      maxParticipants: values.maxParticipants ? Number(values.maxParticipants) : null,
-      recordingLink: null,
-      isPublished: true,
       // S'assurer que les dates sont en format ISO
-      date: values.date,
-      endDate: values.endDate || undefined
+      date: values.date
+      // Notez que les colonnes title, description, materialsLink, etc. ne sont PAS incluses
+      // car elles n'existent pas dans la base de données
     };
     
+    console.log("Données de session simplifiées:", sessionData);
     createMutation.mutate(sessionData);
   };
 

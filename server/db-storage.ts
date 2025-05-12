@@ -227,8 +227,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Session operations
-  async createSession(session: InsertSession): Promise<Session> {
-    const [newSession] = await db.insert(sessions).values(session).returning();
+  async createSession(session: any): Promise<Session> {
+    // S'assurer que nous n'insérons que les colonnes qui existent dans la table
+    const { courseId, date, zoomLink } = session;
+    
+    console.log("Création de session avec données filtrées:", { courseId, date, zoomLink });
+    
+    const [newSession] = await db.insert(sessions)
+      .values({ 
+        course_id: courseId, 
+        date, 
+        zoom_link: zoomLink 
+      })
+      .returning();
+    
     return newSession;
   }
 
