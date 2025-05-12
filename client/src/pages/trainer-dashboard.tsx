@@ -23,16 +23,44 @@ export default function TrainerDashboard() {
     enabled: !!user
   });
 
+  // Récupérer les cours du formateur
+  const { data: trainerCourses = [], isLoading: isCoursesLoading } = useQuery<any[]>({
+    queryKey: [`/api/courses/trainer/${user?.id}`],
+    enabled: !!user
+  });
+
+  // Récupérer les évaluations du formateur
+  const { data: trainerRatings = [], isLoading: isRatingsLoading } = useQuery<any[]>({
+    queryKey: [`/api/trainer/${user?.id}/ratings`],
+    enabled: !!user
+  });
+
+  // Récupérer toutes les inscriptions aux cours du formateur
+  const { data: enrollments = [], isLoading: isEnrollmentsLoading } = useQuery<any[]>({
+    queryKey: [`/api/trainer/${user?.id}/enrollments`],
+    enabled: !!user
+  });
+
   // Sort sessions by date (upcoming first)
   const upcomingSessions = trainerSessions
     ?.filter(session => new Date(session.date) > new Date())
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  // Stats
-  const totalStudents = trainerSessions?.reduce((total, session) => total + session.enrollmentCount, 0) || 0;
+  // Stats dynamiques
+  // Nombre total d'étudiants uniques inscrits à tous les cours du formateur
+  const uniqueStudentIds = new Set(enrollments.map(enrollment => enrollment.userId));
+  const totalStudents = uniqueStudentIds.size || 0;
+  
+  // Nombre total de sessions
   const totalSessions = trainerSessions?.length || 0;
-  const activeCourses = new Set(trainerSessions?.map(session => session.course.id)).size || 0;
-  const averageRating = 4.8; // This would normally come from a ratings system
+  
+  // Nombre de cours actifs (approuvés)
+  const activeCourses = trainerCourses.filter(course => course.isApproved === true).length;
+  
+  // Calcul de la note moyenne à partir des évaluations
+  const averageRating = trainerRatings.length > 0 
+    ? (trainerRatings.reduce((sum, rating) => sum + rating.score, 0) / trainerRatings.length).toFixed(1)
+    : "N/A";
   
   // Nombre de sessions à venir
   const upcomingSessionsCount = upcomingSessions?.length || 0;

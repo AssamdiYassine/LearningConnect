@@ -1324,6 +1324,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Routes pour les demandes d'approbation par les formateurs
+  app.post('/api/approval-requests', async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: 'Non autorisé' });
+    }
+    
+    try {
+      // Validation des données
+      const approvalSchema = z.object({
+        type: z.enum(['course', 'session', 'post']),
+        itemId: z.number(),
+        requesterId: z.number(),
+        status: z.enum(['pending', 'approved', 'rejected']).default('pending'),
+        notes: z.string().optional(),
+      });
+      
+      const validatedData = approvalSchema.parse(req.body);
+      
+      // Vérifier que l'utilisateur est bien le demandeur
+      if (validatedData.requesterId !== req.user!.id && req.user!.role !== 'admin') {
+        return res.status(403).json({ message: 'Vous ne pouvez créer des demandes que pour vous-même' });
+      }
+      
+      // Créer la demande d'approbation
+      const approvalRequest = await storage.createApprovalRequest({
+        type: validatedData.type,
+        itemId: validatedData.itemId,
+        requesterId: validatedData.requesterId,
+        status: validatedData.status,
+        notes: validatedData.notes || '',
+        requestDate: new Date(),
+      });
+      
+      // Envoyer une notification aux administrateurs
+      const admins = await storage.getUsersByRole('admin');
+      
+      if (admins && admins.length > 0) {
+        // Si c'est une demande de cours, inclure le nom du cours dans la notification
+        let notificationMessage = 'Nouvelle demande d\'approbation en attente';
+        
+        if (validatedData.type === 'course') {
+          const course = await storage.getCourse(validatedData.itemId);
+          if (course) {
+            notificationMessage = `Nouvelle formation "${course.title}" en attente d'approbation`;
+          }
+        }
+        
+        // Notifier chaque administrateur
+        for (const admin of admins) {
+          await storage.createNotification({
+            userId: admin.id,
+            message: notificationMessage,
+            type: 'approval_request',
+            isRead: false
+          });
+        }
+      }
+      
+      res.status(201).json(approvalRequest);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: 'Données invalides', errors: error.format() });
+      } else {
+        console.error('Erreur lors de la création de la demande d\'approbation :', error);
+        res.status(500).json({ message: `Erreur: ${error.message}` });
+      }
+    }
+  });
+  
+  // Route pour récupérer les demandes d'approbation d'un formateur
+  app.get('/api/trainer/approval-requests', async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: 'Non autorisé' });
+    }
+    
+    if (req.user!.role !== 'trainer' && req.user!.role !== 'admin') {
+      return res.status(403).json({ message: 'Accès refusé' });
+    }
+    
+    try {
+      const approvalRequests = await storage.getApprovalRequestsByRequesterId(req.user!.id);
+      
+      // Enrichir les données avec les détails des éléments associés
+      for (const request of approvalRequests) {
+        if (request.type === 'course' && request.itemId) {
+          request.course = await storage.getCourseWithDetails(request.itemId);
+        } else if (request.type === 'session' && request.itemId) {
+          request.session = await storage.getSessionWithDetails(request.itemId);
+        }
+      }
+      
+      res.json(approvalRequests);
+    } catch (error: any) {
+      console.error('Erreur lors de la récupération des demandes d\'approbation :', error);
+      res.status(500).json({ message: `Erreur: ${error.message}` });
+    }
+  });
+
   // Enregistrement des routes admin pour les notifications
   registerAdminNotificationRoutes(app);
   
@@ -1332,6 +1430,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Enregistrement des routes pour les catégories de blog
   registerAdminBlogCategoriesRoutes(app);
+  
+  // Récupérer les évaluations pour un formateur spécifique
+  app.get('/api/trainer/:id/ratings', async (req: Request, res: Response) => {
+    try {
+      const trainerId = parseInt(req.params.id);
+      
+      // Obtenir toutes les sessions du formateur
+      const trainerSessions = await storage.getSessionsByTrainer(trainerId);
+      
+      // Récupérer tous les ratings liés à ces sessions
+      const ratings = [];
+      for (const session of trainerSessions) {
+        const sessionRatings = await storage.getSessionRatings(session.id);
+        if (sessionRatings && sessionRatings.length > 0) {
+          ratings.push(...sessionRatings);
+        }
+      }
+      
+      res.json(ratings);
+    } catch (error) {
+      console.error("Failed to fetch trainer ratings:", error);
+      res.status(500).json({ message: 'Failed to get trainer ratings' });
+    }
+  });
+  
+  // Récupérer toutes les inscriptions aux cours d'un formateur
+  app.get('/api/trainer/:id/enrollments', async (req: Request, res: Response) => {
+    try {
+      const trainerId = parseInt(req.params.id);
+      
+      // Obtenir tous les cours du formateur
+      const trainerCourses = await storage.getCoursesByTrainer(trainerId);
+      
+      // Récupérer toutes les inscriptions pour ces cours
+      const enrollments = [];
+      for (const course of trainerCourses) {
+        const courseEnrollments = await storage.getEnrollmentsByCourse(course.id);
+        if (courseEnrollments && courseEnrollments.length > 0) {
+          enrollments.push(...courseEnrollments);
+        }
+      }
+      
+      res.json(enrollments);
+    } catch (error) {
+      console.error("Failed to fetch trainer enrollments:", error);
+      res.status(500).json({ message: 'Failed to get trainer enrollments' });
+    }
+  });
   
   // Create HTTP server
   const httpServer = createServer(app);
