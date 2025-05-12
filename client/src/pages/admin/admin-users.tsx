@@ -51,7 +51,11 @@ type User = {
   email: string;
   displayName: string;
   role: string;
-  isSubscribed: boolean;
+  isSubscribed: boolean | null;
+  subscriptionType: "monthly" | "annual" | null;
+  subscriptionEndDate: string | null;
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
   createdAt: string;
 };
 

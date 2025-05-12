@@ -552,7 +552,7 @@ function AdminSubscriptions() {
                 className="col-span-3" 
                 type="number"
                 value={editPlan.price}
-                onChange={(e) => setEditPlan({...editPlan, price: parseFloat(e.target.value)})}
+                onChange={(e) => setEditPlan({...editPlan, price: parseFloat(e.target.value) || 0})}
                 placeholder="49.99"
               />
             </div>
@@ -564,7 +564,7 @@ function AdminSubscriptions() {
                 className="col-span-3" 
                 type="number"
                 value={editPlan.duration}
-                onChange={(e) => setEditPlan({...editPlan, duration: parseInt(e.target.value)})}
+                onChange={(e) => setEditPlan({...editPlan, duration: parseInt(e.target.value) || 30})}
                 placeholder="30"
               />
             </div>
@@ -572,38 +572,45 @@ function AdminSubscriptions() {
             <div className="grid grid-cols-4 items-start gap-4">
               <Label className="text-right pt-2">Fonctionnalités</Label>
               <div className="col-span-3 space-y-2">
-                {editPlan.features.map((feature, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Input 
-                      value={feature}
-                      onChange={(e) => {
-                        const newFeatures = [...editPlan.features];
-                        newFeatures[index] = e.target.value;
-                        setEditPlan({...editPlan, features: newFeatures});
-                      }}
-                      placeholder="Accès illimité aux webinaires"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        const newFeatures = [...editPlan.features];
-                        newFeatures.splice(index, 1);
-                        setEditPlan({...editPlan, features: newFeatures});
-                      }}
-                    >
-                      <Trash className="h-4 w-4" />
-                      <span className="sr-only">Supprimer</span>
-                    </Button>
-                  </div>
-                ))}
+                {editPlan.features && editPlan.features.length > 0 ? (
+                  editPlan.features.map((feature, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input 
+                        value={feature}
+                        onChange={(e) => {
+                          const newFeatures = [...editPlan.features];
+                          newFeatures[index] = e.target.value;
+                          setEditPlan({...editPlan, features: newFeatures});
+                        }}
+                        placeholder="Accès illimité aux webinaires"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          const newFeatures = [...editPlan.features];
+                          newFeatures.splice(index, 1);
+                          setEditPlan({...editPlan, features: newFeatures});
+                        }}
+                      >
+                        <Trash className="h-4 w-4" />
+                        <span className="sr-only">Supprimer</span>
+                      </Button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500">Aucune fonctionnalité définie</p>
+                )}
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   className="mt-2"
-                  onClick={() => setEditPlan({...editPlan, features: [...editPlan.features, ""]})}
+                  onClick={() => {
+                    const features = editPlan.features || [];
+                    setEditPlan({...editPlan, features: [...features, ""]});
+                  }}
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Ajouter une fonctionnalité
@@ -615,6 +622,7 @@ function AdminSubscriptions() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Annuler</Button>
             <Button 
+              className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"
               onClick={() => {
                 if (selectedPlan && editPlan.name && editPlan.description && editPlan.price > 0 && editPlan.duration > 0) {
                   updatePlanMutation.mutate({
@@ -630,7 +638,7 @@ function AdminSubscriptions() {
                 }
               }}
             >
-              Mettre à jour
+              Enregistrer
             </Button>
           </DialogFooter>
         </DialogContent>

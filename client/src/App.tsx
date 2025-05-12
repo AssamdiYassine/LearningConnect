@@ -299,17 +299,18 @@ function Router() {
       
       {/* Blog routes */}
       <Route path="/blog">
-        <Route path="/">
-          <BlogPage />
+        {/* Routes Admin blog - IMPORTANT: doit être AVANT les routes génériques */}
+        <Route path="/admin/edit-post/:id">
+          {params => (
+            <ProtectedRoute 
+              component={() => <EditBlogPostPage id={params.id} />} 
+              allowedRoles={["admin"]} 
+            />
+          )}
         </Route>
         
-        {/* Admin routes for blog - IMPORTANT: placer avant les routes génériques */}
-        <Route path="/admin">
-          <ProtectedRoute component={BlogAdminPage} allowedRoles={["admin"]} />
-        </Route>
-        
-        <Route path="/admin/edit-category">
-          <ProtectedRoute component={EditBlogCategoryPage} allowedRoles={["admin"]} />
+        <Route path="/admin/edit-post">
+          <ProtectedRoute component={EditBlogPostPage} allowedRoles={["admin"]} />
         </Route>
         
         <Route path="/admin/edit-category/:id">
@@ -321,20 +322,20 @@ function Router() {
           )}
         </Route>
         
-        <Route path="/admin/edit-post">
-          <ProtectedRoute component={EditBlogPostPage} allowedRoles={["admin"]} />
+        <Route path="/admin/edit-category">
+          <ProtectedRoute component={EditBlogCategoryPage} allowedRoles={["admin"]} />
         </Route>
         
-        <Route path="/admin/edit-post/:id">
-          {params => (
-            <ProtectedRoute 
-              component={() => <EditBlogPostPage id={params.id} />} 
-              allowedRoles={["admin"]} 
-            />
-          )}
+        <Route path="/admin">
+          <ProtectedRoute component={BlogAdminPage} allowedRoles={["admin"]} />
         </Route>
         
-        {/* Cette route doit être en dernier pour éviter de capturer les routes admin */}
+        {/* Routes génériques pour le blog */}
+        <Route path="/">
+          <BlogPage />
+        </Route>
+        
+        {/* Cette route DOIT être en DERNIER pour éviter de capturer les autres routes */}
         <Route path="/:slug">
           {params => <BlogPostPage slug={params.slug} />}
         </Route>
