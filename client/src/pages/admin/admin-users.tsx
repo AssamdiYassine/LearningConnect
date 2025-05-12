@@ -411,6 +411,12 @@ export default function AdminUsers() {
             formateur
           </Badge>
         );
+      case 'enterprise':
+        return (
+          <Badge className="bg-purple-600 hover:bg-purple-700">
+            entreprise
+          </Badge>
+        );
       default:
         return (
           <Badge className="bg-[#5F8BFF] hover:bg-[#5F8BFF]/90">
@@ -426,6 +432,8 @@ export default function AdminUsers() {
         return 'Administrateur';
       case 'trainer':
         return 'Formateur';
+      case 'enterprise':
+        return 'Entreprise';
       default:
         return 'Etudiant';
     }
@@ -533,6 +541,7 @@ export default function AdminUsers() {
                     <SelectContent>
                       <SelectItem value="student">Etudiant</SelectItem>
                       <SelectItem value="trainer">Formateur</SelectItem>
+                      <SelectItem value="enterprise">Entreprise</SelectItem>
                       <SelectItem value="admin">Administrateur</SelectItem>
                     </SelectContent>
                   </Select>
@@ -956,6 +965,7 @@ export default function AdminUsers() {
                 <SelectContent>
                   <SelectItem value="student">Etudiant</SelectItem>
                   <SelectItem value="trainer">Formateur</SelectItem>
+                  <SelectItem value="enterprise">Entreprise</SelectItem>
                   <SelectItem value="admin">Administrateur</SelectItem>
                 </SelectContent>
               </Select>
