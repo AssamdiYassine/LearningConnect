@@ -170,7 +170,7 @@ function AdminSubscriptions() {
         description: "Le plan d'abonnement a été mis à jour avec succès.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/subscription-plans"] });
-      setIsEditDialogOpen(false);
+      setIsPlanEditDialogOpen(false);
     },
     onError: (error: Error) => {
       toast({
@@ -700,7 +700,7 @@ function AdminSubscriptions() {
                           duration: plan.duration,
                           features: [...plan.features]
                         });
-                        setIsEditDialogOpen(true);
+                        setIsPlanEditDialogOpen(true);
                       }}
                     >
                       <Edit className="h-4 w-4 mr-1" />
@@ -1007,7 +1007,7 @@ function AdminSubscriptions() {
           )}
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsSubscriptionEditDialogOpen(false)}>
               Annuler
             </Button>
             <Button 
