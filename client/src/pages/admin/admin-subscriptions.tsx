@@ -495,8 +495,44 @@ function AdminSubscriptions() {
                     </ul>
                   </CardContent>
                   <CardFooter className="flex justify-end gap-2 border-t bg-gray-50 p-3">
-                    <Button variant="outline" size="sm">Modifier</Button>
-                    <Button variant="destructive" size="sm">Supprimer</Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setSelectedPlan(plan);
+                        setEditPlan({
+                          name: plan.name,
+                          description: plan.description,
+                          price: plan.price,
+                          duration: plan.duration,
+                          features: [...plan.features]
+                        });
+                        setIsEditDialogOpen(true);
+                      }}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Modifier
+                    </Button>
+                    {plan.isActive ? (
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => updatePlanStatusMutation.mutate({ id: plan.id, isActive: false })}
+                      >
+                        <Ban className="h-4 w-4 mr-1" />
+                        Désactiver
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        onClick={() => updatePlanStatusMutation.mutate({ id: plan.id, isActive: true })}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        Activer
+                      </Button>
+                    )}
                   </CardFooter>
                 </Card>
               ))}
