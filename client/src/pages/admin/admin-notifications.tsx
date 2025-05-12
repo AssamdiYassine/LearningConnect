@@ -8,8 +8,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, CheckIcon, BellIcon, TrashIcon, BellRing } from 'lucide-react';
+import { Loader2, CheckIcon, BellIcon, TrashIcon, BellRing, Send, Users, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 
 // Types basées sur le schema défini
 interface Notification {
@@ -21,9 +30,40 @@ interface Notification {
   createdAt: string;
 }
 
+// Schéma du formulaire d'envoi de notification
+const sendNotificationSchema = z.object({
+  receiverType: z.enum(['all', 'specific', 'student', 'trainer']),
+  userIds: z.array(z.number()).optional(),
+  message: z.string().min(5, {
+    message: "Le message doit contenir au moins 5 caractères."
+  }),
+  type: z.enum(['system', 'admin', 'enrollment', 'comment']).default('admin')
+});
+
+type SendNotificationFormValues = z.infer<typeof sendNotificationSchema>;
+
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  displayName: string;
+  role: string;
+}
+
 function AdminNotificationsPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('all');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  // Récupérer tous les utilisateurs (pour l'envoi de notifications ciblées)
+  const { data: users = [] } = useQuery<User[]>({
+    queryKey: ['/api/admin/users'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/admin/users');
+      return await response.json();
+    },
+    enabled: isDialogOpen // Ne charger que lorsque la boîte de dialogue est ouverte
+  });
   
   // Récupérer toutes les notifications
   const { data: notifications, isLoading, isError } = useQuery({
@@ -31,6 +71,54 @@ function AdminNotificationsPage() {
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/admin/notifications');
       return await response.json();
+    }
+  });
+  
+  // Formulaire d'envoi de notification
+  const form = useForm<SendNotificationFormValues>({
+    resolver: zodResolver(sendNotificationSchema),
+    defaultValues: {
+      receiverType: 'all',
+      message: '',
+      type: 'admin'
+    }
+  });
+  
+  // Mutation pour envoyer une notification
+  const sendNotificationMutation = useMutation({
+    mutationFn: async (values: SendNotificationFormValues) => {
+      const payload: any = {
+        message: values.message,
+        type: values.type
+      };
+      
+      // Définir les destinataires en fonction du type de réception
+      if (values.receiverType === 'specific' && form.watch('userIds')) {
+        payload.userIds = form.watch('userIds');
+      } else if (values.receiverType !== 'all') {
+        payload.role = values.receiverType;
+      } else {
+        payload.role = 'all';
+      }
+      
+      const response = await apiRequest('POST', '/api/admin/notifications/send', payload);
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/notifications'] });
+      toast({
+        title: "Notifications envoyées",
+        description: data.message || `${data.notifications?.length || 0} notification(s) envoyée(s)`,
+      });
+      setIsDialogOpen(false);
+      form.reset();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible d'envoyer les notifications.",
+        variant: "destructive",
+      });
     }
   });
 
@@ -153,22 +241,234 @@ function AdminNotificationsPage() {
     );
   }
 
+  // Fonction pour gérer la soumission du formulaire
+  const onSubmit = (values: SendNotificationFormValues) => {
+    sendNotificationMutation.mutate(values);
+  };
+
+  // Rendre le formulaire d'envoi de notification
+  const renderSendNotificationForm = () => {
+    return (
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Type de notification</FormLabel>
+                <div className="grid grid-cols-2 gap-2">
+                  <FormControl>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem
+                          id="type-admin"
+                          value="admin"
+                          {...field}
+                          checked={field.value === 'admin'}
+                        />
+                        <Label htmlFor="type-admin">Administration</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem
+                          id="type-system"
+                          value="system"
+                          {...field}
+                          checked={field.value === 'system'}
+                        />
+                        <Label htmlFor="type-system">Système</Label>
+                      </div>
+                    </div>
+                  </FormControl>
+                  <FormControl>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem
+                          id="type-enrollment"
+                          value="enrollment"
+                          {...field}
+                          checked={field.value === 'enrollment'}
+                        />
+                        <Label htmlFor="type-enrollment">Inscription</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem
+                          id="type-comment"
+                          value="comment"
+                          {...field}
+                          checked={field.value === 'comment'}
+                        />
+                        <Label htmlFor="type-comment">Commentaire</Label>
+                      </div>
+                    </div>
+                  </FormControl>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="receiverType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Destinataires</FormLabel>
+                <RadioGroup
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  className="space-y-2"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem id="all" value="all" />
+                    <Label htmlFor="all">Tous les utilisateurs</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem id="student" value="student" />
+                    <Label htmlFor="student">Étudiants uniquement</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem id="trainer" value="trainer" />
+                    <Label htmlFor="trainer">Formateurs uniquement</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem id="specific" value="specific" />
+                    <Label htmlFor="specific">Utilisateurs spécifiques</Label>
+                  </div>
+                </RadioGroup>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {form.watch('receiverType') === 'specific' && (
+            <FormField
+              control={form.control}
+              name="userIds"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Sélectionner les utilisateurs</FormLabel>
+                  <FormControl>
+                    <div className="max-h-32 overflow-y-auto border rounded-md p-2">
+                      {users.length > 0 ? (
+                        users.map(user => (
+                          <div key={user.id} className="flex items-center space-x-2 py-1">
+                            <input
+                              type="checkbox"
+                              id={`user-${user.id}`}
+                              value={user.id}
+                              onChange={(e) => {
+                                const userIds = field.value || [];
+                                if (e.target.checked) {
+                                  field.onChange([...userIds, user.id]);
+                                } else {
+                                  field.onChange(userIds.filter(id => id !== user.id));
+                                }
+                              }}
+                              checked={(field.value || []).includes(user.id)}
+                              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                            />
+                            <label htmlFor={`user-${user.id}`} className="text-sm">
+                              {user.displayName} ({user.role}) - {user.email}
+                            </label>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground">Chargement des utilisateurs...</p>
+                      )}
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
+          <FormField
+            control={form.control}
+            name="message"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Message</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Entrez votre message de notification ici..."
+                    {...field}
+                    rows={5}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDialogOpen(false)}
+            >
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              disabled={sendNotificationMutation.isPending}
+            >
+              {sendNotificationMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Envoi en cours...
+                </>
+              ) : (
+                <>
+                  <Send className="mr-2 h-4 w-4" />
+                  Envoyer
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </Form>
+    );
+  };
+
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl flex items-center">
-            <BellIcon className="mr-2 h-5 w-5" />
-            Notifications
-            {unreadCount > 0 && (
-              <Badge variant="default" className="ml-2 bg-primary">
-                {unreadCount} non lues
-              </Badge>
-            )}
-          </CardTitle>
-          <CardDescription>
-            Gérez les notifications système et utilisateurs
-          </CardDescription>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="text-xl flex items-center">
+                <BellIcon className="mr-2 h-5 w-5" />
+                Notifications
+                {unreadCount > 0 && (
+                  <Badge variant="default" className="ml-2 bg-primary">
+                    {unreadCount} non lues
+                  </Badge>
+                )}
+              </CardTitle>
+              <CardDescription>
+                Gérez les notifications système et utilisateurs
+              </CardDescription>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Send className="mr-2 h-4 w-4" />
+                  Envoyer des notifications
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                  <DialogTitle>Envoyer des notifications</DialogTitle>
+                  <DialogDescription>
+                    Créez et envoyez des notifications aux utilisateurs de la plateforme.
+                  </DialogDescription>
+                </DialogHeader>
+                {renderSendNotificationForm()}
+              </DialogContent>
+            </Dialog>
+          </div>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
