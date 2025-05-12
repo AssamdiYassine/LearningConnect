@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setTimeout(() => {
         if (user.role === "admin") {
           console.log("Redirection vers le tableau de bord admin");
-          window.location.replace("/admin-dashboard-new");
+          window.location.replace("/admin/dashboard");
         } else if (user.role === "trainer") {
           console.log("Redirection vers le tableau de bord formateur");
           window.location.replace("/trainer-dashboard");
@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setTimeout(() => {
         if (user.role === "admin") {
           console.log("Redirection vers le tableau de bord admin");
-          window.location.replace("/admin-dashboard-new");
+          window.location.replace("/admin/dashboard");
         } else if (user.role === "trainer") {
           console.log("Redirection vers le tableau de bord formateur");
           window.location.replace("/trainer-dashboard");
