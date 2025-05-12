@@ -18,7 +18,7 @@ const isEnterprise = (req: Request, res: Response, next: Function) => {
     return res.status(401).json({ message: "Non authentifié" });
   }
   
-  if (req.user.role !== "enterprise") {
+  if (req.user && req.user.role !== "enterprise") {
     return res.status(403).json({ message: "Accès refusé: rôle enterprise requis" });
   }
   

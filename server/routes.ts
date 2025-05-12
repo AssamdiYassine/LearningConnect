@@ -12,6 +12,7 @@ import { registerAdminNotificationRoutes } from "./admin-notifications-routes";
 import { registerAdminSubscriptionPlansRoutes } from "./admin-subscription-plans-routes";
 import { registerResetPasswordRoutes } from "./reset-password-routes";
 import { registerAdminBlogCategoriesRoutes } from "./admin-blog-categories-routes";
+import enterpriseRoutes from "./enterprise-api/enterprise-routes";
 // Import des extensions pour les méthodes de stockage manquantes
 import "./db-storage-extensions";
 import { pool } from "./db";
@@ -191,7 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { role } = req.body;
       
-      if (!["student", "trainer", "admin"].includes(role)) {
+      if (!["student", "trainer", "admin", "enterprise"].includes(role)) {
         return res.status(400).json({ message: "Invalid role" });
       }
       
@@ -1504,6 +1505,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to get trainer enrollments' });
     }
   });
+  
+  // Enregistrer les routes pour le rôle enterprise
+  app.use("/api/enterprise", enterpriseRoutes);
   
   // Create HTTP server
   const httpServer = createServer(app);
