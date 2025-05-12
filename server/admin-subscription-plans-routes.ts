@@ -9,6 +9,10 @@ const createSubscriptionPlanSchema = insertSubscriptionPlanSchema.extend({
   features: z.array(z.string()).min(1, "Au moins une caractéristique est requise"),
   price: z.number().positive("Le prix doit être positif"),
   duration: z.number().positive("La durée doit être positive"),
+  planType: z.enum(["monthly", "annual", "business"], {
+    required_error: "Le type de plan est requis",
+    invalid_type_error: "Le type de plan doit être 'mensuel', 'annuel' ou 'business'",
+  }),
 });
 
 // Schéma de validation pour la mise à jour d'un plan d'abonnement
@@ -61,7 +65,7 @@ export function registerAdminSubscriptionPlansRoutes(app: Express) {
         });
       }
       
-      const { name, description, price, duration, features } = validationResult.data;
+      const { name, description, price, duration, features, planType } = validationResult.data;
       
       // Vérifier si un plan avec le même nom existe déjà
       const existingPlan = await storage.getSubscriptionPlanByName(name);
@@ -78,6 +82,7 @@ export function registerAdminSubscriptionPlansRoutes(app: Express) {
         price,
         duration,
         features,
+        planType,
       });
       
       res.status(201).json(plan);

@@ -8,6 +8,9 @@ export const roleEnum = pgEnum("role", ["student", "trainer", "admin"]);
 // Enum for subscription types
 export const subscriptionTypeEnum = pgEnum("subscription_type", ["monthly", "annual"]);
 
+// Enum for subscription plan types
+export const subscriptionPlanTypeEnum = pgEnum("subscription_plan_type", ["monthly", "annual", "business"]);
+
 // Enum for subscription status
 export const subscriptionStatusEnum = pgEnum("subscription_status", ["active", "cancelled", "expired"]);
 
@@ -28,6 +31,7 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   price: integer("price").notNull(), // price in euros
   duration: integer("duration").notNull(), // in days
   features: text("features").array().notNull(),
+  planType: subscriptionPlanTypeEnum("plan_type").notNull().default("monthly"),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -39,6 +43,8 @@ export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans
   isActive: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  planType: z.enum(["monthly", "annual", "business"]).default("monthly"),
 });
 
 export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
