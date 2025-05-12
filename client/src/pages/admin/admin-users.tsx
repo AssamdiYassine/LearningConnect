@@ -634,7 +634,7 @@ export default function AdminUsers() {
                       if (selectedUser) {
                         setSelectedUser({
                           ...selectedUser,
-                          subscriptionType: value === "none" ? null : value
+                          subscriptionType: value === "none" ? null : value as "monthly" | "annual"
                         });
                       }
                     }}

@@ -20,6 +20,7 @@ extendedStorage.getAllSubscriptionPlans = async function() {
       price: 29,
       duration: 30,
       features: ["Accès à toutes les formations", "Support par email", "Certificats de formation"],
+      planType: "monthly",
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -37,6 +38,26 @@ extendedStorage.getAllSubscriptionPlans = async function() {
         "Séances de mentorat mensuelles",
         "Accès aux ressources exclusives"
       ],
+      planType: "annual",
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      id: 3,
+      name: "Business",
+      description: "Solution pour les entreprises avec plusieurs utilisateurs",
+      price: 499,
+      duration: 30,
+      features: [
+        "Accès à toutes les formations pour 10 utilisateurs", 
+        "Support VIP dédié", 
+        "Certificats de formation",
+        "Séances de mentorat hebdomadaires",
+        "Formation personnalisée",
+        "Suivi individuel des progressions"
+      ],
+      planType: "business",
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()
