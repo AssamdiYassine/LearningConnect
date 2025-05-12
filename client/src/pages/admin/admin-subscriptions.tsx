@@ -81,11 +81,19 @@ function AdminSubscriptions() {
   const { toast } = useToast();
   const [currentTab, setCurrentTab] = useState<string>("actifs");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
+  const [isPlanDialogOpen, setIsPlanDialogOpen] = useState<boolean>(false);
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
   const [editForm, setEditForm] = useState({
     type: "",
     endDate: "",
     status: "",
+  });
+  const [newPlan, setNewPlan] = useState({
+    name: "",
+    description: "",
+    price: 0,
+    duration: 30, // En jours
+    features: [""],
   });
 
   // Couleurs pour les graphiques
@@ -97,6 +105,45 @@ function AdminSubscriptions() {
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/admin/subscriptions");
       return res.json();
+    },
+  });
+  
+  // Récupération des plans d'abonnement
+  const { data: subscriptionPlans = [], isLoading: plansLoading } = useQuery({
+    queryKey: ["/api/admin/subscription-plans"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/admin/subscription-plans");
+      return res.json();
+    },
+  });
+  
+  // Mutation pour créer un nouveau plan d'abonnement
+  const createPlanMutation = useMutation({
+    mutationFn: async (data: typeof newPlan) => {
+      const res = await apiRequest("POST", "/api/admin/subscription-plans", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Plan créé",
+        description: "Le plan d'abonnement a été créé avec succès.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/subscription-plans"] });
+      setIsPlanDialogOpen(false);
+      setNewPlan({
+        name: "",
+        description: "",
+        price: 0,
+        duration: 30,
+        features: [""],
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: `Erreur lors de la création: ${error.message}`,
+        variant: "destructive",
+      });
     },
   });
 
@@ -257,9 +304,100 @@ function AdminSubscriptions() {
     );
   }
 
+  // Gestionnaire d'ajout de caractéristiques au plan
+  const handleAddFeature = () => {
+    setNewPlan({
+      ...newPlan,
+      features: [...newPlan.features, ""]
+    });
+  };
+
+  // Gestionnaire de changement de caractéristique
+  const handleFeatureChange = (index: number, value: string) => {
+    const updatedFeatures = [...newPlan.features];
+    updatedFeatures[index] = value;
+    setNewPlan({
+      ...newPlan,
+      features: updatedFeatures
+    });
+  };
+
+  // Gestionnaire de suppression de caractéristique
+  const handleRemoveFeature = (index: number) => {
+    if (newPlan.features.length <= 1) return;
+    const updatedFeatures = [...newPlan.features];
+    updatedFeatures.splice(index, 1);
+    setNewPlan({
+      ...newPlan,
+      features: updatedFeatures
+    });
+  };
+
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-slate-900">Gestion des Abonnements</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-slate-900">Gestion des Abonnements</h1>
+        <Button 
+          onClick={() => setIsPlanDialogOpen(true)}
+          className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Nouveau plan
+        </Button>
+      </div>
+      
+      {/* Section des plans d'abonnement */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Plans d'abonnement disponibles</CardTitle>
+          <CardDescription>Gérez les plans que vous proposez à vos clients</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {plansLoading ? (
+            <div className="flex justify-center p-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#5F8BFF]"></div>
+            </div>
+          ) : subscriptionPlans.length === 0 ? (
+            <div className="text-center p-6 border rounded-lg bg-gray-50">
+              <h3 className="text-lg font-medium text-gray-900">Aucun plan d'abonnement</h3>
+              <p className="mt-1 text-sm text-gray-500">Créez des plans d'abonnement pour vos clients.</p>
+              <Button 
+                onClick={() => setIsPlanDialogOpen(true)} 
+                className="mt-4 bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Créer un plan
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {subscriptionPlans.map((plan: any) => (
+                <Card key={plan.id} className="overflow-hidden border-2 hover:border-[#5F8BFF] transition-all">
+                  <CardHeader className="bg-gradient-to-r from-[#1D2B6C] to-[#5F8BFF] text-white">
+                    <CardTitle>{plan.name}</CardTitle>
+                    <div className="text-2xl font-bold">{plan.price} € {plan.duration === 30 ? '/mois' : plan.duration === 365 ? '/an' : `/${plan.duration}j`}</div>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    <p className="mb-4 text-sm text-gray-600">{plan.description}</p>
+                    <ul className="space-y-2">
+                      {plan.features.map((feature: string, index: number) => (
+                        <li key={index} className="flex items-start">
+                          <Check className="h-5 w-5 text-green-500 mr-2 shrink-0 mt-0.5" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                  <CardFooter className="flex justify-end gap-2 border-t bg-gray-50 p-3">
+                    <Button variant="outline" size="sm">Modifier</Button>
+                    <Button variant="destructive" size="sm">Supprimer</Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
       
       {/* Cartes de statistiques */}
       {stats && (
