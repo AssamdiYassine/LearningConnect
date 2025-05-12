@@ -76,36 +76,47 @@ extendedStorage.getAllSubscriptionPlans = async function() {
 };
 
 extendedStorage.getSubscriptionPlan = async function(id: number) {
-  const plans = await this.getAllSubscriptionPlans();
-  return plans.find(plan => plan.id === id);
+  return subscriptionPlansMap.get(id);
 };
 
 extendedStorage.getSubscriptionPlanByName = async function(name: string) {
-  const plans = await this.getAllSubscriptionPlans();
-  return plans.find(plan => plan.name.toLowerCase() === name.toLowerCase());
+  return Array.from(subscriptionPlansMap.values()).find(plan => 
+    plan.name.toLowerCase() === name.toLowerCase()
+  );
 };
 
-extendedStorage.createSubscriptionPlan = async function(data: any) {
-  // Dans cette implémentation simplifiée, nous retournons simplement les données
-  // comme si elles avaient été créées
-  return {
-    id: 3, // Simuler un nouvel ID
+extendedStorage.createSubscriptionPlan = async function(data: InsertSubscriptionPlan) {
+  const id = subscriptionPlanIdCounter++;
+  const now = new Date();
+  
+  const newPlan: SubscriptionPlan = {
+    id,
     ...data,
     isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date()
+    createdAt: now,
+    updatedAt: now
   };
+  
+  // Stocker le nouveau plan dans la map
+  subscriptionPlansMap.set(id, newPlan);
+  console.log(`Plan d'abonnement créé avec l'ID: ${id}`, newPlan);
+  return newPlan;
 };
 
-extendedStorage.updateSubscriptionPlan = async function(id: number, data: any) {
+extendedStorage.updateSubscriptionPlan = async function(id: number, data: Partial<InsertSubscriptionPlan & { isActive?: boolean }>) {
   const plan = await this.getSubscriptionPlan(id);
   if (!plan) throw new Error("Plan d'abonnement non trouvé");
   
-  return {
+  const updatedPlan: SubscriptionPlan = {
     ...plan,
     ...data,
     updatedAt: new Date()
   };
+  
+  // Mettre à jour le plan dans la map
+  subscriptionPlansMap.set(id, updatedPlan);
+  console.log(`Plan d'abonnement mis à jour avec l'ID: ${id}`, updatedPlan);
+  return updatedPlan;
 };
 
 // Export the extended storage as IStorage

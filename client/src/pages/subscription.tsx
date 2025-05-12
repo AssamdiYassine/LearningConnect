@@ -3,12 +3,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
+import { CheckCircle, Loader2 } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
+
+// Type pour les plans d'abonnement
+interface SubscriptionPlan {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  duration: number;
+  features: string[];
+  planType: "monthly" | "annual" | "business";
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export default function Subscription() {
   const { user } = useAuth();
@@ -16,10 +30,44 @@ export default function Subscription() {
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual">("monthly");
   const [, setLocation] = useLocation();
 
+  // Récupérer les plans d'abonnement depuis l'API
+  const { data: plans, isLoading: isLoadingPlans } = useQuery<SubscriptionPlan[]>({
+    queryKey: ['/api/subscription-plans'],
+    queryFn: async () => {
+      const res = await fetch('/api/subscription-plans');
+      if (!res.ok) throw new Error("Impossible de charger les plans d'abonnement");
+      return res.json();
+    }
+  });
+  
+  // Filtrer les plans par type
+  const monthlyPlans = useMemo(() => 
+    plans?.filter(plan => plan.planType === "monthly" && plan.isActive) || [],
+  [plans]);
+  
+  const annualPlans = useMemo(() => 
+    plans?.filter(plan => plan.planType === "annual" && plan.isActive) || [],
+  [plans]);
+  
+  const businessPlans = useMemo(() => 
+    plans?.filter(plan => plan.planType === "business" && plan.isActive) || [],
+  [plans]);
+
+  // Mettre à jour l'onglet sélectionné si aucun plan n'est disponible pour le type actuel
+  useEffect(() => {
+    if (plans && plans.length > 0) {
+      if (selectedPlan === "monthly" && monthlyPlans.length === 0 && annualPlans.length > 0) {
+        setSelectedPlan("annual");
+      } else if (selectedPlan === "annual" && annualPlans.length === 0 && monthlyPlans.length > 0) {
+        setSelectedPlan("monthly");
+      }
+    }
+  }, [plans, monthlyPlans, annualPlans, selectedPlan]);
+
   // Format the subscription end date if it exists
   const formatEndDate = (date: string | Date | null | undefined) => {
     if (!date) return "N/A";
-    return new Date(date).toLocaleDateString('en-US', {
+    return new Date(date).toLocaleDateString('fr-FR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -27,8 +75,8 @@ export default function Subscription() {
   };
 
   // Handle subscription by redirecting to checkout
-  const handleSubscribe = () => {
-    setLocation(`/checkout?type=${selectedPlan}`);
+  const handleSubscribe = (planId: number) => {
+    setLocation(`/checkout?planId=${planId}`);
   };
 
   // Cancel subscription mutation
@@ -39,14 +87,14 @@ export default function Subscription() {
     },
     onSuccess: () => {
       toast({
-        title: "Subscription cancelled",
-        description: "Your subscription has been cancelled successfully.",
+        title: "Abonnement annulé",
+        description: "Votre abonnement a été annulé avec succès.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
     },
     onError: (error: Error) => {
       toast({
-        title: "Cancellation failed",
+        title: "Échec de l'annulation",
         description: error.message,
         variant: "destructive",
       });
@@ -60,12 +108,21 @@ export default function Subscription() {
   // Check if user has an active subscription
   const isSubscribed = user?.isSubscribed;
 
+  // Afficher un loader pendant le chargement des plans
+  if (isLoadingPlans) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 font-heading">My Subscription</h1>
+        <h1 className="text-3xl font-bold text-gray-900 font-heading">Mon abonnement</h1>
         <p className="mt-2 text-gray-600">
-          Manage your subscription plan and payments
+          Gérez votre plan d'abonnement et vos paiements
         </p>
       </div>
 
@@ -73,42 +130,47 @@ export default function Subscription() {
       {isSubscribed && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle>Current Subscription</CardTitle>
-            <CardDescription>Your active subscription details</CardDescription>
+            <CardTitle>Abonnement actuel</CardTitle>
+            <CardDescription>Détails de votre abonnement actif</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-xl font-medium text-gray-900 capitalize">{user?.subscriptionType} Plan</h3>
-                  <p className="text-gray-500">Valid until: {formatEndDate(user?.subscriptionEndDate)}</p>
+                  <h3 className="text-xl font-medium text-gray-900 capitalize">
+                    {user?.subscriptionType === "monthly" ? "Mensuel" : 
+                     user?.subscriptionType === "annual" ? "Annuel" : "Business"}
+                  </h3>
+                  <p className="text-gray-500">Valide jusqu'au: {formatEndDate(user?.subscriptionEndDate)}</p>
                 </div>
                 <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-                  Active
+                  Actif
                 </Badge>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-gray-900 mb-2">Plan Benefits</h4>
+                  <h4 className="font-medium text-gray-900 mb-2">Avantages du plan</h4>
                   <ul className="space-y-2">
                     <li className="flex items-center text-gray-700">
                       <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Unlimited access to all courses</span>
+                      <span>Accès à toutes les formations</span>
                     </li>
                     <li className="flex items-center text-gray-700">
                       <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Priority support</span>
+                      <span>Support prioritaire</span>
                     </li>
                     <li className="flex items-center text-gray-700">
                       <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Exclusive content</span>
+                      <span>Contenu exclusif</span>
                     </li>
                   </ul>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-gray-900 mb-2">Billing Information</h4>
+                  <h4 className="font-medium text-gray-900 mb-2">Informations de facturation</h4>
                   <p className="text-gray-700">
-                    Your {user?.subscriptionType} subscription will automatically renew on {formatEndDate(user?.subscriptionEndDate)}.
+                    Votre abonnement {user?.subscriptionType === "monthly" ? "mensuel" : 
+                    user?.subscriptionType === "annual" ? "annuel" : "business"} sera 
+                    automatiquement renouvelé le {formatEndDate(user?.subscriptionEndDate)}.
                   </p>
                 </div>
               </div>
@@ -121,7 +183,7 @@ export default function Subscription() {
               onClick={handleCancel}
               disabled={cancelSubscriptionMutation.isPending}
             >
-              {cancelSubscriptionMutation.isPending ? "Cancelling..." : "Cancel Subscription"}
+              {cancelSubscriptionMutation.isPending ? "Annulation en cours..." : "Annuler l'abonnement"}
             </Button>
           </CardFooter>
         </Card>
@@ -129,137 +191,155 @@ export default function Subscription() {
 
       {/* Subscription Plans */}
       {!isSubscribed && (
-        <Tabs defaultValue={selectedPlan} onValueChange={(value) => setSelectedPlan(value as "monthly" | "annual")}>
+        <Tabs 
+          defaultValue={selectedPlan} 
+          onValueChange={(value) => setSelectedPlan(value as "monthly" | "annual")}
+          className="space-y-6"
+        >
           <TabsList className="grid w-full grid-cols-2 mb-8">
-            <TabsTrigger value="monthly">Monthly</TabsTrigger>
-            <TabsTrigger value="annual">Annual (Save 20%)</TabsTrigger>
+            <TabsTrigger value="monthly" disabled={monthlyPlans.length === 0}>Mensuel</TabsTrigger>
+            <TabsTrigger value="annual" disabled={annualPlans.length === 0}>Annuel (Économisez 20%)</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="monthly">
+          {plans && plans.length === 0 && (
             <Card>
-              <CardHeader>
-                <CardTitle>Monthly Subscription</CardTitle>
-                <CardDescription>Pay monthly, cancel anytime</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-baseline">
-                    <span className="text-3xl font-bold text-gray-900">$29</span>
-                    <span className="text-gray-500 ml-1">/ month</span>
-                  </div>
-                  <ul className="space-y-3">
-                    <li className="flex items-center text-gray-700">
-                      <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Unlimited access to all courses</span>
-                    </li>
-                    <li className="flex items-center text-gray-700">
-                      <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Priority support</span>
-                    </li>
-                    <li className="flex items-center text-gray-700">
-                      <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Exclusive content</span>
-                    </li>
-                    <li className="flex items-center text-gray-700">
-                      <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Cancel anytime</span>
-                    </li>
-                  </ul>
-                </div>
+              <CardContent className="pt-6">
+                <p className="text-center text-gray-500">
+                  Aucun plan d'abonnement n'est disponible actuellement. Veuillez réessayer ultérieurement.
+                </p>
               </CardContent>
-              <CardFooter>
-                <Button 
-                  className="w-full" 
-                  onClick={handleSubscribe}
-                >
-                  Subscribe Now
-                </Button>
-              </CardFooter>
             </Card>
+          )}
+          
+          <TabsContent value="monthly" className="space-y-6">
+            {monthlyPlans.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-center text-gray-500">
+                    Aucun plan mensuel n'est disponible actuellement.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              monthlyPlans.map(plan => (
+                <Card key={plan.id}>
+                  <CardHeader>
+                    <CardTitle>{plan.name}</CardTitle>
+                    <CardDescription>{plan.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-baseline">
+                        <span className="text-3xl font-bold text-gray-900">{plan.price}€</span>
+                        <span className="text-gray-500 ml-1">/ mois</span>
+                      </div>
+                      <ul className="space-y-3">
+                        {plan.features.map((feature, index) => (
+                          <li key={index} className="flex items-center text-gray-700">
+                            <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button 
+                      className="w-full" 
+                      onClick={() => handleSubscribe(plan.id)}
+                    >
+                      S'abonner maintenant
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))
+            )}
           </TabsContent>
           
-          <TabsContent value="annual">
-            <Card>
-              <CardHeader>
-                <CardTitle>Annual Subscription</CardTitle>
-                <CardDescription>Pay annually and save 20%</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-baseline">
-                    <span className="text-3xl font-bold text-gray-900">$279</span>
-                    <span className="text-gray-500 ml-1">/ year</span>
-                    <Badge className="ml-2 bg-green-100 text-green-800">Save $69</Badge>
-                  </div>
-                  <ul className="space-y-3">
-                    <li className="flex items-center text-gray-700">
-                      <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                      <span>All monthly plan benefits</span>
-                    </li>
-                    <li className="flex items-center text-gray-700">
-                      <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                      <span>20% discount compared to monthly plan</span>
-                    </li>
-                    <li className="flex items-center text-gray-700">
-                      <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Priority access to new courses</span>
-                    </li>
-                    <li className="flex items-center text-gray-700">
-                      <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                      <span>30-day money-back guarantee</span>
-                    </li>
-                  </ul>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  className="w-full" 
-                  onClick={handleSubscribe}
-                >
-                  Subscribe Now
-                </Button>
-              </CardFooter>
-            </Card>
+          <TabsContent value="annual" className="space-y-6">
+            {annualPlans.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-center text-gray-500">
+                    Aucun plan annuel n'est disponible actuellement.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              annualPlans.map(plan => (
+                <Card key={plan.id}>
+                  <CardHeader>
+                    <CardTitle>{plan.name}</CardTitle>
+                    <CardDescription>{plan.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-baseline">
+                        <span className="text-3xl font-bold text-gray-900">{plan.price}€</span>
+                        <span className="text-gray-500 ml-1">/ an</span>
+                        <Badge className="ml-2 bg-green-100 text-green-800">Économisez 20%</Badge>
+                      </div>
+                      <ul className="space-y-3">
+                        {plan.features.map((feature, index) => (
+                          <li key={index} className="flex items-center text-gray-700">
+                            <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button 
+                      className="w-full" 
+                      onClick={() => handleSubscribe(plan.id)}
+                    >
+                      S'abonner maintenant
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))
+            )}
           </TabsContent>
         </Tabs>
       )}
 
       {/* FAQ Section */}
       <div className="mt-12">
-        <h2 className="text-2xl font-bold text-gray-900 font-heading mb-6">Frequently Asked Questions</h2>
+        <h2 className="text-2xl font-bold text-gray-900 font-heading mb-6">Questions fréquentes</h2>
         <div className="grid gap-6 md:grid-cols-2">
           <Card>
             <CardContent className="pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Can I cancel my subscription?</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Puis-je annuler mon abonnement ?</h3>
               <p className="text-gray-600">
-                Yes, you can cancel your subscription at any time. If you cancel, you'll still have access until the end of your billing period.
+                Oui, vous pouvez annuler votre abonnement à tout moment. Si vous annulez, vous aurez toujours accès jusqu'à la fin de votre période de facturation.
               </p>
             </CardContent>
           </Card>
           
           <Card>
             <CardContent className="pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">What's included in my subscription?</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Qu'est-ce qui est inclus dans mon abonnement ?</h3>
               <p className="text-gray-600">
-                Your subscription gives you access to all our live training sessions, ability to interact with trainers, and access to exclusive resources.
+                Votre abonnement vous donne accès à toutes nos sessions de formation en direct, la possibilité d'interagir avec les formateurs et l'accès à des ressources exclusives.
               </p>
             </CardContent>
           </Card>
           
           <Card>
             <CardContent className="pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">How do I access the live sessions?</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Comment accéder aux sessions en direct ?</h3>
               <p className="text-gray-600">
-                After enrolling in a course, you'll be able to access the Zoom link for the session. We'll also send you an email reminder before the session starts.
+                Après vous être inscrit à un cours, vous pourrez accéder au lien Zoom pour la session. Nous vous enverrons également un e-mail de rappel avant le début de la session.
               </p>
             </CardContent>
           </Card>
           
           <Card>
             <CardContent className="pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Is there a refund policy?</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Y a-t-il une politique de remboursement ?</h3>
               <p className="text-gray-600">
-                We offer a 30-day money-back guarantee for annual subscriptions. Monthly subscriptions can be cancelled at any time.
+                Nous offrons une garantie de remboursement de 30 jours pour les abonnements annuels. Les abonnements mensuels peuvent être annulés à tout moment.
               </p>
             </CardContent>
           </Card>
