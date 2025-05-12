@@ -68,10 +68,13 @@ export const users = pgTable("users", {
   stripeSubscriptionId: text("stripe_subscription_id"),
   resetPasswordToken: text("reset_password_token"),
   resetTokenExpires: timestamp("reset_token_expires"),
-  enterpriseId: integer("enterprise_id").references(() => users.id),
+  enterpriseId: integer("enterprise_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+// La relation entre users et enterpriseId est définie dans la base de données
+// Pour les opérations, nous utiliserons des requêtes spécifiques
 
 // Categories table
 export const categories = pgTable("categories", {
@@ -131,7 +134,51 @@ export const userCourseAccess = pgTable("user_course_access", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-// Les tables pour la gestion des entreprises seront ajoutées progressivement
+// Table pour les accès aux formations attribués aux entreprises (par l'admin)
+export const enterpriseCourseAccess = pgTable("enterprise_course_access", {
+  id: serial("id").primaryKey(),
+  enterpriseId: integer("enterprise_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  courseId: integer("course_id").notNull().references(() => courses.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Table pour les accès aux formations gérés par l'entreprise pour ses employés
+export const enterpriseEmployeeCourseAccess = pgTable("enterprise_employee_course_access", {
+  id: serial("id").primaryKey(),
+  employeeId: integer("employee_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  courseId: integer("course_id").notNull().references(() => courses.id, { onDelete: "cascade" }),
+  assignedById: integer("assigned_by_id").notNull().references(() => users.id), // ID de l'entreprise qui assigne
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Table pour le suivi de progression des employés d'entreprise
+export const employeeCourseProgress = pgTable("employee_course_progress", {
+  id: serial("id").primaryKey(),
+  employeeId: integer("employee_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  courseId: integer("course_id").notNull().references(() => courses.id, { onDelete: "cascade" }),
+  progress: integer("progress").notNull().default(0), // 0-100%
+  completedAt: timestamp("completed_at"),
+  lastAccessedAt: timestamp("last_accessed_at").notNull().defaultNow(),
+  timeSpentMinutes: integer("time_spent_minutes").notNull().default(0),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Table pour la présence aux sessions de formation
+export const employeeSessionAttendance = pgTable("employee_session_attendance", {
+  id: serial("id").primaryKey(),
+  employeeId: integer("employee_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  sessionId: integer("session_id").notNull().references(() => sessions.id, { onDelete: "cascade" }),
+  attended: boolean("attended").notNull().default(false),
+  joinedAt: timestamp("joined_at"),
+  leftAt: timestamp("left_at"),
+  attendanceStatus: text("attendance_status").notNull().default("absent"), // absent, present, late, partial
+  notes: text("notes"),
+  recordedById: integer("recorded_by_id").references(() => users.id), // Qui a enregistré cette présence
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
 
 // Notifications table
 export const notifications = pgTable("notifications", {
@@ -465,4 +512,38 @@ export const insertUserOnboardingSchema = createInsertSchema(userOnboarding).omi
 export type UserOnboarding = typeof userOnboarding.$inferSelect;
 export type InsertUserOnboarding = z.infer<typeof insertUserOnboardingSchema>;
 
-// Les types pour la gestion des entreprises seront ajoutés progressivement
+// Types pour les accès aux cours pour les entreprises
+export const insertEnterpriseCourseAccessSchema = createInsertSchema(enterpriseCourseAccess).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type EnterpriseCourseAccess = typeof enterpriseCourseAccess.$inferSelect;
+export type InsertEnterpriseCourseAccess = z.infer<typeof insertEnterpriseCourseAccessSchema>;
+
+// Types pour les accès aux cours pour les employés d'entreprise
+export const insertEnterpriseEmployeeCourseAccessSchema = createInsertSchema(enterpriseEmployeeCourseAccess).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type EnterpriseEmployeeCourseAccess = typeof enterpriseEmployeeCourseAccess.$inferSelect;
+export type InsertEnterpriseEmployeeCourseAccess = z.infer<typeof insertEnterpriseEmployeeCourseAccessSchema>;
+
+// Types pour le suivi de progression des employés
+export const insertEmployeeCourseProgressSchema = createInsertSchema(employeeCourseProgress).omit({
+  id: true,
+  lastAccessedAt: true,
+  updatedAt: true,
+});
+export type EmployeeCourseProgress = typeof employeeCourseProgress.$inferSelect;
+export type InsertEmployeeCourseProgress = z.infer<typeof insertEmployeeCourseProgressSchema>;
+
+// Types pour la présence aux sessions
+export const insertEmployeeSessionAttendanceSchema = createInsertSchema(employeeSessionAttendance).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type EmployeeSessionAttendance = typeof employeeSessionAttendance.$inferSelect;
+export type InsertEmployeeSessionAttendance = z.infer<typeof insertEmployeeSessionAttendanceSchema>;
