@@ -498,6 +498,50 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
     await db.delete(blogComments).where(eq(blogComments.id, id));
   };
 
+  // Méthodes d'accès aux formations pour les utilisateurs
+  dbStorage.getUserCourseAccess = async function(userId: number) {
+    try {
+      // Utiliser une requête SQL directe pour récupérer les accès aux cours
+      const result = await db.execute(`
+        SELECT course_id 
+        FROM user_course_access 
+        WHERE user_id = ${userId}
+      `);
+      
+      if (!result.rows) {
+        return [];
+      }
+      
+      return result.rows.map(row => parseInt(row.course_id));
+    } catch (error) {
+      console.error("Erreur lors de la récupération des accès aux cours:", error);
+      return [];
+    }
+  };
+
+  dbStorage.updateUserCourseAccess = async function(userId: number, courseIds: number[]) {
+    try {
+      // D'abord, supprimer tous les accès existants
+      await db.execute(`
+        DELETE FROM user_course_access 
+        WHERE user_id = ${userId}
+      `);
+      
+      // Ensuite, insérer les nouveaux accès
+      if (courseIds.length > 0) {
+        const values = courseIds.map(courseId => `(${userId}, ${courseId})`).join(', ');
+        
+        await db.execute(`
+          INSERT INTO user_course_access (user_id, course_id)
+          VALUES ${values}
+        `);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour des accès aux cours:", error);
+      throw error;
+    }
+  };
+
   // Retourner l'objet dbStorage modifié
   return dbStorage;
 }
