@@ -2,11 +2,12 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { CourseWithDetails, insertSessionSchema } from "@shared/schema";
-import { Loader2, Save, ArrowLeft, Info } from "lucide-react";
+import { Loader2, Save, ArrowLeft, Info, Clock, CalendarDays } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -28,10 +29,15 @@ export default function CreateSession() {
   const courseIdParam = queryParams.get('courseId');
   const initialCourseId = courseIdParam ? parseInt(courseIdParam) : undefined;
   
-  // État pour gérer le temps
+  // État pour gérer le temps de début
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedHour, setSelectedHour] = useState("09");
   const [selectedMinute, setSelectedMinute] = useState("00");
+  
+  // État pour gérer le temps de fin
+  const [selectedEndDate, setSelectedEndDate] = useState<Date>(new Date());
+  const [selectedEndHour, setSelectedEndHour] = useState("10");
+  const [selectedEndMinute, setSelectedEndMinute] = useState("30");
 
   // Récupérer tous les cours pour ce formateur
   const { data: courses, isLoading } = useQuery<CourseWithDetails[]>({
@@ -53,10 +59,17 @@ export default function CreateSession() {
     date: z.string().refine(val => !isNaN(Date.parse(val)), {
       message: "Date et heure invalides",
     }),
+    endDate: z.string().refine(val => !isNaN(Date.parse(val)), {
+      message: "Date et heure de fin invalides",
+    }).optional(),
     courseId: z.number({
       required_error: "Veuillez sélectionner un cours",
     }),
+    title: z.string().optional(),
+    description: z.string().optional(),
     zoomLink: z.string().min(1, "Le lien Zoom est requis"),
+    materialsLink: z.string().optional(),
+    maxParticipants: z.number().optional(),
   });
 
   // Initialiser le formulaire
@@ -64,8 +77,13 @@ export default function CreateSession() {
     resolver: zodResolver(createSessionSchema),
     defaultValues: {
       courseId: initialCourseId || 0,
+      title: "",
+      description: "",
       date: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
-      zoomLink: ""
+      endDate: format(new Date(new Date().setHours(new Date().getHours() + 1)), "yyyy-MM-dd'T'HH:mm:ss"),
+      zoomLink: "",
+      materialsLink: "",
+      maxParticipants: undefined
     }
   });
 
@@ -79,11 +97,23 @@ export default function CreateSession() {
     newDate.setHours(parseInt(hour), parseInt(minute));
     form.setValue('date', newDate.toISOString());
   };
+  
+  // Mise à jour de la date de fin dans le formulaire
+  const updateEndDateField = (date: Date, hour: string, minute: string) => {
+    const newDate = new Date(date);
+    newDate.setHours(parseInt(hour), parseInt(minute));
+    form.setValue('endDate', newDate.toISOString());
+  };
 
-  // Effet pour mettre à jour la date quand les composants changent
+  // Mise à jour de la date quand les composants changent
   const onDateChange = (date: Date) => {
     setSelectedDate(date);
     updateDateField(date, selectedHour, selectedMinute);
+    
+    // Mettre à jour la date de fin également pour conserver la même date
+    const endDate = new Date(date);
+    setSelectedEndDate(endDate);
+    updateEndDateField(endDate, selectedEndHour, selectedEndMinute);
   };
 
   const onHourChange = (hour: string) => {
@@ -94,6 +124,22 @@ export default function CreateSession() {
   const onMinuteChange = (minute: string) => {
     setSelectedMinute(minute);
     updateDateField(selectedDate, selectedHour, minute);
+  };
+  
+  // Gestion des changements pour la date de fin
+  const onEndDateChange = (date: Date) => {
+    setSelectedEndDate(date);
+    updateEndDateField(date, selectedEndHour, selectedEndMinute);
+  };
+
+  const onEndHourChange = (hour: string) => {
+    setSelectedEndHour(hour);
+    updateEndDateField(selectedEndDate, hour, selectedEndMinute);
+  };
+
+  const onEndMinuteChange = (minute: string) => {
+    setSelectedEndMinute(minute);
+    updateEndDateField(selectedEndDate, selectedEndHour, minute);
   };
 
   // Mutation pour créer une session
@@ -106,7 +152,6 @@ export default function CreateSession() {
       toast({
         title: "Session créée",
         description: "La session a été créée avec succès",
-        variant: "success"
       });
       queryClient.invalidateQueries({ queryKey: ["/api/sessions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/sessions/trainer"] });
@@ -163,6 +208,11 @@ export default function CreateSession() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="flex flex-col space-y-6">
+                <h3 className="text-lg font-semibold text-gray-900">Détails de la session</h3>
+                <p className="text-sm text-gray-500">Tous les champs sont obligatoires pour créer une session.</p>
+              </div>
+              
               <FormField
                 control={form.control}
                 name="courseId"
@@ -191,81 +241,202 @@ export default function CreateSession() {
                   </FormItem>
                 )}
               />
+              
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Titre de la session</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Ex: Introduction aux bases de données" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormDescription className="flex items-center gap-2 mt-1">
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                      Un titre descriptif pour cette session.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Description du contenu de cette session..." 
+                        className="min-h-[100px]"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-1 gap-6 pt-2">
+                <div className="flex flex-col space-y-4">
+                  <FormLabel className="flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                    Date
+                  </FormLabel>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <FormField
+                        control={form.control}
+                        name="date"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                      "w-full pl-3 text-left font-normal",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    {selectedDate ? (
+                                      format(selectedDate, "dd MMMM yyyy", { locale: fr })
+                                    ) : (
+                                      <span>Sélectionner une date</span>
+                                    )}
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={selectedDate}
+                                  onSelect={(date) => date && onDateChange(date)}
+                                  initialFocus
+                                  locale={fr}
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <FormField
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Date</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {selectedDate ? (
-                                  format(selectedDate, "dd MMMM yyyy", { locale: fr })
-                                ) : (
-                                  <span>Sélectionner une date</span>
-                                )}
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={selectedDate}
-                              onSelect={(date) => date && onDateChange(date)}
-                              initialFocus
-                              locale={fr}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                    <div className="space-y-2">
+                      <FormLabel className="text-sm text-gray-500">Heure de début</FormLabel>
+                      <div className="flex items-center gap-2">
+                        <Select value={selectedHour} onValueChange={onHourChange}>
+                          <SelectTrigger className="w-24">
+                            <SelectValue placeholder="Heure" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {hours.map((hour) => (
+                              <SelectItem key={hour} value={hour}>
+                                {hour}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span>:</span>
+                        <Select value={selectedMinute} onValueChange={onMinuteChange}>
+                          <SelectTrigger className="w-24">
+                            <SelectValue placeholder="Minute" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {minutes.map((minute) => (
+                              <SelectItem key={minute} value={minute}>
+                                {minute}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                    <div>
+                      <FormField
+                        control={form.control}
+                        name="endDate"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel className="text-sm text-gray-500">Date de fin</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                      "w-full pl-3 text-left font-normal",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    {selectedEndDate ? (
+                                      format(selectedEndDate, "dd MMMM yyyy", { locale: fr })
+                                    ) : (
+                                      <span>Sélectionner une date</span>
+                                    )}
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={selectedEndDate}
+                                  onSelect={(date) => date && onEndDateChange(date)}
+                                  initialFocus
+                                  locale={fr}
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
-                <div className="space-y-4">
-                  <FormLabel>Heure</FormLabel>
-                  <div className="flex items-center gap-2">
-                    <Select value={selectedHour} onValueChange={onHourChange}>
-                      <SelectTrigger className="w-24">
-                        <SelectValue placeholder="Heure" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {hours.map((hour) => (
-                          <SelectItem key={hour} value={hour}>
-                            {hour}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <span>:</span>
-                    <Select value={selectedMinute} onValueChange={onMinuteChange}>
-                      <SelectTrigger className="w-24">
-                        <SelectValue placeholder="Minute" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {minutes.map((minute) => (
-                          <SelectItem key={minute} value={minute}>
-                            {minute}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="space-y-2">
+                      <FormLabel className="text-sm text-gray-500">Heure de fin</FormLabel>
+                      <div className="flex items-center gap-2">
+                        <Select value={selectedEndHour} onValueChange={onEndHourChange}>
+                          <SelectTrigger className="w-24">
+                            <SelectValue placeholder="Heure" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {hours.map((hour) => (
+                              <SelectItem key={hour} value={hour}>
+                                {hour}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span>:</span>
+                        <Select value={selectedEndMinute} onValueChange={onEndMinuteChange}>
+                          <SelectTrigger className="w-24">
+                            <SelectValue placeholder="Minute" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {minutes.map((minute) => (
+                              <SelectItem key={minute} value={minute}>
+                                {minute}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-
+              
               <FormField
                 control={form.control}
                 name="zoomLink"
@@ -282,6 +453,50 @@ export default function CreateSession() {
                       <Info className="h-4 w-4 text-muted-foreground" />
                       Lien vers la réunion Zoom où la session aura lieu.
                     </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="materialsLink"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Lien vers les matériaux</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="https://drive.google.com/folder/..." 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormDescription className="flex items-center gap-2 mt-1">
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                      Lien optionnel vers des ressources pour les participants (slides, documents, exercices).
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="maxParticipants"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nombre maximum de participants</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="20"
+                        min="1"
+                        onChange={(e) => {
+                          const value = e.target.value ? parseInt(e.target.value) : undefined;
+                          field.onChange(value);
+                        }}
+                        value={field.value === undefined ? '' : field.value}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
