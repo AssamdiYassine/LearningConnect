@@ -3,7 +3,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Enum for user roles
-export const roleEnum = pgEnum("role", ["student", "trainer", "admin"]);
+export const roleEnum = pgEnum("role", ["student", "trainer", "admin", "enterprise"]);
 
 // Enum for subscription types
 export const subscriptionTypeEnum = pgEnum("subscription_type", ["monthly", "annual"]);
@@ -68,6 +68,9 @@ export const users = pgTable("users", {
   stripeSubscriptionId: text("stripe_subscription_id"),
   resetPasswordToken: text("reset_password_token"),
   resetTokenExpires: timestamp("reset_token_expires"),
+  enterpriseId: integer("enterprise_id").references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 // Categories table
@@ -127,6 +130,8 @@ export const userCourseAccess = pgTable("user_course_access", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+// Les tables pour la gestion des entreprises seront ajoutées progressivement
 
 // Notifications table
 export const notifications = pgTable("notifications", {
@@ -459,3 +464,5 @@ export const insertUserOnboardingSchema = createInsertSchema(userOnboarding).omi
 
 export type UserOnboarding = typeof userOnboarding.$inferSelect;
 export type InsertUserOnboarding = z.infer<typeof insertUserOnboardingSchema>;
+
+// Les types pour la gestion des entreprises seront ajoutés progressivement
