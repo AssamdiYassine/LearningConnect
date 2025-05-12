@@ -64,7 +64,7 @@ export default function TrainerSchedule() {
   
   // Récupérer toutes les sessions pour ce formateur
   const { data: sessions, isLoading: isSessionsLoading } = useQuery<SessionWithDetails[]>({
-    queryKey: ["/api/sessions/trainer"],
+    queryKey: [`/api/sessions/trainer/${user?.id}`],
     enabled: !!user && user.role === "trainer",
     queryFn: async () => {
       try {
@@ -93,10 +93,39 @@ export default function TrainerSchedule() {
   });
 
   // Pour les besoins de ce prototype, nous allons maintenant créer des objets Date à partir des chaînes ISO
-  const parsedSessions = sessions?.map(session => ({
-    ...session,
-    parsedDate: parseISO(session.date.toString())
-  })) || [];
+  console.log("Sessions récupérées:", sessions);
+  
+  // Assurons-nous que les dates sont correctement formatées
+  const parsedSessions = sessions?.map(session => {
+    let parsedDate: Date;
+    
+    try {
+      // Si la date est déjà un objet Date
+      if (session.date instanceof Date) {
+        parsedDate = session.date;
+      } 
+      // Si c'est une chaîne ISO
+      else if (typeof session.date === 'string') {
+        parsedDate = parseISO(session.date);
+      } 
+      // Si c'est un timestamp ou autre format
+      else {
+        parsedDate = new Date(session.date);
+      }
+      
+      return {
+        ...session,
+        parsedDate
+      };
+    } catch (error) {
+      console.error("Erreur lors du parsing de la date:", session.date, error);
+      // Utiliser la date actuelle comme fallback
+      return {
+        ...session,
+        parsedDate: new Date()
+      };
+    }
+  }) || [];
 
   // Fonction pour vérifier si une journée a des sessions
   const hasSessionsOnDate = (date: Date) => {
@@ -354,7 +383,7 @@ export default function TrainerSchedule() {
                               showSession(session);
                             }}
                           >
-                            {format(parseISO(session.date.toString()), 'HH:mm')} - {session.course.title}
+                            {format(session.parsedDate, 'HH:mm')} - {session.course.title}
                           </div>
                         ))}
                         {day.sessions.length > 2 && (

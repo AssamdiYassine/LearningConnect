@@ -339,35 +339,72 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUpcomingSessions(): Promise<SessionWithDetails[]> {
-    const now = new Date();
-    
-    const result = await db
-      .select({
-        session: sessions,
-        course: courses,
-        category: categories,
-        trainer: users,
-        enrollmentCount: sql<number>`count(${enrollments.id})`
-      })
-      .from(sessions)
-      .leftJoin(courses, eq(sessions.courseId, courses.id))
-      .leftJoin(categories, eq(courses.categoryId, categories.id))
-      .leftJoin(users, eq(courses.trainerId, users.id))
-      .leftJoin(enrollments, eq(sessions.id, enrollments.sessionId))
-      .where(gte(sessions.date, now))
-      .groupBy(
-        sessions.id,
-        courses.id,
-        categories.id,
-        users.id
-      )
-      .orderBy(sessions.date);
-
-    return result.map(({ session, course, category, trainer, enrollmentCount }) => ({
-      ...session,
-      course: { ...course, category, trainer },
-      enrollmentCount
-    }));
+    try {
+      const now = new Date().toISOString();
+      
+      // Utiliser une requête SQL directe pour éviter les problèmes avec le schéma
+      const result = await db.execute(`
+        SELECT 
+          s.id, s.course_id, s.date, s.zoom_link, s.created_at, s.updated_at, s.is_completed,
+          c.id as course_id, c.title as course_title, c.description as course_description,
+          cat.id as category_id, cat.name as category_name,
+          u.id as trainer_id, u.username as trainer_username, u.display_name as trainer_display_name,
+          COUNT(e.id) as enrollment_count
+        FROM 
+          sessions s
+        LEFT JOIN 
+          courses c ON s.course_id = c.id
+        LEFT JOIN 
+          categories cat ON c.category_id = cat.id
+        LEFT JOIN 
+          users u ON c.trainer_id = u.id
+        LEFT JOIN 
+          enrollments e ON s.id = e.session_id
+        WHERE 
+          s.date >= '${now}'
+        GROUP BY 
+          s.id, c.id, cat.id, u.id
+        ORDER BY 
+          s.date
+      `);
+      
+      console.log("Résultat getUpcomingSessions:", result);
+      
+      if (!result.rows) {
+        return [];
+      }
+      
+      // Transformer les résultats en objets SessionWithDetails
+      return result.rows.map(row => {
+        return {
+          id: row.id,
+          courseId: row.course_id,
+          date: new Date(row.date),
+          zoomLink: row.zoom_link,
+          createdAt: new Date(row.created_at),
+          updatedAt: new Date(row.updated_at),
+          isCompleted: row.is_completed,
+          course: {
+            id: row.course_id,
+            title: row.course_title,
+            description: row.course_description,
+            category: {
+              id: row.category_id,
+              name: row.category_name
+            },
+            trainer: {
+              id: row.trainer_id,
+              username: row.trainer_username,
+              displayName: row.trainer_display_name
+            }
+          },
+          enrollmentCount: parseInt(row.enrollment_count)
+        };
+      });
+    } catch (error) {
+      console.error("Erreur dans getUpcomingSessions:", error);
+      throw error;
+    }
   }
 
   async getSessionWithDetails(id: number): Promise<SessionWithDetails | undefined> {
