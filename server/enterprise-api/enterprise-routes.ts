@@ -108,7 +108,7 @@ router.get("/employees", isEnterprise, async (req, res) => {
           WHERE eeca.employee_id = u.id
         ) as "courseCount",
         (
-          SELECT MAX(esa.joined_at) 
+          SELECT MAX(esa.created_at) 
           FROM ${employeeSessionAttendance} esa 
           WHERE esa.employee_id = u.id
         ) as "lastActivity"
@@ -246,9 +246,9 @@ router.get("/courses", isEnterprise, async (req, res) => {
           ELSE false 
         END as "isActive",
         (
-          SELECT MIN(s.start_time) 
+          SELECT MIN(s.date) 
           FROM sessions s 
-          WHERE s.course_id = c.id AND s.start_time > NOW()
+          WHERE s.course_id = c.id AND s.date > NOW()
         ) as "nextSession"
       FROM ${courses} c
       JOIN categories cat ON c.category_id = cat.id
@@ -368,20 +368,26 @@ router.get("/analytics", isEnterprise, async (req, res) => {
     const monthlyAttendanceResult = await db.execute(
       sql`
       SELECT 
-        TO_CHAR(esa.joined_at, 'Month') as month, 
+        TO_CHAR(esa.created_at, 'Month') as month, 
         AVG(CASE WHEN esa.attended THEN 100 ELSE 0 END) as avg_attendance
       FROM ${employeeSessionAttendance} esa
       JOIN ${users} u ON esa.employee_id = u.id
       WHERE u.enterprise_id = ${enterpriseId}
-      GROUP BY TO_CHAR(esa.joined_at, 'Month'), EXTRACT(MONTH FROM esa.joined_at)
-      ORDER BY EXTRACT(MONTH FROM esa.joined_at)
+      GROUP BY TO_CHAR(esa.created_at, 'Month'), EXTRACT(MONTH FROM esa.created_at)
+      ORDER BY EXTRACT(MONTH FROM esa.created_at)
       `
     );
     
-    const monthlyAttendance = monthlyAttendanceResult.rows.map((row) => ({
-      month: row.month.trim(),
-      percentage: Math.round(parseFloat(row.avg_attendance) || 0),
-    }));
+    const monthlyAttendance = monthlyAttendanceResult.rows.map((row) => {
+      let monthName = "Inconnu";
+      if (row.month && typeof row.month === 'string') {
+        monthName = row.month.trim();
+      }
+      return {
+        month: monthName,
+        percentage: Math.round(parseFloat(row.avg_attendance as string) || 0),
+      };
+    });
     
     // Obtenir le temps total passé en formation
     const totalTimeResult = await db.execute(
