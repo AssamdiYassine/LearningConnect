@@ -26,11 +26,8 @@ interface DayWithSessions {
   isCurrentMonth: boolean;
 }
 
-interface ScheduleProps {
-  user: any;
-}
-
-export default function Schedule({ user }: ScheduleProps) {
+export default function Schedule() {
+  const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [view, setView] = useState<"month" | "week" | "day">("month");
