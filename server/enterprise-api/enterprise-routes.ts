@@ -14,7 +14,7 @@ import {
 const router = Router();
 
 // Middleware pour vérifier si l'utilisateur est une entreprise
-const isEnterprise = (req: Request, res: Response, next: Function) => {
+const isEnterprise = (req: any, res: Response, next: Function) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Non authentifié" });
   }

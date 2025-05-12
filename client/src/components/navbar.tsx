@@ -133,7 +133,14 @@ export default function Navbar() {
                   <DropdownMenuItem asChild>
                     <div 
                       className="w-full cursor-pointer"
-                      onClick={() => window.location.href = user.role === "admin" ? "/admin-dashboard" : user.role === "trainer" ? "/trainer-dashboard" : "/student-dashboard"}
+                      onClick={() => {
+                        const dashboardPath = 
+                          user.role === "admin" ? "/admin-dashboard" : 
+                          user.role === "trainer" ? "/trainer-dashboard" : 
+                          user.role === "enterprise" ? "/enterprise/dashboard" : 
+                          "/student-dashboard";
+                        window.location.href = dashboardPath;
+                      }}
                     >
                       Mon tableau de bord
                     </div>
@@ -159,6 +166,35 @@ export default function Navbar() {
                         Console d'administration
                       </div>
                     </DropdownMenuItem>
+                  )}
+                  
+                  {user.role === "enterprise" && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <div 
+                          className="w-full cursor-pointer"
+                          onClick={() => window.location.href = "/enterprise/employees"}
+                        >
+                          Gestion des employés
+                        </div>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <div 
+                          className="w-full cursor-pointer"
+                          onClick={() => window.location.href = "/enterprise/courses"}
+                        >
+                          Accès aux formations
+                        </div>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <div 
+                          className="w-full cursor-pointer"
+                          onClick={() => window.location.href = "/enterprise/analytics"}
+                        >
+                          Analytiques
+                        </div>
+                      </DropdownMenuItem>
+                    </>
                   )}
                   <DropdownMenuItem asChild>
                     <div 
@@ -246,7 +282,14 @@ export default function Navbar() {
                 {user ? (
                   <>
                     <div
-                      onClick={() => window.location.href = user.role === "admin" ? "/admin-dashboard" : user.role === "trainer" ? "/trainer-dashboard" : "/student-dashboard"}
+                      onClick={() => {
+                        const dashboardPath = 
+                          user.role === "admin" ? "/admin-dashboard" : 
+                          user.role === "trainer" ? "/trainer-dashboard" : 
+                          user.role === "enterprise" ? "/enterprise/dashboard" : 
+                          "/student-dashboard";
+                        window.location.href = dashboardPath;
+                      }}
                       className="block px-4 py-3 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
                     >
                       Mon tableau de bord
@@ -268,6 +311,29 @@ export default function Navbar() {
                       >
                         Console d'administration
                       </div>
+                    )}
+                    
+                    {user.role === "enterprise" && (
+                      <>
+                        <div
+                          onClick={() => window.location.href = "/enterprise/employees"}
+                          className="block px-4 py-3 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                        >
+                          Gestion des employés
+                        </div>
+                        <div
+                          onClick={() => window.location.href = "/enterprise/courses"}
+                          className="block px-4 py-3 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                        >
+                          Accès aux formations
+                        </div>
+                        <div
+                          onClick={() => window.location.href = "/enterprise/analytics"}
+                          className="block px-4 py-3 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                        >
+                          Analytiques
+                        </div>
+                      </>
                     )}
                     <div
                       onClick={() => window.location.href = "/profile"}

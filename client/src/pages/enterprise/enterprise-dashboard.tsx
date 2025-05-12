@@ -12,7 +12,6 @@ export default function EnterpriseDashboard() {
   // Fetch enterprise data
   const { data: enterpriseData, isLoading: isLoadingEnterprise } = useQuery({
     queryKey: ['/api/enterprise/dashboard'],
-    enabled: false, // Désactivé jusqu'à ce que l'API soit implémentée
   });
 
   if (isLoadingEnterprise) {

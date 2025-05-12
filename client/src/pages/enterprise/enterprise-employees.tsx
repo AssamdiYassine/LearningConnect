@@ -59,7 +59,6 @@ export function EnterpriseEmployees() {
   // Fetch employees
   const { data: employees = [], isLoading } = useQuery<Employee[]>({
     queryKey: ["/api/enterprise/employees"],
-    enabled: false, // Désactivé jusqu'à ce que l'API soit implémentée
   });
 
   // Add employee mutation

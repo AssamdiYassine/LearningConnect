@@ -44,7 +44,6 @@ export function EnterpriseCourses() {
   // Fetch courses accessible to the enterprise
   const { data: courses = [], isLoading } = useQuery<EnterpriseCourse[]>({
     queryKey: ["/api/enterprise/courses"],
-    enabled: false, // Désactivé jusqu'à ce que l'API soit implémentée
   });
 
   // Toggle course access for employees mutation

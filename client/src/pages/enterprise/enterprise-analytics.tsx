@@ -39,7 +39,6 @@ export function EnterpriseAnalytics() {
   // Fetch analytics data
   const { data: analytics, isLoading } = useQuery<AnalyticsData>({
     queryKey: ["/api/enterprise/analytics"],
-    enabled: false, // Désactivé jusqu'à ce que l'API soit implémentée
   });
 
   // Données fictives pour démonstration
