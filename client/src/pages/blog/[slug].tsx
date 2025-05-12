@@ -102,13 +102,13 @@ const BlogPostDetail = () => {
   
   // Récupérer l'article de blog avec le slug
   const { data: post, isLoading, error } = useQuery<BlogPostWithDetails>({
-    queryKey: ['/api/blog-posts', slug],
+    queryKey: ['/api/blog/posts/slug', slug],
     retry: false,
   });
 
   // Récupérer les commentaires de cet article
   const { data: comments, isLoading: commentsLoading } = useQuery<BlogCommentWithUser[]>({
-    queryKey: ['/api/blog-comments', post?.id],
+    queryKey: ['/api/blog/posts', post?.id, 'comments'],
     enabled: !!post?.id,
     retry: false,
   });
@@ -116,7 +116,7 @@ const BlogPostDetail = () => {
   // Incrémenter le compteur de vues
   useEffect(() => {
     if (post?.id) {
-      apiRequest('POST', `/api/blog-posts/${post.id}/view`)
+      apiRequest('POST', `/api/blog/posts/${post.id}/view`)
         .catch(err => console.error("Erreur lors de l'enregistrement de la vue:", err));
     }
   }, [post?.id]);
