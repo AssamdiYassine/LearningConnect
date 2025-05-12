@@ -98,7 +98,7 @@ const EditBlogPostPage = () => {
         excerpt: post.excerpt,
         content: post.content,
         featuredImage: post.featuredImage || '',
-        categoryId: post.categoryId.toString(),
+        categoryId: post.categoryId ? post.categoryId.toString() : '',
         status: post.status,
         readTime: (post.readTime || 5).toString(),
       });
