@@ -182,7 +182,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/courses", async (req, res) => {
     try {
       const courses = await storage.getAllCoursesWithDetails();
-      res.json(courses);
+      
+      // Filtrer pour ne montrer que les cours approuvés dans l'interface utilisateur
+      const filteredCourses = courses.filter(course => course.isApproved === true);
+      
+      res.json(filteredCourses);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch courses" });
     }
@@ -195,6 +199,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!course) {
         return res.status(404).json({ message: "Course not found" });
+      }
+      
+      // Vérifier si le cours est approuvé, sauf pour les formateurs et les admins
+      if (!course.isApproved && req.isAuthenticated() && !['admin', 'trainer'].includes(req.user.role)) {
+        return res.status(403).json({ message: "Ce cours n'est pas encore disponible" });
       }
       
       res.json(course);
@@ -224,7 +233,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { trainerId } = req.params;
       const courses = await storage.getCoursesByTrainer(parseInt(trainerId));
-      res.json(courses);
+      
+      // Filtrer les cours non approuvés, sauf pour les admin et formateur
+      const isAdminOrTrainer = req.isAuthenticated() && ['admin', 'trainer'].includes(req.user?.role);
+      const filteredCourses = isAdminOrTrainer 
+        ? courses 
+        : courses.filter(course => course.isApproved === true);
+      
+      res.json(filteredCourses);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch trainer courses" });
     }
@@ -234,7 +250,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { categoryId } = req.params;
       const courses = await storage.getCoursesByCategory(parseInt(categoryId));
-      res.json(courses);
+      
+      // Filtrer les cours non approuvés, sauf pour les admin et formateur
+      const isAdminOrTrainer = req.isAuthenticated() && ['admin', 'trainer'].includes(req.user?.role);
+      const filteredCourses = isAdminOrTrainer 
+        ? courses 
+        : courses.filter(course => course.isApproved === true);
+      
+      res.json(filteredCourses);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch category courses" });
     }

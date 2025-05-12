@@ -303,10 +303,7 @@ function Router() {
           <BlogPage />
         </Route>
         
-        <Route path="/:slug">
-          {params => <BlogPostPage slug={params.slug} />}
-        </Route>
-        
+        {/* Admin routes for blog - IMPORTANT: placer avant les routes génériques */}
         <Route path="/admin">
           <ProtectedRoute component={BlogAdminPage} allowedRoles={["admin"]} />
         </Route>
@@ -335,6 +332,11 @@ function Router() {
               allowedRoles={["admin"]} 
             />
           )}
+        </Route>
+        
+        {/* Cette route doit être en dernier pour éviter de capturer les routes admin */}
+        <Route path="/:slug">
+          {params => <BlogPostPage slug={params.slug} />}
         </Route>
       </Route>
       
