@@ -33,13 +33,13 @@ const BlogIndex = () => {
 
   // Récupérer les articles de blog
   const { data: blogPosts, isLoading, error } = useQuery<BlogPostWithDetails[]>({
-    queryKey: ['/api/blog-posts'],
+    queryKey: ['/api/blog/posts'],
     retry: false,
   });
 
   // Récupérer les catégories uniques à partir des articles
   const { data: categories } = useQuery({
-    queryKey: ['/api/blog-categories'],
+    queryKey: ['/api/blog/categories'],
     retry: false,
   });
 
