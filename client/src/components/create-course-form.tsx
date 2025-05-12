@@ -92,7 +92,8 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
         const payload = {
           ...courseData,
           categoryId: parseInt(courseData.categoryId.toString(), 10),
-          trainerId: user?.id // Explicitly include the trainerId
+          trainerId: user?.id, // Explicitly include the trainerId
+          isApproved: null // Le cours nécessite une approbation
         };
         
         console.log("Submitting course data:", payload);
@@ -112,12 +113,14 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
     },
     onSuccess: (data) => {
       toast({
-        title: "Cours créé",
-        description: "Votre cours a été créé avec succès.",
+        title: "Cours soumis pour approbation",
+        description: "Votre cours a été soumis et sera examiné par un administrateur avant d'être publié.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/courses"] });
-      setCourseId(data.id);
-      setShowSessionForm(true);
+      queryClient.invalidateQueries({ queryKey: [`/api/courses/trainer/${user?.id}`] });
+      
+      // Créer une demande d'approbation
+      createApprovalRequest(data.id);
     },
     onError: (error: Error) => {
       toast({
@@ -127,6 +130,45 @@ export default function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
       });
     },
   });
+  
+  // Mutation pour créer une demande d'approbation
+  const approvalRequestMutation = useMutation({
+    mutationFn: async (courseId: number) => {
+      const payload = {
+        type: "course",
+        itemId: courseId,
+        requesterId: user?.id,
+        status: "pending",
+        notes: "Nouvelle formation soumise pour approbation"
+      };
+      
+      const res = await apiRequest("POST", "/api/approval-requests", payload);
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Échec de création de la demande d'approbation");
+      }
+      
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      setCourseId(data.itemId);
+      setShowSessionForm(true);
+    },
+    onError: (error: Error) => {
+      console.error("Erreur lors de la création de la demande d'approbation:", error);
+      // On continue quand même à la création de session même si la demande d'approbation échoue
+      // car le cours a déjà été créé
+      if (courseId) {
+        setShowSessionForm(true);
+      }
+    }
+  });
+  
+  // Fonction pour créer une demande d'approbation
+  const createApprovalRequest = (courseId: number) => {
+    approvalRequestMutation.mutate(courseId);
+  };
 
   // Session creation mutation
   const createSessionMutation = useMutation({
