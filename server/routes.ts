@@ -678,6 +678,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Récupérer les sessions auxquelles un utilisateur est inscrit
+  app.get("/api/enrollments/user", isAuthenticated, async (req, res) => {
+    try {
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: "Utilisateur non authentifié" });
+      }
+      
+      const sessions = await storage.getUserEnrolledSessions(req.user.id);
+      res.json(sessions);
+    } catch (error) {
+      console.error("Error fetching user enrolled sessions:", error);
+      res.status(500).json({ message: "Failed to fetch user enrolled sessions" });
+    }
+  });
+
   // Notification routes
   app.get("/api/notifications", isAuthenticated, async (req, res) => {
     try {

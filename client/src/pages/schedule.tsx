@@ -1,127 +1,474 @@
-import { useQuery } from "@tanstack/react-query";
-import { SessionWithDetails } from "@shared/schema";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CalendarIcon } from "lucide-react";
-import SessionItem from "@/components/session-item";
-import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
+import { apiRequest } from "@/lib/queryClient";
+import { SessionWithDetails } from "@shared/schema";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle, 
+  CardDescription, 
+  CardFooter 
+} from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Search, Calendar, ChevronLeft, ChevronRight, ExternalLink, Video } from "lucide-react";
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth, eachDayOfInterval, addMonths, subMonths, isToday, isSameDay } from "date-fns";
+import { fr } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
-export default function Schedule() {
-  const { user } = useAuth();
-  const [view, setView] = useState("upcoming");
+interface DayWithSessions {
+  date: Date;
+  sessions: SessionWithDetails[];
+  isCurrentMonth: boolean;
+}
 
-  // Fetch user enrolled sessions
+interface ScheduleProps {
+  user: any;
+}
+
+export default function Schedule({ user }: ScheduleProps) {
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [view, setView] = useState<"month" | "week" | "day">("month");
+  const [showSessionDetails, setShowSessionDetails] = useState(false);
+  const [selectedSession, setSelectedSession] = useState<SessionWithDetails | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  // Récupérer toutes les sessions de l'utilisateur
   const { data: sessions, isLoading: isSessionsLoading } = useQuery<SessionWithDetails[]>({
     queryKey: ["/api/enrollments/user"],
     enabled: !!user
   });
 
-  // Separate upcoming and past sessions
-  const now = new Date();
-  const upcomingSessions = sessions?.filter(session => new Date(session.date) >= now) || [];
-  const pastSessions = sessions?.filter(session => new Date(session.date) < now) || [];
+  const prevMonth = () => {
+    if (view === "month") {
+      setCurrentMonth(prev => subMonths(prev, 1));
+    } else if (view === "week") {
+      setSelectedDate(prev => subMonths(prev, 1));
+    } else {
+      setSelectedDate(prev => subMonths(prev, 1));
+    }
+  };
 
-  // Sort sessions by date
-  const sortedUpcomingSessions = [...upcomingSessions].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  const nextMonth = () => {
+    if (view === "month") {
+      setCurrentMonth(prev => addMonths(prev, 1));
+    } else if (view === "week") {
+      setSelectedDate(prev => addMonths(prev, 1));
+    } else {
+      setSelectedDate(prev => addMonths(prev, 1));
+    }
+  };
+
+  // Fonction pour récupérer les sessions pour une date spécifique
+  const getSessionsForDate = (date: Date): SessionWithDetails[] => {
+    if (!sessions) return [];
+    return sessions.filter(session => 
+      isSameDay(new Date(session.date), date)
+    );
+  };
+
+  // Générer les jours pour la vue actuelle
+  const getDaysWithSessions = (): DayWithSessions[] => {
+    if (view === "month") {
+      const monthStart = startOfMonth(currentMonth);
+      const monthEnd = endOfMonth(currentMonth);
+      const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
+      const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
+
+      return eachDayOfInterval({ start: startDate, end: endDate }).map(date => ({
+        date,
+        sessions: getSessionsForDate(date),
+        isCurrentMonth: isSameMonth(date, currentMonth)
+      }));
+    } else if (view === "week") {
+      const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 });
+
+      return eachDayOfInterval({ start: weekStart, end: weekEnd }).map(date => ({
+        date,
+        sessions: getSessionsForDate(date),
+        isCurrentMonth: true
+      }));
+    } else {
+      // Vue journalière
+      return [{
+        date: selectedDate,
+        sessions: getSessionsForDate(selectedDate),
+        isCurrentMonth: true
+      }];
+    }
+  };
+
+  // Filtrer les sessions
+  const filteredSessions = sessions ? sessions.filter(session => 
+    !searchQuery || 
+    session.course.title.toLowerCase().includes(searchQuery.toLowerCase())
+  ) : [];
+
+  // Trier par date
+  const sortedSessions = filteredSessions.sort((a, b) => 
+    new Date(a.date).getTime() - new Date(b.date).getTime()
   );
-  
-  const sortedPastSessions = [...pastSessions].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+
+  // Séparer les sessions passées et à venir
+  const now = new Date();
+  const upcomingSessions = sortedSessions.filter(session => new Date(session.date) > now);
+  const pastSessions = sortedSessions.filter(session => new Date(session.date) <= now);
+
+  // Si chargement en cours
+  if (isSessionsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
+      {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 font-heading">My Schedule</h1>
-        <p className="mt-2 text-gray-600">
-          Manage your enrolled sessions and access your upcoming training
+        <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl font-heading">
+          Mon Calendrier
+        </h2>
+        <p className="mt-2 text-muted-foreground">
+          Gérez vos sessions inscrites et accédez à vos formations à venir
         </p>
       </div>
 
-      <Tabs defaultValue={view} onValueChange={setView}>
-        <TabsList className="grid w-full grid-cols-2 mb-8">
-          <TabsTrigger value="upcoming">
-            Upcoming ({upcomingSessions.length})
+      {/* Barre de recherche et filtres */}
+      <div className="flex flex-col sm:flex-row gap-4 items-center">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Rechercher une formation..."
+            className="pl-10"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Onglets (Prochaines / Passées) */}
+      <Tabs defaultValue="upcoming" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="upcoming" className="flex items-center">
+            Prochaines ({upcomingSessions.length})
           </TabsTrigger>
-          <TabsTrigger value="past">
-            Past ({pastSessions.length})
+          <TabsTrigger value="past" className="flex items-center">
+            Passées ({pastSessions.length})
+          </TabsTrigger>
+          <TabsTrigger value="calendar" className="flex items-center">
+            Calendrier
           </TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="upcoming">
-          <Card>
-            <CardHeader className="border-b border-gray-200">
-              <CardTitle className="flex items-center">
-                <CalendarIcon className="mr-2 h-5 w-5" />
-                Upcoming Sessions
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              {isSessionsLoading ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                </div>
-              ) : sortedUpcomingSessions.length > 0 ? (
-                <div className="divide-y divide-gray-200">
-                  {sortedUpcomingSessions.map((session) => (
-                    <SessionItem key={session.id} session={session} />
-                  ))}
-                </div>
-              ) : (
-                <div className="py-12 text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-                    <CalendarIcon className="h-8 w-8 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900">No upcoming sessions</h3>
-                  <p className="mt-2 text-gray-500">
-                    You're not enrolled in any upcoming sessions
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+
+        {/* Liste des sessions à venir */}
+        <TabsContent value="upcoming" className="space-y-4">
+          {upcomingSessions.length === 0 && (
+            <Card className="flex flex-col items-center justify-center p-8 text-center">
+              <Calendar className="h-12 w-12 text-muted-foreground/50 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Aucune session à venir</h3>
+              <p className="text-muted-foreground">
+                Vous n'êtes inscrit à aucune session à venir. Consultez notre catalogue pour découvrir nos formations.
+              </p>
+            </Card>
+          )}
+          {upcomingSessions.map((session) => (
+            <SessionCard 
+              key={session.id} 
+              session={session} 
+              onClick={() => {
+                setSelectedSession(session);
+                setShowSessionDetails(true);
+              }}
+              isPast={false}
+            />
+          ))}
         </TabsContent>
-        
-        <TabsContent value="past">
+
+        {/* Liste des sessions passées */}
+        <TabsContent value="past" className="space-y-4">
+          {pastSessions.length === 0 && (
+            <Card className="flex flex-col items-center justify-center p-8 text-center">
+              <Calendar className="h-12 w-12 text-muted-foreground/50 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Aucune session passée</h3>
+              <p className="text-muted-foreground">
+                Vous n'avez pas encore participé à des sessions de formation.
+              </p>
+            </Card>
+          )}
+          {pastSessions.map((session) => (
+            <SessionCard 
+              key={session.id} 
+              session={session}
+              onClick={() => {
+                setSelectedSession(session);
+                setShowSessionDetails(true);
+              }}
+              isPast={true}
+            />
+          ))}
+        </TabsContent>
+
+        {/* Vue Calendrier */}
+        <TabsContent value="calendar">
           <Card>
-            <CardHeader className="border-b border-gray-200">
-              <CardTitle className="flex items-center">
-                <CalendarIcon className="mr-2 h-5 w-5" />
-                Past Sessions
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              {isSessionsLoading ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                </div>
-              ) : sortedPastSessions.length > 0 ? (
-                <div className="divide-y divide-gray-200">
-                  {sortedPastSessions.map((session) => (
-                    <SessionItem 
-                      key={session.id} 
-                      session={session} 
-                      showActions={false} 
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="py-12 text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-                    <CalendarIcon className="h-8 w-8 text-gray-400" />
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle>Calendrier</CardTitle>
+                <div className="flex items-center space-x-2">
+                  <Button variant="outline" size="sm" onClick={prevMonth}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <div className="font-medium">
+                    {format(currentMonth, 'MMMM yyyy', { locale: fr })}
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900">No past sessions</h3>
-                  <p className="mt-2 text-gray-500">
-                    You haven't attended any sessions yet
-                  </p>
+                  <Button variant="outline" size="sm" onClick={nextMonth}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
                 </div>
-              )}
+              </div>
+              <div className="flex space-x-2 mt-2">
+                <Tabs defaultValue="month">
+                  <TabsList>
+                    <TabsTrigger value="month" onClick={() => setView("month")}>Mois</TabsTrigger>
+                    <TabsTrigger value="week" onClick={() => setView("week")}>Semaine</TabsTrigger>
+                    <TabsTrigger value="day" onClick={() => setView("day")}>Jour</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div>
+                {view === "month" && (
+                  <div className="grid grid-cols-7 gap-1">
+                    {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((day, i) => (
+                      <div key={i} className="h-8 flex items-center justify-center text-sm font-medium">
+                        {day}
+                      </div>
+                    ))}
+                    {getDaysWithSessions().map((day, i) => (
+                      <div
+                        key={i}
+                        className={cn(
+                          "h-28 border border-gray-100 relative p-1 overflow-hidden",
+                          day.isCurrentMonth ? "bg-white" : "bg-gray-50",
+                          isToday(day.date) && "bg-blue-50",
+                          !day.isCurrentMonth && "text-gray-400"
+                        )}
+                        onClick={() => {
+                          setSelectedDate(day.date);
+                          if (view !== "day") setView("day");
+                        }}
+                      >
+                        <div className="absolute top-1 right-1 text-sm">
+                          {format(day.date, 'd')}
+                        </div>
+                        <div className="mt-4 space-y-1">
+                          {day.sessions.map((session) => (
+                            <div key={session.id} className="text-xs bg-blue-100 text-blue-700 p-1 rounded truncate">
+                              {format(new Date(session.date), 'HH:mm')} - {session.course.title}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {view === "week" && (
+                  <div className="grid grid-cols-7 gap-2">
+                    {getDaysWithSessions().map((day, i) => (
+                      <div key={i} className="space-y-2">
+                        <div className={cn(
+                          "text-center p-2 rounded-t",
+                          isToday(day.date) ? "bg-blue-100 font-bold" : "bg-gray-100"
+                        )}>
+                          <div>{format(day.date, 'EEEE', { locale: fr })}</div>
+                          <div>{format(day.date, 'd MMM', { locale: fr })}</div>
+                        </div>
+                        <div className="space-y-2 h-96 overflow-auto p-1">
+                          {day.sessions.length === 0 ? (
+                            <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+                              Aucune session
+                            </div>
+                          ) : (
+                            day.sessions.map((session) => (
+                              <div 
+                                key={session.id} 
+                                className="p-2 bg-white border rounded shadow-sm cursor-pointer hover:shadow"
+                                onClick={() => {
+                                  setSelectedSession(session);
+                                  setShowSessionDetails(true);
+                                }}
+                              >
+                                <div className="text-xs font-semibold text-blue-700">
+                                  {format(new Date(session.date), 'HH:mm')}
+                                </div>
+                                <div className="font-medium text-sm truncate">{session.course.title}</div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {view === "day" && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">
+                      {format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
+                    </h3>
+                    <div className="space-y-4">
+                      {getDaysWithSessions()[0].sessions.length === 0 ? (
+                        <div className="p-8 text-center">
+                          <div className="mb-2 text-gray-400">
+                            <Calendar className="h-12 w-12 mx-auto" />
+                          </div>
+                          <p className="text-gray-500">Aucune session programmée pour cette journée</p>
+                        </div>
+                      ) : (
+                        getDaysWithSessions()[0].sessions.map((session) => (
+                          <SessionCard 
+                            key={session.id} 
+                            session={session}
+                            onClick={() => {
+                              setSelectedSession(session);
+                              setShowSessionDetails(true);
+                            }}
+                            isPast={new Date(session.date) <= new Date()}
+                          />
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modal détails de session */}
+      {showSessionDetails && selectedSession && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-auto">
+            <div className="p-6">
+              <h3 className="text-2xl font-bold mb-2">{selectedSession.course.title}</h3>
+              <p className="text-gray-500 mb-4">
+                {format(new Date(selectedSession.date), 'EEEE d MMMM yyyy à HH:mm', { locale: fr })}
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <h4 className="font-semibold mb-1">Formateur</h4>
+                  <p>{selectedSession.course.trainer.displayName}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-1">Catégorie</h4>
+                  <p>{selectedSession.course.category?.name || "Non catégorisé"}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-1">Niveau</h4>
+                  <p>{selectedSession.course.level === "beginner" ? "Débutant" : 
+                      selectedSession.course.level === "intermediate" ? "Intermédiaire" : "Avancé"}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-1">Durée</h4>
+                  <p>{selectedSession.course.duration} minutes</p>
+                </div>
+              </div>
+              
+              <div className="mb-4">
+                <h4 className="font-semibold mb-1">Description du cours</h4>
+                <p className="text-gray-700">{selectedSession.course.description}</p>
+              </div>
+              
+              {selectedSession.zoomLink && (
+                <div className="mb-6">
+                  <h4 className="font-semibold mb-2">Lien de la session</h4>
+                  <Button className="w-full" asChild>
+                    <a href={selectedSession.zoomLink} target="_blank" rel="noopener noreferrer">
+                      <Video className="mr-2 h-4 w-4" />
+                      Rejoindre la session
+                    </a>
+                  </Button>
+                </div>
+              )}
+              
+              <div className="flex justify-end space-x-2 pt-4 border-t">
+                <Button variant="outline" onClick={() => setShowSessionDetails(false)}>
+                  Fermer
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+function SessionCard({ 
+  session, 
+  onClick,
+  isPast = false
+}: { 
+  session: SessionWithDetails;
+  onClick: () => void;
+  isPast?: boolean;
+}) {
+  const sessionDate = new Date(session.date);
+  const formattedDate = format(sessionDate, 'EEEE d MMMM yyyy', { locale: fr });
+  const formattedTime = format(sessionDate, 'HH:mm');
+  
+  return (
+    <Card 
+      className={cn(
+        "overflow-hidden border hover:shadow-md transition-shadow",
+        isPast ? "opacity-80" : ""
+      )}
+      onClick={onClick}
+    >
+      <div className="h-2 bg-gradient-to-r from-blue-600 to-purple-600"></div>
+      <CardContent className="p-0">
+        <div className="grid grid-cols-1 md:grid-cols-4">
+          <div className="p-4 md:border-r">
+            <div className="text-sm text-gray-500">{formattedDate}</div>
+            <div className="text-lg font-bold">{formattedTime}</div>
+            <Badge variant={isPast ? "outline" : "default"} className="mt-2">
+              {isPast ? "Terminée" : "À venir"}
+            </Badge>
+          </div>
+          <div className="p-4 md:col-span-2">
+            <h3 className="font-semibold text-lg mb-1">{session.course.title}</h3>
+            <p className="text-gray-500 text-sm mb-2">
+              Formateur: {session.course.trainer.displayName}
+            </p>
+            <p className="text-sm text-gray-600 line-clamp-2">
+              {session.course.description}
+            </p>
+          </div>
+          <div className="p-4 flex flex-col justify-between items-end">
+            {session.zoomLink && !isPast && (
+              <Button size="sm" asChild>
+                <a href={session.zoomLink} target="_blank" rel="noopener noreferrer">
+                  <Video className="mr-2 h-4 w-4" />
+                  Rejoindre
+                </a>
+              </Button>
+            )}
+            <div className="text-sm text-gray-500 mt-2">
+              {session.course.duration} minutes
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
