@@ -102,13 +102,13 @@ const BlogPostDetail = () => {
   
   // Récupérer l'article de blog avec le slug
   const { data: post, isLoading, error } = useQuery<BlogPostWithDetails>({
-    queryKey: ['/api/blog/posts/slug', slug],
+    queryKey: [`/api/blog/posts/slug/${slug}`],
     retry: false,
   });
 
   // Récupérer les commentaires de cet article
   const { data: comments, isLoading: commentsLoading } = useQuery<BlogCommentWithUser[]>({
-    queryKey: ['/api/blog/posts', post?.id, 'comments'],
+    queryKey: [`/api/blog/posts/${post?.id}/comments`],
     enabled: !!post?.id,
     retry: false,
   });
