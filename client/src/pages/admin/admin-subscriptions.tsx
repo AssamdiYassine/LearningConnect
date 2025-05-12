@@ -347,6 +347,111 @@ function AdminSubscriptions() {
         </Button>
       </div>
       
+      {/* Dialog pour créer un plan d'abonnement */}
+      <Dialog open={isPlanDialogOpen} onOpenChange={setIsPlanDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Créer un nouveau plan d'abonnement</DialogTitle>
+            <DialogDescription>
+              Définissez les détails du nouveau plan d'abonnement qui sera proposé aux utilisateurs.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="plan-name" className="text-right">Nom</Label>
+              <Input 
+                id="plan-name" 
+                className="col-span-3" 
+                value={newPlan.name}
+                onChange={(e) => setNewPlan({...newPlan, name: e.target.value})}
+                placeholder="Premium Mensuel"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="plan-description" className="text-right">Description</Label>
+              <Textarea 
+                id="plan-description" 
+                className="col-span-3" 
+                value={newPlan.description}
+                onChange={(e) => setNewPlan({...newPlan, description: e.target.value})}
+                placeholder="Accès illimité à toutes les formations pendant un mois"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="plan-price" className="text-right">Prix (€)</Label>
+              <Input 
+                id="plan-price" 
+                type="number" 
+                className="col-span-3" 
+                value={newPlan.price}
+                onChange={(e) => setNewPlan({...newPlan, price: Number(e.target.value)})}
+                placeholder="29"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="plan-duration" className="text-right">Durée (jours)</Label>
+              <Input 
+                id="plan-duration" 
+                type="number" 
+                className="col-span-3" 
+                value={newPlan.duration}
+                onChange={(e) => setNewPlan({...newPlan, duration: Number(e.target.value)})}
+                placeholder="30"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label className="text-right pt-2">Caractéristiques</Label>
+              <div className="col-span-3 space-y-2">
+                {newPlan.features.map((feature, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Input 
+                      value={feature} 
+                      onChange={(e) => handleFeatureChange(index, e.target.value)}
+                      placeholder={`Caractéristique ${index + 1}`}
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => handleRemoveFeature(index)}
+                      disabled={newPlan.features.length <= 1}
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleAddFeature}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Ajouter une caractéristique
+                </Button>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPlanDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button 
+              onClick={() => createPlanMutation.mutate(newPlan)}
+              disabled={createPlanMutation.isPending}
+              className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"
+            >
+              {createPlanMutation.isPending ? "Création en cours..." : "Créer le plan"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       {/* Section des plans d'abonnement */}
       <Card>
         <CardHeader>
