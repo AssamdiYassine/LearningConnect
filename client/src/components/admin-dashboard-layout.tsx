@@ -29,7 +29,8 @@ import {
   Key, 
   Mail,
   Layers,
-  LayoutDashboard
+  LayoutDashboard,
+  ListFilter
 } from "lucide-react";
 
 // Format date in French
@@ -223,6 +224,12 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({ chil
               text="Blog" 
               path="/admin/blogs" 
               isActive={location === "/admin/blogs"}
+            />
+            <SidebarItem 
+              icon={<ListFilter size={18} />} 
+              text="Catégories Blog" 
+              path="/blog/admin/categories" 
+              isActive={location === "/blog/admin/categories"}
             />
             <SidebarItem 
               icon={<CheckSquare size={18} />} 

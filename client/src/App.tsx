@@ -61,6 +61,7 @@ import AdminApiSettings from "@/pages/admin/admin-api-settings";
 import BlogPage from "@/pages/blog";
 import BlogPostPage from "@/pages/blog/[slug]";
 import BlogAdminPage from "@/pages/blog/admin";
+import AdminBlogCategoriesPage from "@/pages/blog/admin/categories";
 import EditBlogCategoryPage from "@/pages/blog/admin/edit-category";
 import EditBlogPostPage from "@/pages/blog/admin/edit-post";
 
@@ -302,8 +303,17 @@ function Router() {
       </Route>
       
       {/* Blog routes */}
+      {/* Routes de gestion du blog pour l'admin */}
+      <Route path="/blog/admin">
+        <ProtectedRoute component={BlogAdminPage} allowedRoles={["admin"]} />
+      </Route>
+      
+      <Route path="/blog/admin/categories">
+        <ProtectedRoute component={AdminBlogCategoriesPage} allowedRoles={["admin"]} />
+      </Route>
+      
+      {/* Routes génériques pour le blog */}
       <Route path="/blog">
-        {/* Routes génériques pour le blog */}
         <Route path="/">
           <BlogPage />
         </Route>
