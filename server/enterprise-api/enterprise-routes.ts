@@ -225,47 +225,44 @@ router.get("/courses", isEnterprise, async (req, res) => {
     const enterpriseId = req.user.id;
     
     try {
-      // Requête SQL directe pour éviter les conflits de noms
+      // Version simplifiée de la requête pour déboguer
       const coursesData = await db.execute(
         sql`
         SELECT 
           c.id, 
           c.title, 
           cat.name as "categoryName",
+          u.display_name as "trainerName",
           (
-            SELECT u.display_name 
-            FROM users u 
-            WHERE u.id = c.trainer_id
-          ) as "trainerName",
-          (
-            SELECT COUNT(*) 
-            FROM sessions s 
-            WHERE s.course_id = c.id
+            SELECT COUNT(*) FROM sessions s WHERE s.course_id = c.id
           ) as "sessionCount",
           (
-            SELECT COUNT(*) 
-            FROM enterprise_employee_course_access eeca 
-            WHERE eeca.course_id = c.id
+            SELECT COUNT(*) FROM enterprise_employee_course_access eeca WHERE eeca.course_id = c.id
           ) as "enrolledEmployees",
-          CASE 
-            WHEN eca.enterprise_id IS NOT NULL THEN true 
-            ELSE false 
-          END as "isActive",
-          (
-            SELECT MIN(s.date) 
-            FROM sessions s 
-            WHERE s.course_id = c.id AND s.date > NOW()
-          ) as "nextSession"
+          CASE WHEN eca.enterprise_id IS NOT NULL THEN true ELSE false END as "isActive"
         FROM courses c
         JOIN categories cat ON c.category_id = cat.id
+        JOIN users u ON c.trainer_id = u.id
         LEFT JOIN enterprise_course_access eca ON eca.course_id = c.id AND eca.enterprise_id = ${enterpriseId}
         ORDER BY c.title ASC
         `
       );
       
-      res.json(coursesData.rows || []);
+      // Convertir les données en un format JSON approprié avec types explicites
+      const formattedCourses = coursesData.rows.map(course => ({
+        id: Number(course.id),
+        title: String(course.title || ''),
+        categoryName: String(course.categoryName || ''),
+        trainerName: String(course.trainerName || ''),
+        sessionCount: Number(course.sessionCount || 0),
+        enrolledEmployees: Number(course.enrolledEmployees || 0),
+        isActive: Boolean(course.isActive)
+      }));
+      
+      res.json(formattedCourses);
     } catch (dbError) {
-      console.error("Erreur de base de données:", dbError);
+      console.error("Erreur de base de données lors de la récupération des cours:", dbError);
+      // Renvoyer un tableau vide en cas d'erreur
       res.json([]);
     }
   } catch (error) {
