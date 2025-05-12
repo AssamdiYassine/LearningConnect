@@ -168,7 +168,16 @@ export default function CreateSession() {
 
   // Fonction de soumission du formulaire
   const onSubmit = (values: z.infer<typeof createSessionSchema>) => {
-    createMutation.mutate(values);
+    // Assurez-vous que nous avons des valeurs pour les nouveaux champs
+    const sessionData = {
+      ...values,
+      title: values.title || null,
+      description: values.description || null,
+      materialsLink: values.materialsLink || null,
+      maxParticipants: values.maxParticipants || null
+    };
+    
+    createMutation.mutate(sessionData);
   };
 
   if (isLoading) {
