@@ -360,7 +360,7 @@ const AdminBlogPage = () => {
                                   Voir
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
-                                  <Link to={`/admin/blogs/edit-post/${post.id}`}>
+                                  <Link to={`/blog/admin/edit-post/${post.id}`}>
                                     <Edit className="h-4 w-4 mr-2" />
                                     Modifier
                                   </Link>

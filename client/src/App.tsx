@@ -312,6 +312,15 @@ function Router() {
         <ProtectedRoute component={AdminBlogCategoriesPage} allowedRoles={["admin"]} />
       </Route>
       
+      <Route path="/blog/admin/edit-post/:id">
+        {params => (
+          <ProtectedRoute 
+            component={() => <EditBlogPostPage id={params.id} />} 
+            allowedRoles={["admin"]} 
+          />
+        )}
+      </Route>
+      
       {/* Routes génériques pour le blog */}
       <Route path="/blog">
         <Route path="/">
