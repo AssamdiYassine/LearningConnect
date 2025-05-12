@@ -506,6 +506,130 @@ function AdminSubscriptions() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog pour modifier un plan d'abonnement */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Modifier le plan d'abonnement</DialogTitle>
+            <DialogDescription>
+              Modifiez les détails du plan d'abonnement sélectionné.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-plan-name" className="text-right">Nom</Label>
+              <Input 
+                id="edit-plan-name" 
+                className="col-span-3" 
+                value={editPlan.name}
+                onChange={(e) => setEditPlan({...editPlan, name: e.target.value})}
+                placeholder="Premium Mensuel"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-plan-description" className="text-right">Description</Label>
+              <Textarea 
+                id="edit-plan-description" 
+                className="col-span-3" 
+                value={editPlan.description}
+                onChange={(e) => setEditPlan({...editPlan, description: e.target.value})}
+                placeholder="Accès à toutes les formations en direct et en replay"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-plan-price" className="text-right">Prix (€)</Label>
+              <Input 
+                id="edit-plan-price" 
+                className="col-span-3" 
+                type="number"
+                value={editPlan.price}
+                onChange={(e) => setEditPlan({...editPlan, price: parseFloat(e.target.value)})}
+                placeholder="49.99"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-plan-duration" className="text-right">Durée (jours)</Label>
+              <Input 
+                id="edit-plan-duration" 
+                className="col-span-3" 
+                type="number"
+                value={editPlan.duration}
+                onChange={(e) => setEditPlan({...editPlan, duration: parseInt(e.target.value)})}
+                placeholder="30"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label className="text-right pt-2">Fonctionnalités</Label>
+              <div className="col-span-3 space-y-2">
+                {editPlan.features.map((feature, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input 
+                      value={feature}
+                      onChange={(e) => {
+                        const newFeatures = [...editPlan.features];
+                        newFeatures[index] = e.target.value;
+                        setEditPlan({...editPlan, features: newFeatures});
+                      }}
+                      placeholder="Accès illimité aux webinaires"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        const newFeatures = [...editPlan.features];
+                        newFeatures.splice(index, 1);
+                        setEditPlan({...editPlan, features: newFeatures});
+                      }}
+                    >
+                      <Trash className="h-4 w-4" />
+                      <span className="sr-only">Supprimer</span>
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => setEditPlan({...editPlan, features: [...editPlan.features, ""]})}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Ajouter une fonctionnalité
+                </Button>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Annuler</Button>
+            <Button 
+              onClick={() => {
+                if (selectedPlan && editPlan.name && editPlan.description && editPlan.price > 0 && editPlan.duration > 0) {
+                  updatePlanMutation.mutate({
+                    id: selectedPlan.id,
+                    ...editPlan,
+                  });
+                } else {
+                  toast({
+                    title: "Validation échouée",
+                    description: "Veuillez remplir tous les champs obligatoires.",
+                    variant: "destructive",
+                  });
+                }
+              }}
+            >
+              Mettre à jour
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       {/* Section des plans d'abonnement */}
       <Card>
