@@ -33,7 +33,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { X, CheckCircle, Info, RotateCw, Plus, Trash, Check } from "lucide-react";
+import { X, CheckCircle, Info, RotateCw, Plus, Trash, Check, Edit, Ban } from "lucide-react";
 import { BarChart, PieChart, Pie, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartTooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 
 // Types pour les abonnements
@@ -84,10 +84,18 @@ function AdminSubscriptions() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
   const [isPlanDialogOpen, setIsPlanDialogOpen] = useState<boolean>(false);
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [editForm, setEditForm] = useState({
     type: "",
     endDate: "",
     status: "",
+  });
+  const [editPlan, setEditPlan] = useState({
+    name: "",
+    description: "",
+    price: 0,
+    duration: 30,
+    features: [""],
   });
   const [newPlan, setNewPlan] = useState({
     name: "",
@@ -143,6 +151,53 @@ function AdminSubscriptions() {
       toast({
         title: "Erreur",
         description: `Erreur lors de la création: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation pour mettre à jour un plan existant
+  const updatePlanMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const { id, ...planData } = data;
+      const res = await apiRequest("PATCH", `/api/admin/subscription-plans/${id}`, planData);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Plan mis à jour",
+        description: "Le plan d'abonnement a été mis à jour avec succès.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/subscription-plans"] });
+      setIsEditDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: `Erreur lors de la mise à jour: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation pour activer/désactiver un plan
+  const updatePlanStatusMutation = useMutation({
+    mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
+      const endpoint = isActive ? 'activate' : 'deactivate';
+      const res = await apiRequest("PATCH", `/api/admin/subscription-plans/${id}/${endpoint}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Statut mis à jour",
+        description: "Le statut du plan a été modifié avec succès.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/subscription-plans"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: `Erreur lors de la mise à jour du statut: ${error.message}`,
         variant: "destructive",
       });
     },
