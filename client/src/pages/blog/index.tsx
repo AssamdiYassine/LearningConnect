@@ -36,6 +36,8 @@ const BlogIndex = () => {
     queryKey: ['/api/blog/posts'],
     retry: false,
   });
+  
+  console.log("Articles de blog récupérés:", blogPosts);
 
   // Récupérer les catégories uniques à partir des articles
   const { data: categories } = useQuery({

@@ -334,14 +334,14 @@ function Router() {
       
       {/* Routes génériques pour le blog */}
       <Route path="/blog">
-        <Route path="/">
-          <BlogPage />
-        </Route>
-        
-        {/* Cette route DOIT être en DERNIER pour éviter de capturer les autres routes */}
-        <Route path="/:slug">
-          {params => <BlogPostPage slug={params.slug} />}
-        </Route>
+        <BlogPage />
+      </Route>
+      
+      <Route path="/blog/:slug">
+        {params => {
+          console.log("Paramètres d'URL pour le blog:", params);
+          return <BlogPostPage slug={params.slug} />;
+        }}
       </Route>
       
       {/* Fallback to 404 */}
