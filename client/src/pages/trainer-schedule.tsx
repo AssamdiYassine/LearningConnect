@@ -464,8 +464,13 @@ export default function TrainerSchedule() {
                                 <div>
                                   <p className="font-medium">{session.course.title}</p>
                                   <p className="text-sm text-gray-500">
-                                    {format(parseISO(session.date.toString()), 'HH:mm')} - 
-                                    {format(new Date(parseISO(session.date.toString()).getTime() + session.course.duration * 60000), 'HH:mm')}
+                                    {format(new Date(session.date), 'HH:mm')} - 
+                                    {session.course && session.course.duration
+                                      ? format(
+                                          new Date(new Date(session.date).getTime() + session.course.duration * 60000),
+                                          'HH:mm'
+                                        )
+                                      : "N/A"}
                                   </p>
                                 </div>
                               </div>
@@ -530,7 +535,7 @@ export default function TrainerSchedule() {
                         <CardContent className="p-0">
                           <div className="flex border-l-4 border-primary">
                             <div className="p-4 bg-gray-50 flex flex-col justify-center items-center w-32">
-                              <p className="text-2xl font-bold">{format(parseISO(session.date.toString()), 'HH:mm')}</p>
+                              <p className="text-2xl font-bold">{format(new Date(session.date), 'HH:mm')}</p>
                               <p className="text-sm text-gray-500">
                                 {Math.floor(session.course.duration / 60)}h{session.course.duration % 60 ? session.course.duration % 60 : ''}
                               </p>
@@ -563,8 +568,13 @@ export default function TrainerSchedule() {
                                 <div className="flex items-center">
                                   <Clock className="h-4 w-4 text-gray-400 mr-1" />
                                   <span className="text-sm text-gray-600">
-                                    {format(parseISO(session.date.toString()), 'HH:mm')} - 
-                                    {format(new Date(parseISO(session.date.toString()).getTime() + session.course.duration * 60000), 'HH:mm')}
+                                    {format(new Date(session.date), 'HH:mm')} - 
+                                    {session.course && session.course.duration
+                                      ? format(
+                                          new Date(new Date(session.date).getTime() + session.course.duration * 60000),
+                                          'HH:mm'
+                                        )
+                                      : "N/A"}
                                   </span>
                                 </div>
                               </div>
@@ -784,7 +794,12 @@ export default function TrainerSchedule() {
                               <Clock className="h-4 w-4 text-gray-400 mr-1" />
                               <span className="text-sm text-gray-600">
                                 {format(session.parsedDate, 'HH:mm')} - 
-                                {format(new Date(session.parsedDate.getTime() + session.course.duration * 60000), 'HH:mm')}
+                                {session.course && session.course.duration
+                                  ? format(
+                                      new Date(new Date(session.parsedDate).getTime() + session.course.duration * 60000),
+                                      'HH:mm'
+                                    )
+                                  : "N/A"}
                               </span>
                             </div>
                           </div>
@@ -828,11 +843,11 @@ export default function TrainerSchedule() {
               <div className="flex flex-col md:flex-row md:items-start gap-6">
                 <div className="flex-shrink-0">
                   <div className="p-6 bg-primary-50 rounded-lg flex flex-col items-center">
-                    <p className="text-primary-900 font-medium">{format(parseISO(selectedSession.date.toString()), 'eeee', { locale: fr })}</p>
-                    <p className="text-3xl font-bold text-primary-900">{format(parseISO(selectedSession.date.toString()), 'd')}</p>
-                    <p className="text-primary-900 font-medium">{format(parseISO(selectedSession.date.toString()), 'MMMM yyyy', { locale: fr })}</p>
+                    <p className="text-primary-900 font-medium">{format(new Date(selectedSession.date), 'eeee', { locale: fr })}</p>
+                    <p className="text-3xl font-bold text-primary-900">{format(new Date(selectedSession.date), 'd')}</p>
+                    <p className="text-primary-900 font-medium">{format(new Date(selectedSession.date), 'MMMM yyyy', { locale: fr })}</p>
                     <div className="mt-2 text-center py-1 px-3 bg-primary-100 rounded-md">
-                      <p className="text-xl font-bold text-primary-900">{format(parseISO(selectedSession.date.toString()), 'HH:mm')}</p>
+                      <p className="text-xl font-bold text-primary-900">{format(new Date(selectedSession.date), 'HH:mm')}</p>
                     </div>
                   </div>
                 </div>
