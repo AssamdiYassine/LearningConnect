@@ -4,6 +4,8 @@ import { z } from "zod";
 
 // Enum for user roles
 export const roleEnum = pgEnum("role", ["student", "trainer", "admin", "enterprise"]);
+// Type for user roles
+export type UserRole = "student" | "trainer" | "admin" | "enterprise";
 
 // Enum for subscription types
 export const subscriptionTypeEnum = pgEnum("subscription_type", ["monthly", "annual"]);

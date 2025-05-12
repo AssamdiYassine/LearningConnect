@@ -8,6 +8,7 @@ import {
   enterpriseEmployeeCourseAccess,
   employeeCourseProgress,
   employeeSessionAttendance,
+  UserRole
 } from "@shared/schema";
 
 const router = Router();
@@ -18,7 +19,7 @@ const isEnterprise = (req: Request, res: Response, next: Function) => {
     return res.status(401).json({ message: "Non authentifié" });
   }
   
-  if (req.user && req.user.role !== "enterprise") {
+  if (req.user && req.user.role !== "enterprise" as UserRole) {
     return res.status(403).json({ message: "Accès refusé: rôle enterprise requis" });
   }
   
