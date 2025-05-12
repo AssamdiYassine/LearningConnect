@@ -9,7 +9,7 @@ import {
   X, 
   UserPlus,
   Eye,
-  Key,
+  KeyRound,
   CreditCard,
   CalendarRange
 } from 'lucide-react';
@@ -548,6 +548,173 @@ export default function AdminUsers() {
           </Dialog>
         </CardHeader>
         <CardContent>
+        
+          {/* Reset Password Dialog */}
+          <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Réinitialiser le mot de passe</DialogTitle>
+                <DialogDescription>
+                  {selectedUser ? `Définissez un nouveau mot de passe pour ${selectedUser.displayName || selectedUser.username}` : 'Définissez un nouveau mot de passe pour cet utilisateur'}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="new-password" className="text-right">
+                    Nouveau mot de passe
+                  </label>
+                  <Input
+                    id="new-password"
+                    name="password"
+                    type="password"
+                    className="col-span-3"
+                    value={resetPasswordData.password}
+                    onChange={handleResetPasswordInputChange}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="confirm-password" className="text-right">
+                    Confirmer
+                  </label>
+                  <Input
+                    id="confirm-password"
+                    name="confirmPassword"
+                    type="password"
+                    className="col-span-3"
+                    value={resetPasswordData.confirmPassword}
+                    onChange={handleResetPasswordInputChange}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsResetPasswordDialogOpen(false)}>
+                  Annuler
+                </Button>
+                <Button 
+                  type="button" 
+                  onClick={() => {
+                    if (selectedUser) {
+                      resetPasswordMutation.mutate({ 
+                        id: selectedUser.id, 
+                        password: resetPasswordData.password,
+                        confirmPassword: resetPasswordData.confirmPassword
+                      });
+                    }
+                  }}
+                  disabled={resetPasswordMutation.isPending}
+                  className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"
+                >
+                  {resetPasswordMutation.isPending ? "Réinitialisation en cours..." : "Réinitialiser le mot de passe"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Assign Subscription Dialog */}
+          <Dialog open={isAssignSubscriptionDialogOpen} onOpenChange={setIsAssignSubscriptionDialogOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Gérer l'abonnement</DialogTitle>
+                <DialogDescription>
+                  {selectedUser ? `Définissez l'abonnement pour ${selectedUser.displayName || selectedUser.username}` : 'Définissez l\'abonnement pour cet utilisateur'}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="subscription-type" className="text-right">
+                    Type d'abonnement
+                  </label>
+                  <Select 
+                    value={selectedUser?.subscriptionType || "none"} 
+                    onValueChange={(value) => {
+                      if (selectedUser) {
+                        setSelectedUser({
+                          ...selectedUser,
+                          subscriptionType: value === "none" ? null : value
+                        });
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Sélectionner un abonnement" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Aucun abonnement</SelectItem>
+                      <SelectItem value="monthly">Abonnement mensuel</SelectItem>
+                      <SelectItem value="annual">Abonnement annuel</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {selectedUser?.subscriptionType && (
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <label htmlFor="end-date" className="text-right">
+                      Date de fin
+                    </label>
+                    <div className="col-span-3 flex items-center space-x-2">
+                      <Input
+                        id="end-date"
+                        type="date"
+                        className="flex-1"
+                        value={selectedUser.subscriptionEndDate 
+                          ? new Date(selectedUser.subscriptionEndDate).toISOString().split('T')[0]
+                          : new Date(Date.now() + (selectedUser.subscriptionType === 'monthly' ? 30 : 365) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                        }
+                        onChange={(e) => {
+                          if (selectedUser) {
+                            setSelectedUser({
+                              ...selectedUser,
+                              subscriptionEndDate: e.target.value
+                            });
+                          }
+                        }}
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={() => {
+                          if (selectedUser) {
+                            const daysToAdd = selectedUser.subscriptionType === 'monthly' ? 30 : 365;
+                            const newDate = new Date();
+                            newDate.setDate(newDate.getDate() + daysToAdd);
+                            
+                            setSelectedUser({
+                              ...selectedUser,
+                              subscriptionEndDate: newDate.toISOString().split('T')[0]
+                            });
+                          }
+                        }}
+                      >
+                        <CalendarRange className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsAssignSubscriptionDialogOpen(false)}>
+                  Annuler
+                </Button>
+                <Button 
+                  type="button" 
+                  onClick={() => {
+                    if (selectedUser) {
+                      assignSubscriptionMutation.mutate({ 
+                        id: selectedUser.id, 
+                        isSubscribed: selectedUser.subscriptionType !== null,
+                        subscriptionType: selectedUser.subscriptionType,
+                        subscriptionEndDate: selectedUser.subscriptionEndDate
+                      });
+                    }
+                  }}
+                  disabled={assignSubscriptionMutation.isPending}
+                  className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"
+                >
+                  {assignSubscriptionMutation.isPending ? "Mise à jour en cours..." : "Mettre à jour l'abonnement"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           <div className="mb-4 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
@@ -628,7 +795,7 @@ export default function AdminUsers() {
                               }}
                               className="text-yellow-600 border-yellow-600 hover:bg-yellow-50"
                             >
-                              <Key className="h-4 w-4" />
+                              <KeyRound className="h-4 w-4" />
                             </Button>
                             <Button 
                               variant="outline" 
