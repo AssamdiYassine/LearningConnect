@@ -137,8 +137,8 @@ const AdminBlogPage = () => {
   // Filtrer les articles en fonction du terme de recherche
   const filteredPosts = posts ? posts.filter(post => 
     post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    post.author.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    post.category.name.toLowerCase().includes(searchTerm.toLowerCase())
+    (post.author && post.author.displayName && post.author.displayName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (post.category && post.category.name && post.category.name.toLowerCase().includes(searchTerm.toLowerCase()))
   ) : [];
 
   // Compter les articles par statut
@@ -330,8 +330,8 @@ const AdminBlogPage = () => {
                           <TableCell className="font-medium max-w-[200px] truncate">
                             {post.title}
                           </TableCell>
-                          <TableCell>{post.author.displayName}</TableCell>
-                          <TableCell>{post.category.name}</TableCell>
+                          <TableCell>{post.author && post.author.displayName ? post.author.displayName : 'N/A'}</TableCell>
+                          <TableCell>{post.category && post.category.name ? post.category.name : 'N/A'}</TableCell>
                           <TableCell>
                             {post.publishedAt 
                               ? formatDate(new Date(post.publishedAt)) 
