@@ -14,12 +14,45 @@ import {
 import { DatabaseStorage } from "./db-storage";
 import { pool } from "./db";
 import { db } from "./db";
+import { extendDatabaseStorageWithSubscriptionPlans } from "./db-storage-subscription-plans";
 
 /**
  * Étend la classe DatabaseStorage avec des méthodes supplémentaires pour l'interface IStorage
  * Cette fonction permet d'ajouter des fonctionnalités sans modifier directement le fichier de stockage
  */
 export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
+  // Ajouter les méthodes de réinitialisation de mot de passe
+  dbStorage.updateResetPasswordToken = async function (userId: number, token: string, expiresAt: Date) {
+    await db
+      .update(users)
+      .set({
+        resetPasswordToken: token,
+        resetTokenExpires: expiresAt
+      })
+      .where(eq(users.id, userId));
+  };
+
+  dbStorage.getUserByResetToken = async function (token: string) {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.resetPasswordToken, token));
+    return user;
+  };
+
+  dbStorage.updateUserPassword = async function (userId: number, newPassword: string) {
+    await db
+      .update(users)
+      .set({
+        password: newPassword,
+        resetPasswordToken: null,
+        resetTokenExpires: null
+      })
+      .where(eq(users.id, userId));
+  };
+
+  // Étendre avec les méthodes pour les plans d'abonnement
+  Object.assign(dbStorage, extendDatabaseStorageWithSubscriptionPlans(pool));
   // Méthodes étendues pour les utilisateurs
   dbStorage.getUsersByRole = async function(role: string) {
     const result = await db.select().from(users).where(eq(users.role, role as any));

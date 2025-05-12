@@ -299,37 +299,6 @@ function Router() {
       
       {/* Blog routes */}
       <Route path="/blog">
-        {/* Routes Admin blog - IMPORTANT: doit être AVANT les routes génériques */}
-        <Route path="/admin/edit-post/:id">
-          {params => (
-            <ProtectedRoute 
-              component={() => <EditBlogPostPage id={params.id} />} 
-              allowedRoles={["admin"]} 
-            />
-          )}
-        </Route>
-        
-        <Route path="/admin/edit-post">
-          <ProtectedRoute component={EditBlogPostPage} allowedRoles={["admin"]} />
-        </Route>
-        
-        <Route path="/admin/edit-category/:id">
-          {params => (
-            <ProtectedRoute 
-              component={() => <EditBlogCategoryPage id={params.id} />} 
-              allowedRoles={["admin"]} 
-            />
-          )}
-        </Route>
-        
-        <Route path="/admin/edit-category">
-          <ProtectedRoute component={EditBlogCategoryPage} allowedRoles={["admin"]} />
-        </Route>
-        
-        <Route path="/admin">
-          <ProtectedRoute component={BlogAdminPage} allowedRoles={["admin"]} />
-        </Route>
-        
         {/* Routes génériques pour le blog */}
         <Route path="/">
           <BlogPage />
