@@ -10,6 +10,7 @@ import { registerAdminUserRoutes } from "./admin-api-users";
 import { registerAdminCourseRoutes } from "./admin-api-courses";
 import { registerAdminNotificationRoutes } from "./admin-notifications-routes";
 import { registerAdminSubscriptionPlansRoutes } from "./admin-subscription-plans-routes";
+import { registerResetPasswordRoutes } from "./reset-password-routes";
 // Import des extensions pour les méthodes de stockage manquantes
 import "./db-storage-extensions";
 import { pool } from "./db";
@@ -61,6 +62,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
   
   // Les autres routes peuvent accéder à req.isAuthenticated() maintenant
+  
+  // Enregistrer les routes de réinitialisation de mot de passe
+  registerResetPasswordRoutes(app);
+  
+  // Enregistrer les routes pour les plans d'abonnement admin
+  registerAdminSubscriptionPlansRoutes(app);
   
   // Register admin dashboard routes
   registerAdminDashboard(app, pool);

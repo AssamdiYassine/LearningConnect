@@ -66,6 +66,8 @@ export const users = pgTable("users", {
   subscriptionEndDate: timestamp("subscription_end_date"),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
+  resetPasswordToken: text("reset_password_token"),
+  resetTokenExpires: timestamp("reset_token_expires"),
 });
 
 // Categories table
