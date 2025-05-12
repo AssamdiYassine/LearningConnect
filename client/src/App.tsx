@@ -42,6 +42,12 @@ import AdminLayout from "@/components/admin-layout";
 import AdminDashboardLayout from "@/components/admin-dashboard-layout";
 import { ThemeProvider } from "@/components/theme-provider";
 
+// Enterprise pages
+import { EnterpriseEmployees } from "@/pages/enterprise/enterprise-employees";
+import { EnterpriseCourses } from "@/pages/enterprise/enterprise-courses";
+import { EnterpriseAnalytics } from "@/pages/enterprise/enterprise-analytics";
+import EnterpriseDashboard from "@/pages/enterprise/enterprise-dashboard";
+
 // Admin pages - Nouvelles implémentations
 import AdminUsers from "@/pages/admin/functional-admin-users";
 import AdminCourses from "@/pages/admin/fixed-admin-courses";
@@ -318,6 +324,27 @@ function Router() {
       
       <Route path="/admin/api-settings">
         <ProtectedRoute component={AdminApiSettings} allowedRoles={["admin"]} />
+      </Route>
+      
+      {/* Enterprise routes */}
+      <Route path="/enterprise">
+        <ProtectedRoute component={EnterpriseDashboard} allowedRoles={["enterprise"]} />
+      </Route>
+      
+      <Route path="/enterprise/dashboard">
+        <ProtectedRoute component={EnterpriseDashboard} allowedRoles={["enterprise"]} />
+      </Route>
+      
+      <Route path="/enterprise/employees">
+        <ProtectedRoute component={EnterpriseEmployees} allowedRoles={["enterprise"]} />
+      </Route>
+      
+      <Route path="/enterprise/courses">
+        <ProtectedRoute component={EnterpriseCourses} allowedRoles={["enterprise"]} />
+      </Route>
+      
+      <Route path="/enterprise/analytics">
+        <ProtectedRoute component={EnterpriseAnalytics} allowedRoles={["enterprise"]} />
       </Route>
       
       {/* Blog routes */}
