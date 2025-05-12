@@ -15,7 +15,8 @@ import {
   BlogPostWithDetails,
   BlogCommentWithUser,
   ApprovalRequest, InsertApprovalRequest,
-  ApprovalRequestWithDetails
+  ApprovalRequestWithDetails,
+  SubscriptionPlan, InsertSubscriptionPlan
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
