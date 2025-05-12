@@ -1172,11 +1172,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/blog/posts/slug/:slug", async (req, res) => {
     try {
       const { slug } = req.params;
+      console.log("Recherche de l'article avec le slug:", slug);
+      
       const post = await storage.getBlogPostBySlugWithDetails(slug);
       
       if (!post) {
+        console.log("Article non trouvé pour le slug:", slug);
         return res.status(404).json({ message: "Blog post not found" });
       }
+      
+      console.log("Article trouvé:", post.title, "Statut:", post.status);
       
       // If post is not published and user is not admin or author, return 404
       if (
@@ -1184,16 +1189,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         (!req.isAuthenticated() || 
           (req.user.id !== post.authorId && req.user.role !== "admin"))
       ) {
+        console.log("Article non publié et utilisateur non autorisé");
         return res.status(404).json({ message: "Blog post not found" });
       }
       
       // Increment view count if post is published
       if (post.status === "published") {
+        console.log("Incrémentation du compteur de vues pour l'article ID:", post.id);
         await storage.incrementBlogPostViewCount(post.id);
       }
       
+      console.log("Envoi de l'article au client");
       res.json(post);
     } catch (error) {
+      console.error("Erreur lors de la récupération de l'article:", error);
       res.status(500).json({ message: "Failed to fetch blog post" });
     }
   });

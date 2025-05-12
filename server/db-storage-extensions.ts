@@ -307,33 +307,48 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
   };
 
   dbStorage.getBlogPostBySlugWithDetails = async function(slug) {
-    const result = await db
-      .select({
-        post: blogPosts,
-        category: blogCategories,
-        author: users
-      })
-      .from(blogPosts)
-      .leftJoin(blogCategories, eq(blogPosts.categoryId, blogCategories.id))
-      .leftJoin(users, eq(blogPosts.authorId, users.id))
-      .where(eq(blogPosts.slug, slug));
+    console.log("getBlogPostBySlugWithDetails appelé avec slug:", slug);
+    
+    try {
+      const result = await db
+        .select({
+          post: blogPosts,
+          category: blogCategories,
+          author: users
+        })
+        .from(blogPosts)
+        .leftJoin(blogCategories, eq(blogPosts.categoryId, blogCategories.id))
+        .leftJoin(users, eq(blogPosts.authorId, users.id))
+        .where(eq(blogPosts.slug, slug));
 
-    if (result.length === 0) return undefined;
+      console.log("Résultat de la requête pour le slug:", slug, "Nombre de résultats:", result.length);
+      
+      if (result.length === 0) return undefined;
 
-    const { post, category, author } = result[0];
-    return {
-      ...post,
-      category: {
-        id: category.id,
-        name: category.name,
-        slug: category.slug
-      },
-      author: {
-        id: author.id,
-        username: author.username,
-        displayName: author.displayName
-      }
-    };
+      const { post, category, author } = result[0];
+      
+      // Vérification des données avant de les retourner
+      console.log("Article trouvé:", post);
+      console.log("Catégorie:", category);
+      console.log("Auteur:", author);
+      
+      return {
+        ...post,
+        category: {
+          id: category.id,
+          name: category.name,
+          slug: category.slug
+        },
+        author: {
+          id: author.id,
+          username: author.username,
+          displayName: author.displayName
+        }
+      };
+    } catch (error) {
+      console.error("Erreur dans getBlogPostBySlugWithDetails:", error);
+      throw error; // Relancer l'erreur pour la gérer au niveau supérieur
+    }
   };
 
   dbStorage.getAllBlogPostsWithDetails = async function() {
