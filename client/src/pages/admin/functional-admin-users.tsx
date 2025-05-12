@@ -498,6 +498,20 @@ function FunctionalAdminUsers() {
             </div>
             
             <div>
+              <label htmlFor="edit-password" className="block text-sm font-medium text-gray-700">
+                Mot de passe (laisser vide pour ne pas changer)
+              </label>
+              <Input
+                id="edit-password"
+                name="password"
+                type="password"
+                value={editFormData.password}
+                onChange={handleEditInputChange}
+                placeholder="Nouveau mot de passe"
+              />
+            </div>
+            
+            <div>
               <label htmlFor="edit-role" className="block text-sm font-medium text-gray-700">
                 Rôle
               </label>
@@ -515,6 +529,42 @@ function FunctionalAdminUsers() {
                 </SelectContent>
               </Select>
             </div>
+            
+            {/* Ajout de la sélection de formations */}
+            {editFormData.role === "student" && (
+              <div>
+                <label htmlFor="course-access" className="block text-sm font-medium text-gray-700 mb-2">
+                  Accès aux formations
+                </label>
+                <div className="space-y-2 max-h-60 overflow-y-auto border rounded-md p-2">
+                  {courses.map((course: any) => (
+                    <div key={course.id} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={`course-${course.id}`}
+                        checked={editFormData.courseAccess.includes(course.id)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setEditFormData(prev => ({
+                            ...prev,
+                            courseAccess: checked 
+                              ? [...prev.courseAccess, course.id]
+                              : prev.courseAccess.filter(id => id !== course.id)
+                          }));
+                        }}
+                        className="mr-2 h-4 w-4"
+                      />
+                      <label htmlFor={`course-${course.id}`} className="text-sm">
+                        {course.title}
+                      </label>
+                    </div>
+                  ))}
+                  {courses.length === 0 && (
+                    <p className="text-sm text-gray-500">Aucune formation disponible</p>
+                  )}
+                </div>
+              </div>
+            )}
             
             <DialogFooter>
               <Button

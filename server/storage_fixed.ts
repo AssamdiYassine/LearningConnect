@@ -39,6 +39,10 @@ export interface IStorage {
   updateUserRole(id: number, role: string): Promise<User>;
   updateSubscription(id: number, isSubscribed: boolean, type?: string, endDate?: Date): Promise<User>;
   updateUserStripeInfo(id: number, stripeInfo: { customerId: string, subscriptionId: string }): Promise<User>;
+  updateUser(id: number, userData: any): Promise<User>; 
+  getUsersByRole(role: string): Promise<User[]>;
+  getUserCourseAccess(userId: number): Promise<number[]>;
+  updateUserCourseAccess(userId: number, courseIds: number[]): Promise<void>;
 
   // Category operations
   createCategory(category: InsertCategory): Promise<Category>;

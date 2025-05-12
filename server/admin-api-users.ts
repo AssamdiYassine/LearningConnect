@@ -136,6 +136,28 @@ export function registerAdminUserRoutes(app: Express) {
     }
   });
 
+  // Route pour récupérer les accès aux cours d'un utilisateur
+  app.get("/api/admin/users/:id/course-access", hasAdminRole, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = parseInt(id);
+      
+      // Vérifier si l'utilisateur existe
+      const existingUser = await storage.getUser(userId);
+      if (!existingUser) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+      
+      // Récupérer les accès aux cours de l'utilisateur
+      const courseAccess = await storage.getUserCourseAccess(userId);
+      
+      res.json(courseAccess);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des accès aux cours:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des accès aux cours" });
+    }
+  });
+
   // Route pour mettre à jour un utilisateur
   app.patch("/api/admin/users/:id", hasAdminRole, async (req: Request, res: Response) => {
     try {
@@ -156,8 +178,9 @@ export function registerAdminUserRoutes(app: Express) {
         displayName: z.string().optional(),
         role: z.enum(["student", "trainer", "admin"]).optional(),
         isSubscribed: z.boolean().nullable().optional(),
-        subscriptionType: z.enum(["monthly", "annual"]).nullable().optional(),
-        subscriptionEndDate: z.date().nullable().optional()
+        subscriptionType: z.enum(["monthly", "annual", "business"]).nullable().optional(),
+        subscriptionEndDate: z.date().nullable().optional(),
+        courseAccess: z.array(z.number()).optional() // Ajout des accès aux cours
       });
       
       const validatedData = schema.parse(req.body);
@@ -186,8 +209,17 @@ export function registerAdminUserRoutes(app: Express) {
         updateData.password = await hashPassword(updateData.password);
       }
       
+      // Traiter les accès aux cours si spécifiés
+      const courseAccess = updateData.courseAccess;
+      delete updateData.courseAccess; // Retirer de l'objet de mise à jour standard
+      
       // Mettre à jour l'utilisateur
       const updatedUser = await storage.updateUser(userId, updateData);
+      
+      // Mettre à jour les accès aux cours si nécessaire
+      if (courseAccess) {
+        await storage.updateUserCourseAccess(userId, courseAccess);
+      }
       
       // Retirer le mot de passe avant d'envoyer les données
       const { password, ...safeUser } = updatedUser;
