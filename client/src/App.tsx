@@ -234,6 +234,13 @@ function Router() {
         />
       </Route>
       
+      <Route path="/admin/dashboard">
+        <ProtectedRoute 
+          component={AdminDashboard}
+          allowedRoles={["admin"]} 
+        />
+      </Route>
+      
       {/* Nouvelles routes admin avec leurs composants spécifiques */}
       <Route path="/admin/users">
         <ProtectedRoute component={AdminUsers} allowedRoles={["admin"]} />
