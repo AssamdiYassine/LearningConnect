@@ -369,7 +369,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/sessions", hasRole(["trainer", "admin"]), async (req, res) => {
     try {
-      const validatedData = insertSessionSchema.parse(req.body);
+      // Convertir les chaînes de dates en objets Date
+      let sessionData = { ...req.body };
+      
+      // Convertir explicitement les champs de date
+      if (sessionData.date && typeof sessionData.date === 'string') {
+        sessionData.date = new Date(sessionData.date);
+      }
+      
+      if (sessionData.endDate && typeof sessionData.endDate === 'string') {
+        sessionData.endDate = new Date(sessionData.endDate);
+      }
+      
+      const validatedData = insertSessionSchema.parse(sessionData);
       
       // Check if the course exists and belongs to the trainer
       const course = await storage.getCourse(validatedData.courseId);
@@ -384,6 +396,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const session = await storage.createSession(validatedData);
       res.status(201).json(session);
     } catch (error) {
+      console.error("Erreur création session:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Validation error", errors: error.errors });
       }
