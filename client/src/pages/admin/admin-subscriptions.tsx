@@ -183,9 +183,14 @@ function AdminSubscriptions() {
   // Mutation pour activer/désactiver un plan
   const updatePlanStatusMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
-      const endpoint = isActive ? 'activate' : 'deactivate';
-      const res = await apiRequest("PATCH", `/api/admin/subscription-plans/${id}/${endpoint}`);
-      return res.json();
+      if (isActive) {
+        const res = await apiRequest("PATCH", `/api/admin/subscription-plans/${id}/activate`);
+        return res.json();
+      } else {
+        // Pour désactiver, on peut soit utiliser un endpoint spécifique, soit mettre à jour avec isActive=false
+        const res = await apiRequest("PATCH", `/api/admin/subscription-plans/${id}`, { isActive: false });
+        return res.json();
+      }
     },
     onSuccess: () => {
       toast({
