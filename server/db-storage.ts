@@ -233,15 +233,19 @@ export class DatabaseStorage implements IStorage {
     
     console.log("Création de session avec données filtrées:", { courseId, date, zoomLink });
     
-    const [newSession] = await db.insert(sessions)
-      .values({ 
-        course_id: courseId, 
-        date, 
-        zoom_link: zoomLink 
-      })
-      .returning();
+    // Utilisation de SQL brut pour éviter les problèmes avec le schéma Drizzle
+    const result = await db.execute(
+      `INSERT INTO sessions (course_id, date, zoom_link) 
+       VALUES ($1, $2, $3) 
+       RETURNING *`,
+      [courseId, date, zoomLink]
+    );
     
-    return newSession;
+    if (!result.rows || result.rows.length === 0) {
+      throw new Error("Échec de la création de la session");
+    }
+    
+    return result.rows[0] as Session;
   }
 
   async getSession(id: number): Promise<Session | undefined> {
