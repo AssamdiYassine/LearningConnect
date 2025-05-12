@@ -263,32 +263,71 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSessionsByTrainer(trainerId: number): Promise<SessionWithDetails[]> {
-    const result = await db
-      .select({
-        session: sessions,
-        course: courses,
-        category: categories,
-        trainer: users,
-        enrollmentCount: sql<number>`count(${enrollments.id})`
-      })
-      .from(sessions)
-      .leftJoin(courses, eq(sessions.courseId, courses.id))
-      .leftJoin(categories, eq(courses.categoryId, categories.id))
-      .leftJoin(users, eq(courses.trainerId, users.id))
-      .leftJoin(enrollments, eq(sessions.id, enrollments.sessionId))
-      .where(eq(courses.trainerId, trainerId))
-      .groupBy(
-        sessions.id,
-        courses.id,
-        categories.id,
-        users.id
-      );
-
-    return result.map(({ session, course, category, trainer, enrollmentCount }) => ({
-      ...session,
-      course: { ...course, category, trainer },
-      enrollmentCount
-    }));
+    try {
+      // Utiliser une requête SQL directe pour éviter les problèmes avec le schéma
+      const result = await db.execute(`
+        SELECT 
+          s.id, s.course_id, s.date, s.zoom_link, s.created_at, s.updated_at, s.is_completed,
+          c.id as course_id, c.title as course_title, c.description as course_description,
+          cat.id as category_id, cat.name as category_name,
+          u.id as trainer_id, u.username as trainer_username, u.display_name as trainer_display_name,
+          COUNT(e.id) as enrollment_count
+        FROM 
+          sessions s
+        LEFT JOIN 
+          courses c ON s.course_id = c.id
+        LEFT JOIN 
+          categories cat ON c.category_id = cat.id
+        LEFT JOIN 
+          users u ON c.trainer_id = u.id
+        LEFT JOIN 
+          enrollments e ON s.id = e.session_id
+        WHERE 
+          c.trainer_id = ${trainerId}
+        GROUP BY 
+          s.id, c.id, cat.id, u.id
+        ORDER BY 
+          s.date DESC
+      `);
+      
+      console.log("Résultat getSessionsByTrainer:", result);
+      
+      if (!result.rows) {
+        console.log("Pas de sessions trouvées pour le formateur", trainerId);
+        return [];
+      }
+      
+      // Transformer les résultats en objets SessionWithDetails
+      return result.rows.map(row => {
+        return {
+          id: row.id,
+          courseId: row.course_id,
+          date: new Date(row.date),
+          zoomLink: row.zoom_link,
+          createdAt: new Date(row.created_at),
+          updatedAt: new Date(row.updated_at),
+          isCompleted: row.is_completed,
+          course: {
+            id: row.course_id,
+            title: row.course_title,
+            description: row.course_description,
+            category: {
+              id: row.category_id,
+              name: row.category_name
+            },
+            trainer: {
+              id: row.trainer_id,
+              username: row.trainer_username,
+              displayName: row.trainer_display_name
+            }
+          },
+          enrollmentCount: parseInt(row.enrollment_count)
+        };
+      });
+    } catch (error) {
+      console.error("Erreur dans getSessionsByTrainer:", error);
+      throw error;
+    }
   }
 
   async getSessionsByCourse(courseId: number): Promise<Session[]> {
@@ -332,63 +371,130 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSessionWithDetails(id: number): Promise<SessionWithDetails | undefined> {
-    const result = await db
-      .select({
-        session: sessions,
-        course: courses,
-        category: categories,
-        trainer: users,
-        enrollmentCount: sql<number>`count(${enrollments.id})`
-      })
-      .from(sessions)
-      .leftJoin(courses, eq(sessions.courseId, courses.id))
-      .leftJoin(categories, eq(courses.categoryId, categories.id))
-      .leftJoin(users, eq(courses.trainerId, users.id))
-      .leftJoin(enrollments, eq(sessions.id, enrollments.sessionId))
-      .where(eq(sessions.id, id))
-      .groupBy(
-        sessions.id,
-        courses.id,
-        categories.id,
-        users.id
-      );
-
-    if (result.length === 0) return undefined;
-
-    const { session, course, category, trainer, enrollmentCount } = result[0];
-    return {
-      ...session,
-      course: { ...course, category, trainer },
-      enrollmentCount
-    };
+    try {
+      // Utiliser une requête SQL directe pour éviter les problèmes avec le schéma
+      const result = await db.execute(`
+        SELECT 
+          s.id, s.course_id, s.date, s.zoom_link, s.created_at, s.updated_at, s.is_completed,
+          c.id as course_id, c.title as course_title, c.description as course_description,
+          cat.id as category_id, cat.name as category_name,
+          u.id as trainer_id, u.username as trainer_username, u.display_name as trainer_display_name,
+          COUNT(e.id) as enrollment_count
+        FROM 
+          sessions s
+        LEFT JOIN 
+          courses c ON s.course_id = c.id
+        LEFT JOIN 
+          categories cat ON c.category_id = cat.id
+        LEFT JOIN 
+          users u ON c.trainer_id = u.id
+        LEFT JOIN 
+          enrollments e ON s.id = e.session_id
+        WHERE 
+          s.id = ${id}
+        GROUP BY 
+          s.id, c.id, cat.id, u.id
+      `);
+      
+      if (!result.rows || result.rows.length === 0) {
+        return undefined;
+      }
+      
+      const row = result.rows[0];
+      
+      return {
+        id: row.id,
+        courseId: row.course_id,
+        date: new Date(row.date),
+        zoomLink: row.zoom_link,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
+        isCompleted: row.is_completed,
+        course: {
+          id: row.course_id,
+          title: row.course_title,
+          description: row.course_description,
+          category: {
+            id: row.category_id,
+            name: row.category_name
+          },
+          trainer: {
+            id: row.trainer_id,
+            username: row.trainer_username,
+            displayName: row.trainer_display_name
+          }
+        },
+        enrollmentCount: parseInt(row.enrollment_count)
+      };
+    } catch (error) {
+      console.error("Erreur dans getSessionWithDetails:", error);
+      throw error;
+    }
   }
 
   async getAllSessionsWithDetails(): Promise<SessionWithDetails[]> {
-    const result = await db
-      .select({
-        session: sessions,
-        course: courses,
-        category: categories,
-        trainer: users,
-        enrollmentCount: sql<number>`count(${enrollments.id})`
-      })
-      .from(sessions)
-      .leftJoin(courses, eq(sessions.courseId, courses.id))
-      .leftJoin(categories, eq(courses.categoryId, categories.id))
-      .leftJoin(users, eq(courses.trainerId, users.id))
-      .leftJoin(enrollments, eq(sessions.id, enrollments.sessionId))
-      .groupBy(
-        sessions.id,
-        courses.id,
-        categories.id,
-        users.id
-      );
-
-    return result.map(({ session, course, category, trainer, enrollmentCount }) => ({
-      ...session,
-      course: { ...course, category, trainer },
-      enrollmentCount
-    }));
+    try {
+      // Utiliser une requête SQL directe pour éviter les problèmes avec le schéma
+      const result = await db.execute(`
+        SELECT 
+          s.id, s.course_id, s.date, s.zoom_link, s.created_at, s.updated_at, s.is_completed,
+          c.id as course_id, c.title as course_title, c.description as course_description,
+          cat.id as category_id, cat.name as category_name,
+          u.id as trainer_id, u.username as trainer_username, u.display_name as trainer_display_name,
+          COUNT(e.id) as enrollment_count
+        FROM 
+          sessions s
+        LEFT JOIN 
+          courses c ON s.course_id = c.id
+        LEFT JOIN 
+          categories cat ON c.category_id = cat.id
+        LEFT JOIN 
+          users u ON c.trainer_id = u.id
+        LEFT JOIN 
+          enrollments e ON s.id = e.session_id
+        GROUP BY 
+          s.id, c.id, cat.id, u.id
+        ORDER BY 
+          s.date DESC
+      `);
+      
+      console.log("Résultat getAllSessionsWithDetails:", result);
+      
+      if (!result.rows) {
+        return [];
+      }
+      
+      // Transformer les résultats en objets SessionWithDetails
+      return result.rows.map(row => {
+        return {
+          id: row.id,
+          courseId: row.course_id,
+          date: new Date(row.date),
+          zoomLink: row.zoom_link,
+          createdAt: new Date(row.created_at),
+          updatedAt: new Date(row.updated_at),
+          isCompleted: row.is_completed,
+          course: {
+            id: row.course_id,
+            title: row.course_title,
+            description: row.course_description,
+            category: {
+              id: row.category_id,
+              name: row.category_name
+            },
+            trainer: {
+              id: row.trainer_id,
+              username: row.trainer_username,
+              displayName: row.trainer_display_name
+            }
+          },
+          enrollmentCount: parseInt(row.enrollment_count)
+        };
+      });
+    } catch (error) {
+      console.error("Erreur dans getAllSessionsWithDetails:", error);
+      throw error;
+    }
   }
   
   async updateSession(id: number, data: Partial<Session>): Promise<Session> {
