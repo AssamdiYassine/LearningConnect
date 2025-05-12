@@ -81,6 +81,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerAdminCourseRoutes(app);
   registerAdminNotificationRoutes(app);
   
+  // Register blog categories routes
+  registerAdminBlogCategoriesRoutes(app);
+  
   // Register password reset routes
   registerResetPasswordRoutes(app);
 
