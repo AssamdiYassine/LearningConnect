@@ -8,7 +8,10 @@ import {
   Check, 
   X, 
   UserPlus,
-  Eye
+  Eye,
+  Key,
+  CreditCard,
+  CalendarRange
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -267,6 +270,11 @@ export default function AdminUsers() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleResetPasswordInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setResetPasswordData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -610,6 +618,28 @@ export default function AdminUsers() {
                               className="text-blue-600 border-blue-600 hover:bg-blue-50"
                             >
                               <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setIsResetPasswordDialogOpen(true);
+                              }}
+                              className="text-yellow-600 border-yellow-600 hover:bg-yellow-50"
+                            >
+                              <Key className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setIsAssignSubscriptionDialogOpen(true);
+                              }}
+                              className="text-purple-600 border-purple-600 hover:bg-purple-50"
+                            >
+                              <CreditCard className="h-4 w-4" />
                             </Button>
                             <Button 
                               variant="outline" 
