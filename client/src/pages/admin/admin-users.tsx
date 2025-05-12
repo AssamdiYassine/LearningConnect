@@ -11,8 +11,10 @@ import {
   Eye,
   KeyRound,
   CreditCard,
-  CalendarRange
+  CalendarRange,
+  BookOpen
 } from 'lucide-react';
+import { CourseAccessDialog } from '@/components/course-access-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -76,6 +78,7 @@ export default function AdminUsers() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const [isAssignSubscriptionDialogOpen, setIsAssignSubscriptionDialogOpen] = useState(false);
+  const [isManageCourseAccessDialogOpen, setIsManageCourseAccessDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [formData, setFormData] = useState<UserFormData>({
     username: '',
