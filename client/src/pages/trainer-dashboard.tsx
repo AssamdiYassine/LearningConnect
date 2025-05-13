@@ -65,7 +65,7 @@ export default function TrainerDashboard() {
   const totalSessions = trainerSessions?.length || 0;
   
   // Nombre de cours actifs (approuvés)
-  const activeCourses = trainerCourses.filter(course => course.isApproved === true).length;
+  const activeCourses = trainerCourses ? trainerCourses.filter(course => course.isApproved === true).length : 0;
   
   // Calcul de la note moyenne à partir des évaluations
   const averageRating = trainerRatings.length > 0 
