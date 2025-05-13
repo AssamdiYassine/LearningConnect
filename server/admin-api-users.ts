@@ -37,8 +37,9 @@ export function registerAdminUserRoutes(app: Express) {
       const studentCount = users.filter(user => user.role === "student").length;
       
       // Log détaillé pour le débogage
-      const roleDistribution = users.reduce((acc, user) => {
-        acc[user.role || 'undefined'] = (acc[user.role || 'undefined'] || 0) + 1;
+      const roleDistribution = users.reduce((acc: Record<string, number>, user) => {
+        const role = user.role || 'undefined';
+        acc[role] = (acc[role] || 0) + 1;
         return acc;
       }, {});
       console.log("Distribution des rôles d'utilisateurs (route count):", roleDistribution);

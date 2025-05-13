@@ -2,6 +2,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { User, SessionWithDetails } from "@shared/schema";
+import { createMockSession } from "@/lib/mock-data";
 import { Loader2, Search, Filter, Calendar, Users, UserPlus, MailIcon, ChevronDown } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
