@@ -1,4 +1,4 @@
-import { Course, CourseWithDetails, SessionWithDetails, User } from "@shared/schema";
+import { Category, Course, CourseWithDetails, SessionWithDetails, User } from "@shared/schema";
 
 /**
  * Crée une session correctement typée pour les données de démonstration
@@ -8,7 +8,24 @@ export function createMockSession(
   courseId: number,
   date: string,
   title: string,
-  course: Partial<CourseWithDetails>
+  course: {
+    title?: string;
+    description?: string;
+    level?: "beginner" | "intermediate" | "advanced";
+    duration?: number;
+    price?: number;
+    maxStudents?: number;
+    categoryId?: number;
+    trainerId?: number;
+    isApproved?: boolean;
+    thumbnail?: string | null;
+    category?: {
+      id: number;
+      name: string;
+      slug: string;
+    };
+    trainer?: Partial<User>;
+  }
 ): SessionWithDetails {
   return {
     id,
@@ -35,16 +52,14 @@ export function createMockSession(
       maxStudents: course.maxStudents || 20,
       categoryId: course.categoryId || 1,
       trainerId: course.trainerId || 2,
-      imageUrl: course.imageUrl || null,
-      isPublished: course.isPublished !== undefined ? course.isPublished : true,
+      isApproved: course.isApproved !== undefined ? course.isApproved : true,
+      thumbnail: course.thumbnail || null,
       createdAt: new Date(),
       updatedAt: new Date(),
       category: course.category || {
         id: 1,
         name: "Catégorie par défaut",
-        slug: "categorie-par-defaut",
-        createdAt: new Date(),
-        updatedAt: new Date()
+        slug: "categorie-par-defaut"
       },
       trainer: course.trainer || {
         id: 2,
