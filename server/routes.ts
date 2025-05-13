@@ -1520,7 +1520,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      const approvalRequests = await storage.getApprovalRequestsByRequesterId(req.user!.id);
+      const approvalRequests = await storage.getApprovalRequestsByRequester(req.user!.id);
       
       // Enrichir les données avec les détails des éléments associés
       for (const request of approvalRequests) {
