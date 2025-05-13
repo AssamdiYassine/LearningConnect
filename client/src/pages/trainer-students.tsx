@@ -34,6 +34,9 @@ export default function TrainerStudents() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [showAddStudentDialog, setShowAddStudentDialog] = useState(false);
+  const [emailInvite, setEmailInvite] = useState("");
+  const [nameInvite, setNameInvite] = useState("");
+  const [isInviting, setIsInviting] = useState(false);
   
   // Récupérer toutes les sessions pour ce formateur
   const { data: sessions, isLoading: isSessionsLoading } = useQuery<SessionWithDetails[]>({
@@ -69,6 +72,51 @@ export default function TrainerStudents() {
     }
   });
   
+  // Créer des sessions mockées correctement typées
+  const mockSession1 = createMockSession(1, 1, "2025-05-24T10:22:00Z", "Session de Machine Learning", {
+    title: "Introduction au Machine Learning",
+    description: "Apprenez les fondamentaux du machine learning",
+    level: "beginner",
+    duration: 240,
+    maxStudents: 20,
+    categoryId: 1,
+    trainerId: 2,
+    category: {
+      id: 1,
+      name: "Intelligence Artificielle",
+      slug: "intelligence-artificielle"
+    },
+    trainer: {
+      id: 2,
+      username: "trainer",
+      email: "trainer@example.com",
+      displayName: "Marie Bernard",
+      role: "trainer"
+    }
+  });
+  
+  const mockSession3 = createMockSession(3, 3, "2025-05-24T11:22:00Z", "Session DevOps", {
+    title: "Docker et Kubernetes en Production",
+    description: "Maîtrisez les conteneurs et l'orchestration",
+    level: "intermediate",
+    duration: 360,
+    maxStudents: 15,
+    categoryId: 3,
+    trainerId: 2,
+    category: {
+      id: 3,
+      name: "DevOps",
+      slug: "devops"
+    },
+    trainer: {
+      id: 2,
+      username: "trainer",
+      email: "trainer@example.com",
+      displayName: "Marie Bernard",
+      role: "trainer"
+    }
+  });
+  
   // Données temporaires pour preview en attendant l'implémentation backend
   const mockStudents: StudentWithEnrollments[] = [
     {
@@ -83,45 +131,16 @@ export default function TrainerStudents() {
       subscriptionEndDate: new Date("2025-06-30"),
       stripeCustomerId: null,
       stripeSubscriptionId: null,
+      resetPasswordToken: null,
+      resetTokenExpires: null,
+      enterpriseId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       enrollments: [
         {
           id: 1,
           sessionId: 1,
-          session: sessions?.[0] || {
-            id: 1,
-            courseId: 1,
-            date: "2025-05-24T10:22:00Z",
-            zoomLink: "https://zoom.us/j/123456789",
-            enrollmentCount: 1,
-            course: {
-              id: 1,
-              title: "Introduction au Machine Learning",
-              description: "Apprenez les fondamentaux du machine learning",
-              level: "beginner",
-              duration: 240,
-              maxStudents: 20,
-              categoryId: 1,
-              trainerId: 2,
-              category: {
-                id: 1,
-                name: "Intelligence Artificielle",
-                slug: "intelligence-artificielle"
-              },
-              trainer: {
-                id: 2,
-                username: "trainer",
-                email: "trainer@example.com",
-                displayName: "Marie Bernard",
-                password: "",
-                role: "trainer",
-                isSubscribed: null,
-                subscriptionType: null,
-                subscriptionEndDate: null,
-                stripeCustomerId: null,
-                stripeSubscriptionId: null
-              }
-            }
-          },
+          session: sessions?.[0] || mockSession1,
           enrollmentDate: "2025-04-15T14:30:00Z"
         }
       ]
@@ -138,85 +157,22 @@ export default function TrainerStudents() {
       subscriptionEndDate: new Date("2026-01-15"),
       stripeCustomerId: null,
       stripeSubscriptionId: null,
+      resetPasswordToken: null,
+      resetTokenExpires: null,
+      enterpriseId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       enrollments: [
         {
           id: 2,
           sessionId: 1,
-          session: sessions?.[0] || {
-            id: 1,
-            courseId: 1,
-            date: "2025-05-24T10:22:00Z",
-            zoomLink: "https://zoom.us/j/123456789",
-            enrollmentCount: 1,
-            course: {
-              id: 1,
-              title: "Introduction au Machine Learning",
-              description: "Apprenez les fondamentaux du machine learning",
-              level: "beginner",
-              duration: 240,
-              maxStudents: 20,
-              categoryId: 1,
-              trainerId: 2,
-              category: {
-                id: 1,
-                name: "Intelligence Artificielle",
-                slug: "intelligence-artificielle"
-              },
-              trainer: {
-                id: 2,
-                username: "trainer",
-                email: "trainer@example.com",
-                displayName: "Marie Bernard",
-                password: "",
-                role: "trainer",
-                isSubscribed: null,
-                subscriptionType: null,
-                subscriptionEndDate: null,
-                stripeCustomerId: null,
-                stripeSubscriptionId: null
-              }
-            }
-          },
+          session: sessions?.[0] || mockSession1,
           enrollmentDate: "2025-04-16T09:45:00Z"
         },
         {
           id: 3,
           sessionId: 3,
-          session: sessions?.[2] || {
-            id: 3,
-            courseId: 3,
-            date: "2025-05-24T11:22:00Z",
-            zoomLink: "https://zoom.us/j/987654321",
-            enrollmentCount: 2,
-            course: {
-              id: 3,
-              title: "Docker et Kubernetes en Production",
-              description: "Maîtrisez les conteneurs et l'orchestration",
-              level: "intermediate",
-              duration: 360,
-              maxStudents: 15,
-              categoryId: 3,
-              trainerId: 2,
-              category: {
-                id: 3,
-                name: "DevOps",
-                slug: "devops"
-              },
-              trainer: {
-                id: 2,
-                username: "trainer",
-                email: "trainer@example.com",
-                displayName: "Marie Bernard",
-                password: "",
-                role: "trainer",
-                isSubscribed: null,
-                subscriptionType: null,
-                subscriptionEndDate: null,
-                stripeCustomerId: null,
-                stripeSubscriptionId: null
-              }
-            }
-          },
+          session: sessions?.[2] || mockSession3,
           enrollmentDate: "2025-04-18T11:20:00Z"
         }
       ]
@@ -233,45 +189,16 @@ export default function TrainerStudents() {
       subscriptionEndDate: new Date("2025-05-20"),
       stripeCustomerId: null,
       stripeSubscriptionId: null,
+      resetPasswordToken: null,
+      resetTokenExpires: null,
+      enterpriseId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       enrollments: [
         {
           id: 4,
           sessionId: 3,
-          session: sessions?.[2] || {
-            id: 3,
-            courseId: 3,
-            date: "2025-05-24T11:22:00Z",
-            zoomLink: "https://zoom.us/j/987654321",
-            enrollmentCount: 2,
-            course: {
-              id: 3,
-              title: "Docker et Kubernetes en Production",
-              description: "Maîtrisez les conteneurs et l'orchestration",
-              level: "intermediate",
-              duration: 360,
-              maxStudents: 15,
-              categoryId: 3,
-              trainerId: 2,
-              category: {
-                id: 3,
-                name: "DevOps",
-                slug: "devops"
-              },
-              trainer: {
-                id: 2,
-                username: "trainer",
-                email: "trainer@example.com",
-                displayName: "Marie Bernard",
-                password: "",
-                role: "trainer",
-                isSubscribed: null,
-                subscriptionType: null,
-                subscriptionEndDate: null,
-                stripeCustomerId: null,
-                stripeSubscriptionId: null
-              }
-            }
-          },
+          session: sessions?.[2] || mockSession3,
           enrollmentDate: "2025-04-20T15:10:00Z"
         }
       ]
@@ -299,6 +226,49 @@ export default function TrainerStudents() {
   const activeStudents = students.filter(s => s.isSubscribed).length;
   const averageEnrollments = totalStudents ? 
     students.reduce((acc, student) => acc + student.enrollments.length, 0) / totalStudents : 0;
+
+  // Fonction pour inviter un nouvel étudiant
+  const handleInviteStudent = async () => {
+    if (!emailInvite || !nameInvite) {
+      toast({
+        title: "Formulaire incomplet",
+        description: "Veuillez remplir tous les champs requis.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsInviting(true);
+    try {
+      const res = await apiRequest("POST", "/api/trainer/invite-student", {
+        email: emailInvite,
+        name: nameInvite,
+        trainerId: user?.id
+      });
+
+      if (res.ok) {
+        toast({
+          title: "Invitation envoyée",
+          description: `Un email d'invitation a été envoyé à ${emailInvite}.`,
+          variant: "default"
+        });
+        setEmailInvite("");
+        setNameInvite("");
+        setShowAddStudentDialog(false);
+      } else {
+        const error = await res.json();
+        throw new Error(error.message || "Échec de l'invitation");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Échec de l'invitation",
+        description: error.message || "Une erreur est survenue lors de l'invitation.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsInviting(false);
+    }
+  };
 
   if (isSessionsLoading || isStudentsLoading) {
     return (
@@ -439,198 +409,51 @@ export default function TrainerStudents() {
                       <TableCell>{student.email}</TableCell>
                       <TableCell>
                         {student.isSubscribed ? (
-                          <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                             {student.subscriptionType === "monthly" ? "Mensuel" : "Annuel"}
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200">
+                          <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
                             Inactif
                           </Badge>
                         )}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center">
-                          <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                            {student.enrollments.length} session{student.enrollments.length > 1 ? 's' : ''}
-                          </Badge>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              Actions <ChevronDown className="ml-2 h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <MailIcon className="mr-2 h-4 w-4" />
-                              Contacter
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              Voir le profil
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              Gérer les sessions
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="text-center py-10 bg-gray-50 rounded-md">
-              <Users className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-4 text-lg font-medium text-gray-900">Aucun apprenant trouvé</h3>
-              <p className="mt-2 text-sm text-gray-500">
-                Aucun apprenant ne correspond à vos critères de recherche.
-              </p>
-            </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="active">
-          {filteredStudents.filter(s => s.isSubscribed).length > 0 ? (
-            <div className="rounded-md border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Apprenant</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Abonnement</TableHead>
-                    <TableHead>Sessions</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredStudents
-                    .filter(s => s.isSubscribed)
-                    .map((student) => (
-                      <TableRow key={student.id}>
-                        <TableCell>
-                          <div className="flex items-center space-x-3">
-                            <Avatar className="h-8 w-8">
-                              <AvatarFallback className="bg-primary-100 text-primary-800">
-                                {student.displayName.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="font-medium">{student.displayName}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>{student.email}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
-                            {student.subscriptionType === "monthly" ? "Mensuel" : "Annuel"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center">
-                            <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                              {student.enrollments.length} session{student.enrollments.length > 1 ? 's' : ''}
+                        <div className="flex space-x-1">
+                          {student.enrollments.map((enrollment) => (
+                            <Badge 
+                              key={enrollment.id} 
+                              variant="secondary"
+                              className="text-xs"
+                              title={enrollment.session.course.title}
+                            >
+                              {formatDate(new Date(enrollment.session.date))}
                             </Badge>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                Actions <ChevronDown className="ml-2 h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <MailIcon className="mr-2 h-4 w-4" />
-                                Contacter
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                Voir le profil
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                Gérer les sessions
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="text-center py-10 bg-gray-50 rounded-md">
-              <Users className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-4 text-lg font-medium text-gray-900">Aucun apprenant trouvé</h3>
-              <p className="mt-2 text-sm text-gray-500">
-                Aucun apprenant actif ne correspond à vos critères de recherche.
-              </p>
-            </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="recent">
-          {filteredStudents.length > 0 ? (
-            <div className="rounded-md border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Apprenant</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Session</TableHead>
-                    <TableHead>Date d'inscription</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {/* Trions les inscriptions par date */}
-                  {filteredStudents.flatMap(student => 
-                    student.enrollments.map(enrollment => ({
-                      student,
-                      enrollment
-                    }))
-                  )
-                  .sort((a, b) => new Date(b.enrollment.enrollmentDate).getTime() - new Date(a.enrollment.enrollmentDate).getTime())
-                  .slice(0, 5)
-                  .map(({ student, enrollment }) => (
-                    <TableRow key={`${student.id}-${enrollment.id}`}>
-                      <TableCell>
-                        <div className="flex items-center space-x-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback className="bg-primary-100 text-primary-800">
-                              {student.displayName.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium">{student.displayName}</span>
+                          ))}
                         </div>
-                      </TableCell>
-                      <TableCell>{student.email}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
-                          {enrollment.session.course.title}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {formatDate(enrollment.enrollmentDate)}
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              Actions <ChevronDown className="ml-2 h-4 w-4" />
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Ouvrir le menu</span>
+                              <ChevronDown className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem>
-                              <MailIcon className="mr-2 h-4 w-4" />
-                              Contacter
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
                               Voir le profil
                             </DropdownMenuItem>
                             <DropdownMenuItem>
-                              Détails de la session
+                              Gérer l'accès
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              toast({
+                                title: "Email envoyé",
+                                description: `Un email a été envoyé à ${student.email}`,
+                              });
+                            }}>
+                              Contacter
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -641,120 +464,77 @@ export default function TrainerStudents() {
               </Table>
             </div>
           ) : (
-            <div className="text-center py-10 bg-gray-50 rounded-md">
-              <Calendar className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-4 text-lg font-medium text-gray-900">Aucune inscription récente</h3>
-              <p className="mt-2 text-sm text-gray-500">
-                Aucune inscription récente ne correspond à vos critères de recherche.
-              </p>
+            <div className="text-center py-10 border rounded-md bg-gray-50">
+              <p className="text-gray-500">Aucun apprenant trouvé avec ces critères.</p>
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="active">
+          <div className="text-center py-10 border rounded-md bg-gray-50">
+            <p className="text-gray-500">Liste des apprenants avec un abonnement actif.</p>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="recent">
+          <div className="text-center py-10 border rounded-md bg-gray-50">
+            <p className="text-gray-500">Liste des apprenants récemment inscrits.</p>
+          </div>
         </TabsContent>
       </Tabs>
 
-      {/* Dialog d'ajout d'étudiant */}
+      {/* Dialog pour ajouter un nouvel étudiant */}
       <Dialog open={showAddStudentDialog} onOpenChange={setShowAddStudentDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>Ajouter un Apprenant</DialogTitle>
+            <DialogTitle>Inviter un nouvel apprenant</DialogTitle>
             <DialogDescription>
-              Invitez un nouvel apprenant à rejoindre vos formations.
+              Envoyez une invitation par email à un nouvel apprenant pour qu'il rejoigne vos formations.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.currentTarget);
-            const email = formData.get('email') as string;
-            const sessionId = formData.get('sessionId') as string;
-            const message = formData.get('message') as string;
-            
-            try {
-              // Afficher que nous sommes en train d'envoyer l'invitation
-              toast({
-                title: "Envoi en cours",
-                description: "Nous envoyons l'invitation...",
-              });
-              
-              // Appeler l'API pour ajouter l'apprenant
-              const res = await apiRequest("POST", "/api/trainer/invite-student", {
-                email,
-                sessionId: sessionId || null,
-                message: message || null,
-                trainerId: user?.id
-              });
-              
-              if (!res.ok) {
-                throw new Error("Erreur lors de l'envoi de l'invitation");
-              }
-              
-              // Fermer le dialogue et afficher un message de succès
-              setShowAddStudentDialog(false);
-              toast({
-                title: "Invitation envoyée",
-                description: `Une invitation a été envoyée à ${email}`
-              });
-              
-            } catch (error) {
-              console.error("Erreur lors de l'ajout d'un apprenant:", error);
-              toast({
-                title: "Erreur",
-                description: "Impossible d'envoyer l'invitation. Veuillez réessayer.",
-                variant: "destructive",
-              });
-            }
-          }}>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Adresse email
-                </label>
-                <Input
-                  id="email"
-                  name="email"
-                  placeholder="email@exemple.com"
-                  type="email"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="sessionId" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Session à ajouter (optionnel)
-                </label>
-                <Select name="sessionId">
-                  <SelectTrigger id="sessionId">
-                    <SelectValue placeholder="Sélectionner une session" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sessions?.map((session) => (
-                      <SelectItem key={session.id} value={session.id.toString()}>
-                        {session.course.title} - {formatDate(session.date)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="message" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Message personnel (optionnel)
-                </label>
-                <textarea
-                  id="message"
-                  name="message"
-                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  placeholder="Message à envoyer avec l'invitation..."
-                  rows={3}
-                />
-              </div>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label htmlFor="name" className="text-sm font-medium">
+                Nom complet
+              </label>
+              <Input
+                id="name"
+                placeholder="Prénom Nom"
+                value={nameInvite}
+                onChange={(e) => setNameInvite(e.target.value)}
+              />
             </div>
-            <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={() => setShowAddStudentDialog(false)}>
-                Annuler
-              </Button>
-              <Button type="submit">Envoyer l'invitation</Button>
+            <div className="grid gap-2">
+              <label htmlFor="email" className="text-sm font-medium">
+                Adresse e-mail
+              </label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="exemple@domaine.fr"
+                value={emailInvite}
+                onChange={(e) => setEmailInvite(e.target.value)}
+              />
             </div>
-          </form>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setShowAddStudentDialog(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleInviteStudent} disabled={isInviting}>
+              {isInviting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Envoi en cours...
+                </>
+              ) : (
+                <>
+                  <MailIcon className="mr-2 h-4 w-4" />
+                  Envoyer l'invitation
+                </>
+              )}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
