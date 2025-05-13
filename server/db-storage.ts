@@ -233,14 +233,32 @@ export class DatabaseStorage implements IStorage {
     
     console.log("Création de session avec données filtrées:", { courseId, date, zoomLink });
     
-    // Formatage de la date pour SQL
-    const dateStr = date.toISOString();
+    // Formatage de la date pour SQL - gestion flexible des formats
+    let formattedDate;
+    
+    if (date instanceof Date) {
+      formattedDate = date.toISOString();
+    } else if (typeof date === 'string') {
+      // Si la date est une chaîne au format YYYY-MM-DD
+      if (date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        formattedDate = `${date}T00:00:00.000Z`;
+      } else {
+        // Essayer de parser la chaîne comme une date
+        try {
+          formattedDate = new Date(date).toISOString();
+        } catch (e) {
+          throw new Error(`Format de date invalide: ${date}`);
+        }
+      }
+    } else {
+      throw new Error("La date doit être une chaîne ou un objet Date");
+    }
     
     try {
-      // Utiliser la fonction execute sans paramètres nommés pour éviter les erreurs
-      const result = await db.execute(`
+      // Utiliser la fonction execute avec SQL paramétré pour plus de sécurité
+      const result = await db.execute(sql`
         INSERT INTO sessions (course_id, date, zoom_link) 
-        VALUES (${courseId}, '${dateStr}', '${zoomLink.replace(/'/g, "''")}')
+        VALUES (${courseId}, ${formattedDate}, ${zoomLink})
         RETURNING *
       `);
       
@@ -560,6 +578,33 @@ export class DatabaseStorage implements IStorage {
   async getEnrollmentsBySession(sessionId: number): Promise<Enrollment[]> {
     return await db.select().from(enrollments).where(eq(enrollments.sessionId, sessionId));
   }
+  
+  // Récupérer les inscriptions pour un cours (à travers ses sessions)
+  async getEnrollmentsByCourse(courseId: number): Promise<Enrollment[]> {
+    console.log(`Récupération des inscriptions pour le cours ${courseId}`);
+    
+    // 1. Récupérer toutes les sessions pour ce cours
+    const courseSessions = await db.select().from(sessions).where(eq(sessions.courseId, courseId));
+    
+    if (!courseSessions || courseSessions.length === 0) {
+      console.log(`Aucune session trouvée pour le cours ${courseId}`);
+      return [];
+    }
+    
+    // 2. Extraire les IDs de session
+    const sessionIds = courseSessions.map(session => session.id);
+    console.log(`Sessions trouvées pour le cours: ${sessionIds.join(', ')}`);
+    
+    // 3. Récupérer toutes les inscriptions pour ces sessions
+    // Utilisation d'une requête SQL brute car inArray n'est pas supporté par tous les drivers
+    const courseEnrollments = await db.execute(sql`
+      SELECT * FROM enrollments 
+      WHERE session_id IN (${sql.join(sessionIds, sql`, `)})
+    `);
+    
+    console.log(`${courseEnrollments.rows.length} inscriptions trouvées pour le cours ${courseId}`);
+    return courseEnrollments.rows as Enrollment[];
+  }
 
   async getEnrollment(userId: number, sessionId: number): Promise<Enrollment | undefined> {
     const [enrollment] = await db
@@ -576,6 +621,35 @@ export class DatabaseStorage implements IStorage {
 
   async deleteEnrollment(id: number): Promise<void> {
     await db.delete(enrollments).where(eq(enrollments.id, id));
+  }
+  
+  // Récupérer les évaluations pour une session spécifique
+  async getSessionRatings(sessionId: number): Promise<any[]> {
+    console.log(`Récupération des évaluations pour la session ${sessionId}`);
+    
+    try {
+      // Requête pour obtenir les évaluations avec le nom de l'utilisateur
+      const results = await db.execute(sql`
+        SELECT r.*, u.username as user_name, u.display_name
+        FROM ratings r
+        JOIN users u ON r.user_id = u.id
+        WHERE r.session_id = ${sessionId}
+        ORDER BY r.created_at DESC
+      `);
+      
+      console.log(`${results.rows.length} évaluations trouvées pour la session ${sessionId}`);
+      
+      // Transformer les résultats pour avoir la propriété userName
+      const formattedRatings = results.rows.map(row => ({
+        ...row,
+        userName: row.display_name || row.user_name
+      }));
+      
+      return formattedRatings;
+    } catch (error) {
+      console.error(`Erreur lors de la récupération des évaluations pour la session ${sessionId}:`, error);
+      return [];
+    }
   }
 
   async getUserEnrolledSessions(userId: number): Promise<SessionWithDetails[]> {

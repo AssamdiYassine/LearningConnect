@@ -464,12 +464,33 @@ export function registerAdminRoutes(app: Express) {
   // Créer une nouvelle session
   app.post('/api/admin/sessions', hasAdminRole, async (req, res) => {
     try {
-      const sessionSchema = insertSessionSchema.extend({
-        zoomLink: z.string().url(),
-        recordingLink: z.string().url().optional(),
+      console.log("Données reçues pour créer une session:", req.body);
+      
+      // Utiliser un schéma plus flexible pour les liens
+      const sessionSchema = z.object({
+        courseId: z.number().int().positive(),
+        date: z.string().or(z.date()),
+        zoomLink: z.string().min(1, "Le lien Zoom est requis"),
+        recordingLink: z.string().optional(),
+        // Ajoutons d'autres champs optionnels
+        startTime: z.string().optional(),
+        endTime: z.string().optional(),
+        maxStudents: z.number().optional()
       });
       
-      const sessionData = sessionSchema.parse(req.body);
+      // Essayer de valider et transformer les données
+      const validationResult = sessionSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        console.error("Erreur de validation:", validationResult.error);
+        return res.status(400).json({ 
+          message: "Données invalides", 
+          errors: validationResult.error.format() 
+        });
+      }
+      
+      const sessionData = validationResult.data;
+      console.log("Données validées:", sessionData);
       
       // Vérifier si la formation existe
       const course = await storage.getCourse(sessionData.courseId);
@@ -482,10 +503,14 @@ export function registerAdminRoutes(app: Express) {
       
       res.status(201).json(newSession);
     } catch (error: any) {
+      console.error("Erreur complète lors de la création de session:", error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Données invalides", errors: error.format() });
       } else {
-        res.status(500).json({ message: `Erreur lors de la création de la session: ${error.message}` });
+        res.status(500).json({ 
+          message: `Erreur lors de la création de la session: ${error.message}`, 
+          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+        });
       }
     }
   });
