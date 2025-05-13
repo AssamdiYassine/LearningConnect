@@ -44,15 +44,15 @@ export default function TrainerDashboard() {
     ?.filter(session => new Date(session.date) > new Date())
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  // Récupérer le nombre d'utilisateurs total
-  const { data: userCount = 0, isLoading: isUserCountLoading } = useQuery<number>({
+  // Récupérer les informations sur les apprenants
+  const { data: studentCount = 0, isLoading: isStudentCountLoading } = useQuery<number>({
     queryKey: ["/api/admin/users/count"],
     enabled: !!user
   });
 
   // Calculer tous les chiffres à partir des données existantes plutôt que d'une API séparée
   // Cela garantit la cohérence entre les différentes sections
-  const totalStudents = userCount;
+  const totalStudents = studentCount;
   
   // Total des sessions
   const totalSessions = trainerSessions?.length || 0;

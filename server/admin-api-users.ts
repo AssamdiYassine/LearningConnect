@@ -26,6 +26,20 @@ export function hasAdminRole(req: any, res: any, next: any) {
 }
 
 export function registerAdminUserRoutes(app: Express) {
+  // Récupérer le nombre total d'utilisateurs étudiants
+  app.get("/api/admin/users/count", async (req: Request, res: Response) => {
+    try {
+      const users = await storage.getAllUsers();
+      // Compter les utilisateurs avec le rôle "student"
+      const studentCount = users.filter(user => user.role === "student").length;
+      
+      res.json(studentCount);
+    } catch (error) {
+      console.error("Erreur lors du comptage des utilisateurs:", error);
+      res.status(500).json({ message: "Erreur lors du comptage des utilisateurs" });
+    }
+  });
+
   // Route pour récupérer tous les utilisateurs (pour admin)
   app.get("/api/admin/users", hasAdminRole, async (req: Request, res: Response) => {
     try {
