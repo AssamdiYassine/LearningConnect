@@ -13,10 +13,12 @@ import { formatDate, formatTime } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, 
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 export default function TrainerDashboard() {
   const { user } = useAuth();
   const { unreadCount } = useNotifications();
+  const { toast } = useToast();
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   // Fetch trainer sessions

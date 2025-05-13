@@ -422,7 +422,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Vérifier que le formateur possède bien ce cours
-      if (existingSession.course.trainerId !== req.user.id && req.user.role !== "admin") {
+      if (existingSession.course && 
+          existingSession.course.trainer && 
+          existingSession.course.trainer.id && 
+          existingSession.course.trainer.id !== req.user.id && 
+          req.user.role !== "admin") {
         return res.status(403).json({ message: "Vous ne pouvez modifier que vos propres sessions" });
       }
       
