@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { formatDate } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 // Type pour les étudiants avec sessions
 type StudentWithEnrollments = User & {
@@ -28,6 +29,7 @@ type StudentWithEnrollments = User & {
 
 export default function TrainerStudents() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [showAddStudentDialog, setShowAddStudentDialog] = useState(false);
@@ -684,8 +686,7 @@ export default function TrainerStudents() {
               setShowAddStudentDialog(false);
               toast({
                 title: "Invitation envoyée",
-                description: `Une invitation a été envoyée à ${email}`,
-                variant: "success",
+                description: `Une invitation a été envoyée à ${email}`
               });
               
             } catch (error) {

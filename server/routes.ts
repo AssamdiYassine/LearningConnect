@@ -26,6 +26,17 @@ import {
   insertBlogCommentSchema
 } from "@shared/schema";
 import nodemailer from "nodemailer";
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { promisify } from "util";
+
+const scryptAsync = promisify(scrypt);
+
+// Fonction pour hacher les mots de passe
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
 
 // Create a test account for nodemailer (for development)
 const transporter = nodemailer.createTransport({
