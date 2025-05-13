@@ -29,10 +29,12 @@ export function registerAdminUserRoutes(app: Express) {
   // Récupérer le nombre total d'utilisateurs étudiants
   app.get("/api/admin/users/count", async (req: Request, res: Response) => {
     try {
+      console.log("Comptage du nombre d'utilisateurs étudiants");
       const users = await storage.getAllUsers();
       // Compter les utilisateurs avec le rôle "student"
       const studentCount = users.filter(user => user.role === "student").length;
       
+      console.log(`Nombre d'utilisateurs étudiants trouvés: ${studentCount}`);
       res.json(studentCount);
     } catch (error) {
       console.error("Erreur lors du comptage des utilisateurs:", error);

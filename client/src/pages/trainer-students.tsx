@@ -654,54 +654,101 @@ export default function TrainerStudents() {
               Invitez un nouvel apprenant à rejoindre vos formations.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                Adresse email
-              </label>
-              <Input
-                id="email"
-                placeholder="email@exemple.com"
-                type="email"
-              />
-            </div>
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.currentTarget);
+            const email = formData.get('email') as string;
+            const sessionId = formData.get('sessionId') as string;
+            const message = formData.get('message') as string;
+            
+            try {
+              // Afficher que nous sommes en train d'envoyer l'invitation
+              toast({
+                title: "Envoi en cours",
+                description: "Nous envoyons l'invitation...",
+              });
+              
+              // Appeler l'API pour ajouter l'apprenant
+              const res = await apiRequest("POST", "/api/trainer/invite-student", {
+                email,
+                sessionId: sessionId || null,
+                message: message || null,
+                trainerId: user?.id
+              });
+              
+              if (!res.ok) {
+                throw new Error("Erreur lors de l'envoi de l'invitation");
+              }
+              
+              // Fermer le dialogue et afficher un message de succès
+              setShowAddStudentDialog(false);
+              toast({
+                title: "Invitation envoyée",
+                description: `Une invitation a été envoyée à ${email}`,
+                variant: "success",
+              });
+              
+            } catch (error) {
+              console.error("Erreur lors de l'ajout d'un apprenant:", error);
+              toast({
+                title: "Erreur",
+                description: "Impossible d'envoyer l'invitation. Veuillez réessayer.",
+                variant: "destructive",
+              });
+            }
+          }}>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Adresse email
+                </label>
+                <Input
+                  id="email"
+                  name="email"
+                  placeholder="email@exemple.com"
+                  type="email"
+                  required
+                />
+              </div>
 
-            <div className="space-y-2">
-              <label htmlFor="session" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                Session à ajouter (optionnel)
-              </label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner une session" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sessions?.map((session) => (
-                    <SelectItem key={session.id} value={session.id.toString()}>
-                      {session.course.title} - {formatDate(session.date)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="space-y-2">
+                <label htmlFor="sessionId" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Session à ajouter (optionnel)
+                </label>
+                <Select name="sessionId">
+                  <SelectTrigger id="sessionId">
+                    <SelectValue placeholder="Sélectionner une session" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sessions?.map((session) => (
+                      <SelectItem key={session.id} value={session.id.toString()}>
+                        {session.course.title} - {formatDate(session.date)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <label htmlFor="message" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                Message personnel (optionnel)
-              </label>
-              <textarea
-                id="message"
-                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                placeholder="Message à envoyer avec l'invitation..."
-                rows={3}
-              />
+              <div className="space-y-2">
+                <label htmlFor="message" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Message personnel (optionnel)
+                </label>
+                <textarea
+                  id="message"
+                  name="message"
+                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder="Message à envoyer avec l'invitation..."
+                  rows={3}
+                />
+              </div>
             </div>
-          </div>
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setShowAddStudentDialog(false)}>
-              Annuler
-            </Button>
-            <Button>Envoyer l'invitation</Button>
-          </div>
+            <div className="flex justify-end space-x-2">
+              <Button type="button" variant="outline" onClick={() => setShowAddStudentDialog(false)}>
+                Annuler
+              </Button>
+              <Button type="submit">Envoyer l'invitation</Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

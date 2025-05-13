@@ -553,6 +553,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Erreur lors de la récupération des étudiants" });
     }
   });
+  
+  // Route pour inviter un nouvel étudiant (pour formateurs)
+  app.post("/api/trainer/invite-student", hasRole(["trainer", "admin"]), async (req, res) => {
+    try {
+      const { email, sessionId, message, trainerId } = req.body;
+      
+      console.log("Invitation d'un étudiant:", { email, sessionId, trainerId });
+      
+      // Vérifier si un utilisateur avec cet email existe déjà
+      const existingUser = await storage.getUserByEmail(email);
+      
+      if (existingUser) {
+        console.log("Utilisateur existant trouvé:", existingUser.id);
+        
+        // Si l'utilisateur existe et qu'une session est spécifiée, on peut l'inscrire à cette session
+        if (sessionId) {
+          try {
+            const enrollment = await storage.createEnrollment({
+              userId: existingUser.id,
+              sessionId: parseInt(sessionId)
+            });
+            console.log("Inscription créée:", enrollment);
+          } catch (err) {
+            console.error("Erreur lors de l'inscription à la session:", err);
+            // Ne pas échouer l'opération complète si l'inscription échoue
+          }
+        }
+        
+        // Créer une notification pour l'utilisateur
+        await storage.createNotification({
+          userId: existingUser.id,
+          message: message || `Vous avez été invité à rejoindre une formation par ${req.user.displayName}`,
+          type: "invitation"
+        });
+        
+        return res.status(200).json({ 
+          message: "Invitation envoyée à un utilisateur existant",
+          userId: existingUser.id
+        });
+      }
+      
+      // Créer un mot de passe temporaire
+      const tempPassword = Math.random().toString(36).substring(2, 10);
+      
+      // Créer un nouvel utilisateur
+      const newUser = await storage.createUser({
+        username: email.split('@')[0],
+        email,
+        password: await hashPassword(tempPassword),
+        displayName: email.split('@')[0],
+        role: "student",
+        isSubscribed: false,
+        subscriptionType: null,
+        subscriptionEndDate: null
+      });
+      
+      console.log("Nouvel utilisateur créé:", newUser.id);
+      
+      // Si une session est spécifiée, inscrire l'utilisateur à cette session
+      if (sessionId) {
+        try {
+          const enrollment = await storage.createEnrollment({
+            userId: newUser.id,
+            sessionId: parseInt(sessionId)
+          });
+          console.log("Inscription créée:", enrollment);
+        } catch (err) {
+          console.error("Erreur lors de l'inscription à la session:", err);
+          // Ne pas échouer l'opération complète si l'inscription échoue
+        }
+      }
+      
+      // Créer une notification pour l'utilisateur
+      await storage.createNotification({
+        userId: newUser.id,
+        message: message || `Vous avez été invité à rejoindre une formation par ${req.user.displayName}`,
+        type: "invitation"
+      });
+      
+      // Dans une implémentation complète, nous enverrions un email ici
+      
+      res.status(201).json({ 
+        message: "Nouvel utilisateur créé et invitation envoyée",
+        userId: newUser.id
+      });
+    } catch (error) {
+      console.error("Erreur lors de l'invitation d'un étudiant:", error);
+      res.status(500).json({ message: "Erreur lors de l'invitation d'un étudiant" });
+    }
+  });
   app.post("/api/enrollments", isAuthenticated, async (req, res) => {
     try {
       const { sessionId } = req.body;
