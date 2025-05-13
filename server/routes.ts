@@ -1598,6 +1598,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enregistrer les routes pour le rôle enterprise
   app.use("/api/enterprise", enterpriseRoutes);
   
+  // API pour récupérer les statistiques par formateur
+  app.get("/api/trainer/:id/stats", async (req, res) => {
+    try {
+      const trainerId = parseInt(req.params.id);
+      
+      // Récupérer les cours du formateur
+      const trainerCourses = await storage.getCoursesByTrainer(trainerId);
+      
+      // Récupérer les sessions du formateur
+      const trainerSessions = await storage.getSessionsByTrainer(trainerId);
+      
+      // Récupérer les évaluations du formateur
+      const trainerRatings = await storage.getTrainerRatings(trainerId);
+      
+      // Calculer les inscriptions totales
+      const courseIds = trainerCourses.map(course => course.id);
+      let allEnrollments = [];
+      for (const courseId of courseIds) {
+        try {
+          const enrollments = await storage.getEnrollmentsByCourse(courseId);
+          if (enrollments && enrollments.length) {
+            allEnrollments = [...allEnrollments, ...enrollments];
+          }
+        } catch (err) {
+          console.error(`Erreur lors de la récupération des inscriptions pour le cours ${courseId}:`, err);
+        }
+      }
+      
+      // Nombre d'étudiants uniques
+      const uniqueStudentIds = new Set();
+      allEnrollments.forEach(enrollment => {
+        if (enrollment && enrollment.userId) {
+          uniqueStudentIds.add(enrollment.userId);
+        }
+      });
+      
+      // Calculer les sessions planifiées (à venir)
+      const upcomingSessions = trainerSessions.filter(session => 
+        new Date(session.date) > new Date()
+      );
+      
+      // Calculer la note moyenne
+      const averageRating = trainerRatings.length > 0
+        ? trainerRatings.reduce((sum, rating) => sum + rating.score, 0) / trainerRatings.length
+        : 0;
+      
+      res.json({
+        totalStudents: uniqueStudentIds.size,
+        totalSessions: trainerSessions.length,
+        totalCourses: trainerCourses.length,
+        activeCourses: trainerCourses.filter(course => course.isApproved === true).length,
+        plannedSessions: upcomingSessions.length,
+        averageRating: averageRating,
+        totalEnrollments: allEnrollments.length,
+      });
+    } catch (error) {
+      console.error("Erreur lors de la récupération des statistiques du formateur:", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
   // Create HTTP server
   const httpServer = createServer(app);
 

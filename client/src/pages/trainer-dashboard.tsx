@@ -21,6 +21,12 @@ export default function TrainerDashboard() {
   const { toast } = useToast();
   const [showCreateForm, setShowCreateForm] = useState(false);
 
+  // Récupérer les statistiques du formateur
+  const { data: trainerStats, isLoading: isStatsLoading } = useQuery<any>({
+    queryKey: [`/api/trainer/${user?.id}/stats`],
+    enabled: !!user
+  });
+
   // Fetch trainer sessions
   const { data: trainerSessions, isLoading: isSessionsLoading } = useQuery<SessionWithDetails[]>({
     queryKey: [`/api/sessions/trainer/${user?.id}`],
@@ -30,18 +36,6 @@ export default function TrainerDashboard() {
   // Récupérer les cours du formateur
   const { data: trainerCourses = [], isLoading: isCoursesLoading } = useQuery<any[]>({
     queryKey: [`/api/courses/trainer/${user?.id}`],
-    enabled: !!user
-  });
-
-  // Récupérer les évaluations du formateur
-  const { data: trainerRatings = [], isLoading: isRatingsLoading } = useQuery<any[]>({
-    queryKey: [`/api/trainer/${user?.id}/ratings`],
-    enabled: !!user
-  });
-
-  // Récupérer toutes les inscriptions aux cours du formateur
-  const { data: enrollments = [], isLoading: isEnrollmentsLoading } = useQuery<any[]>({
-    queryKey: [`/api/trainer/${user?.id}/enrollments`],
     enabled: !!user
   });
   
@@ -56,24 +50,14 @@ export default function TrainerDashboard() {
     ?.filter(session => new Date(session.date) > new Date())
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  // Stats dynamiques
-  // Nombre total d'étudiants uniques inscrits à tous les cours du formateur
-  const uniqueStudentIds = new Set(enrollments.map(enrollment => enrollment.userId));
-  const totalStudents = uniqueStudentIds.size || 0;
-  
-  // Nombre total de sessions
-  const totalSessions = trainerSessions?.length || 0;
-  
-  // Nombre de cours actifs (approuvés)
-  const activeCourses = trainerCourses ? trainerCourses.filter(course => course.isApproved === true).length : 0;
-  
-  // Calcul de la note moyenne à partir des évaluations
-  const averageRating = trainerRatings.length > 0 
-    ? (trainerRatings.reduce((sum, rating) => sum + rating.score, 0) / trainerRatings.length).toFixed(1)
+  // Stats dynamiques à partir de l'API stats
+  const totalStudents = trainerStats?.totalStudents || 0;
+  const totalSessions = trainerStats?.totalSessions || 0;
+  const activeCourses = trainerStats?.activeCourses || 0;
+  const averageRating = trainerStats?.averageRating > 0 
+    ? trainerStats.averageRating.toFixed(1) 
     : "N/A";
-  
-  // Nombre de sessions à venir
-  const upcomingSessionsCount = upcomingSessions?.length || 0;
+  const upcomingSessionsCount = trainerStats?.plannedSessions || 0;
 
   return (
     <div className="space-y-8">
