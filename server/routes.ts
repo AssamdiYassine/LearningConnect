@@ -720,6 +720,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch notifications" });
     }
   });
+  
+  // Route pour diffuser des notifications (pour les formateurs)
+  app.post("/api/notifications/broadcast", isAuthenticated, async (req, res) => {
+    try {
+      if (req.user.role !== "trainer" && req.user.role !== "admin") {
+        return res.status(403).json({ message: "Vous n'êtes pas autorisé à diffuser des notifications" });
+      }
+      
+      // Validation des données
+      const schema = z.object({
+        message: z.string().min(1, "Le message est requis"),
+        type: z.string(),
+        courseId: z.number().optional(),
+        sessionId: z.number().optional(),
+      });
+      
+      const { message, type, courseId, sessionId } = schema.parse(req.body);
+      
+      // Déterminer les utilisateurs cibles
+      let targetUserIds: number[] = [];
+      
+      if (courseId) {
+        // Diffusion aux étudiants inscrits à un cours spécifique
+        const enrollments = await storage.getEnrollmentsByCourse(courseId);
+        targetUserIds = enrollments.map(enrollment => enrollment.userId);
+      } else if (sessionId) {
+        // Diffusion aux étudiants inscrits à une session spécifique
+        const enrollments = await storage.getEnrollmentsBySession(sessionId);
+        targetUserIds = enrollments.map(enrollment => enrollment.userId);
+      } else {
+        // Diffusion à tous les étudiants des cours du formateur
+        const courses = await storage.getCoursesByTrainer(req.user.id);
+        const enrollmentPromises = courses.map(course => 
+          storage.getEnrollmentsByCourse(course.id)
+        );
+        
+        const allEnrollments = await Promise.all(enrollmentPromises);
+        const userIdSet = new Set<number>();
+        
+        allEnrollments.flat().forEach(enrollment => {
+          userIdSet.add(enrollment.userId);
+        });
+        
+        targetUserIds = Array.from(userIdSet);
+      }
+      
+      // Si aucun utilisateur trouvé
+      if (targetUserIds.length === 0) {
+        return res.status(404).json({ 
+          message: "Aucun utilisateur trouvé pour cette diffusion" 
+        });
+      }
+      
+      // Créer les notifications pour chaque utilisateur cible
+      const notifications = [];
+      for (const userId of targetUserIds) {
+        const notification = await storage.createNotification({
+          userId,
+          message,
+          type,
+          isRead: false
+        });
+        notifications.push(notification);
+      }
+      
+      res.status(201).json({ 
+        success: true,
+        message: `${notifications.length} notification(s) envoyée(s)`,
+        count: notifications.length 
+      });
+    } catch (error) {
+      console.error("Erreur lors de la diffusion des notifications:", error);
+      
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Données invalides", 
+          errors: error.errors 
+        });
+      }
+      
+      res.status(500).json({ 
+        message: "Erreur lors de l'envoi des notifications" 
+      });
+    }
+  });
 
   // Subscription plans routes - Pour afficher les plans aux utilisateurs normaux
   app.get("/api/subscription-plans", async (req, res) => {
