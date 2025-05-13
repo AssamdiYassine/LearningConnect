@@ -174,7 +174,7 @@ export function registerAdminUserRoutes(app: Express) {
       const schema = z.object({
         username: z.string().min(3, "Le nom d'utilisateur doit contenir au moins 3 caractères").optional(),
         email: z.string().email("Email invalide").optional(),
-        password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères").optional(),
+        password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères").optional().or(z.literal('')), // Permettre un mot de passe vide
         displayName: z.string().optional(),
         role: z.enum(["student", "trainer", "admin"]).optional(),
         isSubscribed: z.boolean().nullable().optional(),
@@ -204,9 +204,12 @@ export function registerAdminUserRoutes(app: Express) {
       // Préparer les données à mettre à jour
       const updateData: any = { ...validatedData };
       
-      // Hacher le mot de passe s'il est fourni
-      if (updateData.password) {
+      // Hacher le mot de passe s'il est fourni et non vide
+      if (updateData.password && updateData.password.length > 0) {
         updateData.password = await hashPassword(updateData.password);
+      } else {
+        // Supprimer le champ password s'il est vide pour éviter la mise à jour
+        delete updateData.password;
       }
       
       // Traiter les accès aux cours si spécifiés
