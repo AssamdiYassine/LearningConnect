@@ -47,7 +47,19 @@ export default function TrainerDashboard() {
   // Récupérer les informations sur les apprenants
   const { data: studentCount = 0, isLoading: isStudentCountLoading } = useQuery<number>({
     queryKey: ["/api/admin/users/count"],
-    enabled: !!user
+    enabled: !!user,
+    queryFn: async () => {
+      try {
+        console.log("Récupération du nombre d'étudiants (dashboard)");
+        const res = await fetch("/api/admin/users/count");
+        const count = await res.json();
+        console.log("Nombre d'étudiants reçu (dashboard):", count);
+        return count;
+      } catch (error) {
+        console.error("Erreur lors de la récupération du nombre d'étudiants:", error);
+        return 0;
+      }
+    }
   });
 
   // Calculer tous les chiffres à partir des données existantes plutôt que d'une API séparée

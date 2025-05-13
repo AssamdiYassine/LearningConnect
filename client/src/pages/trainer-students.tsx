@@ -55,8 +55,12 @@ export default function TrainerStudents() {
     enabled: !!user && user.role === "trainer",
     queryFn: async () => {
       try {
+        console.log("Récupération des étudiants pour le formateur:", user?.id);
         const res = await apiRequest("GET", `/api/trainer/${user?.id}/students`);
-        return await res.json();
+        const students = await res.json();
+        console.log("Nombre d'étudiants récupérés:", students.length);
+        console.log("Données des étudiants:", students);
+        return students;
       } catch (error) {
         console.error("Error fetching trainer students:", error);
         return [];

@@ -543,10 +543,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { trainerId } = req.params;
       console.log("Récupération des étudiants pour le formateur:", trainerId);
       
-      // Méthode alternative pour récupérer les étudiants
-      // Obtenons d'abord tous les utilisateurs avec le rôle "student"
+      // Récupérer tous les utilisateurs avec le rôle "student"
       const allUsers = await storage.getAllUsers();
+      console.log("Total d'utilisateurs récupérés:", allUsers.length);
+      
       const students = allUsers.filter(user => user.role === "student");
+      console.log("Nombre d'étudiants (rôle 'student'):", students.length);
       
       // Temporairement, attribuons tous les étudiants à ce formateur
       // Dans une implémentation complète, nous filtrerions selon des critères réels
@@ -557,7 +559,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
       });
       
-      console.log("Nombre d'étudiants trouvés:", studentsWithEnrollments.length);
+      console.log("Nombre d'étudiants renvoyés au formateur:", studentsWithEnrollments.length);
+      
+      // Enrichissons les logs pour le débogage
+      const roleDistribution = allUsers.reduce((acc: Record<string, number>, user) => {
+        const role = user.role || 'undefined';
+        acc[role] = (acc[role] || 0) + 1;
+        return acc;
+      }, {});
+      console.log("Distribution des rôles d'utilisateurs:", roleDistribution);
+      
       res.json(studentsWithEnrollments);
     } catch (error) {
       console.error("Erreur lors de la récupération des étudiants:", error);

@@ -31,10 +31,19 @@ export function registerAdminUserRoutes(app: Express) {
     try {
       console.log("Comptage du nombre d'utilisateurs étudiants");
       const users = await storage.getAllUsers();
+      console.log("Total d'utilisateurs récupérés:", users.length);
+      
       // Compter les utilisateurs avec le rôle "student"
       const studentCount = users.filter(user => user.role === "student").length;
       
-      console.log(`Nombre d'utilisateurs étudiants trouvés: ${studentCount}`);
+      // Log détaillé pour le débogage
+      const roleDistribution = users.reduce((acc, user) => {
+        acc[user.role || 'undefined'] = (acc[user.role || 'undefined'] || 0) + 1;
+        return acc;
+      }, {});
+      console.log("Distribution des rôles d'utilisateurs (route count):", roleDistribution);
+      
+      console.log(`Nombre d'utilisateurs étudiants trouvés (route count): ${studentCount}`);
       res.json(studentCount);
     } catch (error) {
       console.error("Erreur lors du comptage des utilisateurs:", error);
