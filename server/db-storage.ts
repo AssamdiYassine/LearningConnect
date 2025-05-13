@@ -348,8 +348,70 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getSessionsByCourse(courseId: number): Promise<Session[]> {
-    return await db.select().from(sessions).where(eq(sessions.courseId, courseId));
+  async getSessionsByCourse(courseId: number): Promise<SessionWithDetails[]> {
+    try {
+      // Utiliser une requête SQL directe pour obtenir tous les détails nécessaires
+      const result = await db.execute(`
+        SELECT 
+          s.id, s.course_id, s.date, s.zoom_link, s.created_at, s.updated_at, s.is_completed,
+          c.id as course_id, c.title as course_title, c.description as course_description, c.level as course_level,
+          c.duration as course_duration, c.max_students as course_max_students, c.category_id as course_category_id,
+          c.trainer_id as course_trainer_id,
+          cat.id as category_id, cat.name as category_name, cat.slug as category_slug,
+          u.id as trainer_id, u.username as trainer_username, u.display_name as trainer_display_name,
+          COUNT(e.id) as enrollment_count
+        FROM sessions s
+        JOIN courses c ON s.course_id = c.id
+        JOIN categories cat ON c.category_id = cat.id
+        JOIN users u ON c.trainer_id = u.id
+        LEFT JOIN enrollments e ON s.id = e.session_id
+        WHERE s.course_id = $1
+        GROUP BY s.id, c.id, cat.id, u.id
+      `, [courseId]);
+
+      // Transformer les résultats en objets SessionWithDetails
+      return result.rows.map(row => ({
+        id: row.id,
+        courseId: row.course_id,
+        date: new Date(row.date),
+        zoomLink: row.zoom_link,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
+        isCompleted: row.is_completed,
+        enrollmentCount: parseInt(row.enrollment_count),
+        course: {
+          id: row.course_id,
+          title: row.course_title,
+          description: row.course_description,
+          level: row.course_level,
+          duration: row.course_duration,
+          maxStudents: row.course_max_students,
+          categoryId: row.course_category_id,
+          trainerId: row.course_trainer_id,
+          category: {
+            id: row.category_id,
+            name: row.category_name,
+            slug: row.category_slug
+          },
+          trainer: {
+            id: row.trainer_id,
+            username: row.trainer_username,
+            displayName: row.trainer_display_name,
+            email: "", // Champs nécessaires pour le type mais données sensibles
+            password: "", // Ne pas exposer le mot de passe
+            role: "trainer",
+            isSubscribed: null,
+            subscriptionType: null,
+            subscriptionEndDate: null,
+            stripeCustomerId: null,
+            stripeSubscriptionId: null
+          }
+        }
+      }));
+    } catch (error) {
+      console.error("Erreur lors de la récupération des sessions par cours:", error);
+      return [];
+    }
   }
 
   async getAllSessions(): Promise<Session[]> {
