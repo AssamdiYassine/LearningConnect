@@ -514,7 +514,7 @@ router.get("/recent-activities", isEnterprise, async (req, res) => {
       SELECT 
         u.display_name as employee_name,
         c.title as course_title,
-        s.title as session_title,
+        c.title as session_title,
         esa.attendance_status,
         esa.created_at as activity_date
       FROM ${employeeSessionAttendance} esa
@@ -552,7 +552,7 @@ router.get("/upcoming-sessions", isEnterprise, async (req, res) => {
       sql`
       SELECT 
         s.id,
-        s.title,
+        c.title as title,
         c.title as course_title,
         u.display_name as trainer_name,
         s.start_time,
