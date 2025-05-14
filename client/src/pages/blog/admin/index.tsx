@@ -334,15 +334,19 @@ const AdminBlogPage = () => {
                             {post.title}
                           </TableCell>
                           <TableCell>
-                            {post.author?.displayName || post.author?.username || 'N/A'}
+                            {typeof post.author === 'object' && post.author 
+                              ? (post.author.displayName || post.author.username) 
+                              : 'N/A'}
                           </TableCell>
                           <TableCell>
-                            {post.category?.name || 'N/A'}
+                            {typeof post.category === 'object' && post.category 
+                              ? post.category.name 
+                              : 'N/A'}
                           </TableCell>
                           <TableCell>
                             {post.publishedAt 
-                              ? formatDate(new Date(post.publishedAt)) 
-                              : (post.createdAt ? formatDate(new Date(post.createdAt)) : 'Date invalide')}
+                              ? formatDate(post.publishedAt) 
+                              : (post.createdAt ? formatDate(post.createdAt) : 'Date invalide')}
                           </TableCell>
                           <TableCell>
                             <Badge variant={getStatusBadgeVariant(post.status) as any}>

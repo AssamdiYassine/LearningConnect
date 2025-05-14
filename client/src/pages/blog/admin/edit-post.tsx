@@ -67,6 +67,13 @@ const EditBlogPostPage = () => {
     enabled: isEditing,
     retry: false,
   });
+  
+  // Debugging pour vérifier les données du post
+  useEffect(() => {
+    if (post) {
+      console.log("Données du post chargées:", post);
+    }
+  }, [post]);
 
   // Récupérer les catégories
   const { data: categories } = useQuery<BlogCategory[]>({
@@ -92,19 +99,29 @@ const EditBlogPostPage = () => {
   // Remplir le formulaire avec les données existantes si on est en mode édition
   useEffect(() => {
     if (isEditing && post) {
+      console.log("Réinitialisation du formulaire avec les données du post:", post);
+      
+      // Récupérer la catégorie soit comme objet soit comme ID
+      let categoryId = '';
+      if (typeof post.categoryId === 'number') {
+        categoryId = post.categoryId.toString();
+      } else if (post.category && typeof post.category === 'object' && post.category.id) {
+        categoryId = post.category.id.toString();
+      }
+      
       form.reset({
         title: post.title,
         slug: post.slug,
-        excerpt: post.excerpt,
+        excerpt: post.excerpt || '',
         content: post.content,
         featuredImage: post.featuredImage || '',
-        categoryId: post.categoryId ? post.categoryId.toString() : '',
+        categoryId: categoryId,
         status: post.status,
         readTime: (post.readTime || 5).toString(),
       });
       
       if (post.tags) {
-        setTags(post.tags);
+        setTags(Array.isArray(post.tags) ? post.tags : []);
       }
     }
   }, [post, form, isEditing]);
