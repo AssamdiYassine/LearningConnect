@@ -16,6 +16,7 @@ import { registerAdminBlogCategoriesRoutes } from "./admin-blog-categories-route
 import enterpriseRoutes from "./enterprise-api/enterprise-routes";
 import enterpriseAdminRoutes from "./admin-api/enterprise-admin-routes";
 import enterpriseEmployeesRoutes from "./admin-api/enterprise-employees-routes";
+import blogCommentsRoutes from "./api/blog/comments";
 // Import des extensions pour les méthodes de stockage manquantes
 import "./db-storage-extensions";
 import { pool, db } from "./db";
