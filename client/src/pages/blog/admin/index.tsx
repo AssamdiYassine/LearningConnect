@@ -334,26 +334,22 @@ const AdminBlogPage = () => {
                             {post.title}
                           </TableCell>
                           <TableCell>
-                            {typeof post.author === 'object' && post.author 
-                              ? (post.author.displayName || post.author.username) 
-                              : 'N/A'}
+                            {post.author ? (post.author.displayName || post.author.username) : 'N/A'}
                           </TableCell>
                           <TableCell>
-                            {typeof post.category === 'object' && post.category 
-                              ? post.category.name 
-                              : 'N/A'}
+                            {post.category ? post.category.name : 'N/A'}
                           </TableCell>
                           <TableCell>
                             {post.publishedAt 
-                              ? formatDate(post.publishedAt) 
-                              : (post.createdAt ? formatDate(post.createdAt) : 'Date invalide')}
+                              ? formatDate(new Date(post.publishedAt)) 
+                              : (post.createdAt ? formatDate(new Date(post.createdAt)) : 'Date invalide')}
                           </TableCell>
                           <TableCell>
                             <Badge variant={getStatusBadgeVariant(post.status) as any}>
                               {translateStatus(post.status)}
                             </Badge>
                           </TableCell>
-                          <TableCell>{typeof post.viewCount === 'number' ? post.viewCount : 0}</TableCell>
+                          <TableCell>{post.viewCount || 0}</TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
