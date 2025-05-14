@@ -7,7 +7,7 @@ export function registerAdminApiExtensions(app: Express) {
   // API des blogs
   app.get('/api/admin/blogs', hasAdminRole, async (req: Request, res: Response) => {
     try {
-      const blogs = await storage.getAllBlogPosts();
+      const blogs = await storage.getAllBlogPostsWithDetails();
       res.json(blogs);
     } catch (error: any) {
       console.error('Error getting blog posts:', error);
