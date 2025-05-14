@@ -218,8 +218,6 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({ chil
               text="Catégories" 
               path="/admin/categories" 
               isActive={location === "/admin/categories"}
-              badge={3}
-              badgeVariant="secondary"
             />
             
             <SidebarSection title="Gestion des Entreprises" />
@@ -240,8 +238,6 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({ chil
               text="Employés" 
               path="/admin/enterprise-employees" 
               isActive={location === "/admin/enterprise-employees"}
-              badge={5}
-              badgeVariant="outline"
             />
             
             <SidebarSection title="Contenu" />
@@ -257,14 +253,7 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({ chil
               path="/blog/admin/categories" 
               isActive={location === "/blog/admin/categories"}
             />
-            <SidebarItem 
-              icon={<CheckSquare size={18} />} 
-              text="Approbations" 
-              path="/admin/approvals" 
-              isActive={location === "/admin/approvals"}
-              badge={4}
-              badgeVariant="destructive"
-            />
+            {/* Section Approbations supprimée à la demande du client */}
             
             <SidebarSection title="Paiements" />
             <SidebarItem 
@@ -286,25 +275,7 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({ chil
               isActive={location === "/admin/analytics"}
             />
             
-            <SidebarSection title="Entreprises" />
-            <SidebarItem 
-              icon={<Building2 size={18} />} 
-              text="Gestion des Entreprises" 
-              path="/admin/enterprises" 
-              isActive={location === "/admin/enterprises"}
-            />
-            <SidebarItem 
-              icon={<Bookmark size={18} />} 
-              text="Formations assignées" 
-              path="/admin/enterprise-courses" 
-              isActive={location === "/admin/enterprise-courses"}
-            />
-            <SidebarItem 
-              icon={<Users size={18} />} 
-              text="Employés" 
-              path="/admin/enterprise-employees" 
-              isActive={location === "/admin/enterprise-employees"}
-            />
+            {/* Section Entreprises supprimée car dupliquée avec "Gestion des Entreprises" */}
             
             <SidebarSection title="Système" />
             <SidebarItem 
