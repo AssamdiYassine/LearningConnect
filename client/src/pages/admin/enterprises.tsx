@@ -109,60 +109,35 @@ export default function AdminEnterprises() {
     });
   };
 
-  // Mock data for enterprises (will be replaced with API call)
-  const mockEnterprises: Enterprise[] = [
-    {
-      id: 1,
-      name: "TechCorp Solutions",
-      contactEmail: "contact@techcorp.fr",
-      contactName: "Jean Dupont",
-      employeeLimit: 50,
-      subscriptionEndDate: "2025-12-31",
-      isActive: true,
-      courseIds: [1, 3, 5],
-      employeeCount: 32
-    },
-    {
-      id: 2,
-      name: "Innovatech",
-      contactEmail: "info@innovatech.fr",
-      contactName: "Marie Laurent",
-      employeeLimit: 25,
-      subscriptionEndDate: "2025-08-15",
-      isActive: true,
-      courseIds: [2, 4],
-      employeeCount: 18
-    },
-    {
-      id: 3,
-      name: "Digital Services",
-      contactEmail: "contact@digitalservices.fr",
-      contactName: "Paul Martin",
-      employeeLimit: 100,
-      subscriptionEndDate: "2025-06-30",
-      isActive: false,
-      courseIds: [1, 2, 3, 4, 5],
-      employeeCount: 87
-    }
-  ];
-
-  // Fetch enterprises (Mock for now)
-  const { data: enterprises = mockEnterprises, isLoading } = useQuery<Enterprise[]>({
+  // Fetch enterprises from API
+  const { data: enterprises = [], isLoading } = useQuery<Enterprise[]>({
     queryKey: ['/api/admin/enterprises'],
-    // À remplacer par un vrai appel API quand l'endpoint sera disponible
-    queryFn: () => Promise.resolve(mockEnterprises),
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/admin/enterprises");
+      
+      if (!response.ok) {
+        throw new Error("Échec de la récupération des entreprises");
+      }
+      
+      return await response.json();
+    },
     enabled: true
   });
 
-  // Create enterprise mutation (Mock for now)
+  // Create enterprise mutation
   const createEnterpriseMutation = useMutation({
     mutationFn: async (enterpriseData: EnterpriseFormData) => {
-      // Remplacer par un vrai appel API
-      console.log("Création d'entreprise:", enterpriseData);
-      return { id: Math.random(), ...enterpriseData, employeeCount: 0 };
+      const response = await apiRequest("POST", "/api/admin/enterprises", enterpriseData);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Échec de la création de l'entreprise");
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
-      // Remplacer par queryClient.invalidateQueries
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/enterprises'] });
       toast({
         title: "Succès",
         description: "Entreprise créée avec succès!",
