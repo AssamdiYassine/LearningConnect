@@ -280,79 +280,91 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
   dbStorage.getBlogPostWithDetails = async function(id) {
     console.log("getBlogPostWithDetails appelé avec ID:", id);
     
-    // Même approche SQL brute pour garantir la cohérence des structures de données
-    const query = `
-      SELECT 
-        bp.*,
-        bc.id as "category.id",
-        bc.name as "category.name", 
-        bc.slug as "category.slug",
-        bc.description as "category.description",
-        bc.created_at as "category.createdAt",
-        bc.updated_at as "category.updatedAt",
-        u.id as "author.id",
-        u.username as "author.username",
-        u.display_name as "author.displayName",
-        u.email as "author.email",
-        u.role as "author.role",
-        u.created_at as "author.createdAt",
-        u.updated_at as "author.updatedAt",
-        (SELECT COUNT(*) FROM blog_comments WHERE post_id = bp.id) as "commentCount"
-      FROM 
-        blog_posts bp
-      LEFT JOIN 
-        blog_categories bc ON bp.category_id = bc.id
-      LEFT JOIN 
-        users u ON bp.author_id = u.id
-      WHERE
-        bp.id = $1
-    `;
-    
-    const result = await db.execute(query, [id]);
-    
-    if (result.rows.length === 0) {
-      console.log("Aucun article trouvé avec l'ID:", id);
-      return undefined;
-    }
-    
-    const post = result.rows[0];
-    
-    // Créer les objets author et category structurés correctement
-    const author = {
-      id: post["author.id"],
-      username: post["author.username"],
-      displayName: post["author.displayName"],
-      email: post["author.email"],
-      role: post["author.role"],
-      createdAt: post["author.createdAt"],
-      updatedAt: post["author.updatedAt"]
-    };
-    
-    const category = {
-      id: post["category.id"],
-      name: post["category.name"],
-      slug: post["category.slug"],
-      description: post["category.description"],
-      createdAt: post["category.createdAt"],
-      updatedAt: post["category.updatedAt"]
-    };
-    
-    // Supprimons les propriétés aplaties et reconstruisons l'objet proprement
-    const cleanedPost = Object.keys(post).reduce((obj, key) => {
-      if (!key.includes('.')) {
-        obj[key] = post[key];
+    try {
+      // Requête SQL directe pour récupérer les données du blog
+      const query = `
+        SELECT 
+          bp.*,
+          bc.id as category_id,
+          bc.name as category_name, 
+          bc.slug as category_slug,
+          bc.description as category_description,
+          bc.created_at as category_created_at,
+          bc.updated_at as category_updated_at,
+          u.id as author_id,
+          u.username as author_username,
+          u.display_name as author_display_name,
+          u.email as author_email,
+          u.role as author_role,
+          u.created_at as author_created_at,
+          u.updated_at as author_updated_at,
+          (SELECT COUNT(*) FROM blog_comments WHERE post_id = bp.id) as comment_count
+        FROM 
+          blog_posts bp
+        LEFT JOIN 
+          blog_categories bc ON bp.category_id = bc.id
+        LEFT JOIN 
+          users u ON bp.author_id = u.id
+        WHERE
+          bp.id = $1
+      `;
+      
+      console.log("Exécution de la requête pour l'ID:", id);
+      const result = await db.execute(query, [id]);
+      console.log("Résultat obtenu, nombre de lignes:", result.rows.length);
+      
+      if (result.rows.length === 0) {
+        console.log("Aucun article trouvé avec l'ID:", id);
+        return undefined;
       }
-      return obj;
-    }, {});
-    
-    console.log("Article trouvé et structuré correctement:", cleanedPost.title);
-    
-    return {
-      ...cleanedPost,
-      author,
-      category,
-      commentCount: parseInt(post.commentCount || '0', 10)
-    };
+      
+      const row = result.rows[0];
+      console.log("Données brutes de l'article:", row.title);
+      
+      // Convertir en format camelCase et restructurer
+      const post = {
+        id: row.id,
+        title: row.title,
+        slug: row.slug,
+        content: row.content,
+        excerpt: row.excerpt,
+        featuredImage: row.featured_image,
+        categoryId: row.category_id,
+        authorId: row.author_id,
+        status: row.status,
+        publishedAt: row.published_at,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        readTime: row.read_time,
+        tags: row.tags,
+        viewCount: row.view_count,
+        // Restructuration des objets imbriqués
+        author: {
+          id: row.author_id,
+          username: row.author_username,
+          displayName: row.author_display_name,
+          email: row.author_email,
+          role: row.author_role,
+          createdAt: row.author_created_at,
+          updatedAt: row.author_updated_at
+        },
+        category: {
+          id: row.category_id,
+          name: row.category_name,
+          slug: row.category_slug,
+          description: row.category_description,
+          createdAt: row.category_created_at,
+          updatedAt: row.category_updated_at
+        },
+        commentCount: parseInt(row.comment_count || '0', 10)
+      };
+      
+      console.log("Article structuré:", post.title, "Catégorie:", post.category.name);
+      return post;
+    } catch (error) {
+      console.error("Erreur dans getBlogPostWithDetails:", error);
+      throw error;
+    }
   };
 
   dbStorage.getBlogPostBySlugWithDetails = async function(slug) {
