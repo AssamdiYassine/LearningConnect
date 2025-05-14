@@ -359,44 +359,79 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
     console.log("getBlogPostBySlugWithDetails appelé avec slug:", slug);
     
     try {
-      const result = await db
-        .select({
-          post: blogPosts,
-          category: blogCategories,
-          author: users
-        })
-        .from(blogPosts)
-        .leftJoin(blogCategories, eq(blogPosts.categoryId, blogCategories.id))
-        .leftJoin(users, eq(blogPosts.authorId, users.id))
-        .where(eq(blogPosts.slug, slug));
-
-      console.log("Résultat de la requête pour le slug:", slug, "Nombre de résultats:", result.length);
+      // Même approche SQL brute pour garantir la cohérence des structures de données
+      const query = `
+        SELECT 
+          bp.*,
+          bc.id as "category.id",
+          bc.name as "category.name", 
+          bc.slug as "category.slug",
+          bc.description as "category.description",
+          bc.created_at as "category.createdAt",
+          bc.updated_at as "category.updatedAt",
+          u.id as "author.id",
+          u.username as "author.username",
+          u.display_name as "author.displayName",
+          u.email as "author.email",
+          u.role as "author.role",
+          u.created_at as "author.createdAt",
+          u.updated_at as "author.updatedAt",
+          (SELECT COUNT(*) FROM blog_comments WHERE post_id = bp.id) as "commentCount"
+        FROM 
+          blog_posts bp
+        LEFT JOIN 
+          blog_categories bc ON bp.category_id = bc.id
+        LEFT JOIN 
+          users u ON bp.author_id = u.id
+        WHERE
+          bp.slug = $1
+      `;
       
-      if (result.length === 0) return undefined;
-
-      const { post, category, author } = result[0];
+      const result = await db.execute(query, [slug]);
+      console.log("Résultat de la requête pour le slug:", slug, "Nombre de résultats:", result.rows.length);
       
-      // Vérification des données avant de les retourner
-      console.log("Article trouvé:", post);
-      console.log("Catégorie:", category);
-      console.log("Auteur:", author);
+      if (result.rows.length === 0) {
+        return undefined;
+      }
       
-      // Récupérer le nombre de commentaires pour cet article
-      const commentsCount = await db
-        .select({ count: sql`count(*)` })
-        .from(blogComments)
-        .where(eq(blogComments.postId, post.id));
+      const post = result.rows[0];
       
-      const commentCount = Number(commentsCount[0]?.count || 0);
+      // Créer les objets author et category structurés correctement
+      const author = {
+        id: post["author.id"],
+        username: post["author.username"],
+        displayName: post["author.displayName"],
+        email: post["author.email"],
+        role: post["author.role"],
+        createdAt: post["author.createdAt"],
+        updatedAt: post["author.updatedAt"]
+      };
       
-      // Incrémenter le compteur de vues
-      console.log("Article trouvé:", post.title, "Statut:", post.status);
+      const category = {
+        id: post["category.id"],
+        name: post["category.name"],
+        slug: post["category.slug"],
+        description: post["category.description"],
+        createdAt: post["category.createdAt"],
+        updatedAt: post["category.updatedAt"]
+      };
+      
+      // Supprimons les propriétés aplaties et reconstruisons l'objet proprement
+      const cleanedPost = Object.keys(post).reduce((obj, key) => {
+        if (!key.includes('.')) {
+          obj[key] = post[key];
+        }
+        return obj;
+      }, {});
+      
+      // Afficher des informations supplémentaires pour debugging
+      console.log("Article trouvé:", cleanedPost.title, "Statut:", cleanedPost.status);
       
       return {
-        ...post,
-        category,
+        ...cleanedPost,
         author,
-        commentCount
+        category,
+        commentCount: parseInt(post.commentCount || '0', 10)
       };
     } catch (error) {
       console.error("Erreur dans getBlogPostBySlugWithDetails:", error);
