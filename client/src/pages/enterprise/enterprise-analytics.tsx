@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
   Card, 
@@ -20,10 +20,12 @@ import {
   Pie,
   Cell,
   LineChart,
-  Line
+  Line,
+  Sector
 } from 'recharts';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, Clock, Award, Users } from 'lucide-react';
+import { Loader2, Clock, Award, Users, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 // Interface pour les données d'analytiques
 interface AnalyticsData {
@@ -54,9 +56,12 @@ interface AnalyticsData {
 const COLORS = ['#1D2B6C', '#5F8BFF', '#7A6CFF', '#4F46E5', '#818CF8', '#A5B4FC'];
 
 export function EnterpriseAnalytics() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  
   // Fetch analytics data
-  const { data: analyticsData, isLoading } = useQuery<AnalyticsData>({
+  const { data: analyticsData, isLoading, refetch } = useQuery<AnalyticsData>({
     queryKey: ['/api/enterprise/analytics'],
+    refetchOnWindowFocus: false
   });
 
   if (isLoading) {

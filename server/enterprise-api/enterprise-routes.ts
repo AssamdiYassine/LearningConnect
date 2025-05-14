@@ -411,7 +411,7 @@ router.get("/analytics", isEnterprise, async (req, res) => {
       
       if (overallAttendanceResult.rows && overallAttendanceResult.rows.length > 0) {
         const attendance = overallAttendanceResult.rows[0].avg_attendance;
-        defaultResponse.attendance.overall = Math.round(parseFloat(attendance as string) || 0);
+        analyticsData.attendance.overall = Math.round(parseFloat(attendance as string) || 0);
       }
       
       // Obtenir le taux de présence par mois
@@ -444,7 +444,7 @@ router.get("/analytics", isEnterprise, async (req, res) => {
           return { month: monthName, percentage };
         });
         
-        defaultResponse.attendance.byMonth = monthlyAttendance;
+        analyticsData.attendance.byMonth = monthlyAttendance;
       }
       
       // Obtenir le temps total passé en formation
@@ -460,7 +460,7 @@ router.get("/analytics", isEnterprise, async (req, res) => {
       if (totalTimeResult.rows && totalTimeResult.rows.length > 0 && totalTimeResult.rows[0].total_time) {
         const totalTime = totalTimeResult.rows[0].total_time;
         const totalTimeMinutes = parseInt(String(totalTime)) || 0;
-        defaultResponse.timeSpent.total = Math.round(totalTimeMinutes / 60);
+        analyticsData.timeSpent.total = Math.round(totalTimeMinutes / 60);
       }
       
       // Obtenir le temps passé par employé
@@ -486,7 +486,7 @@ router.get("/analytics", isEnterprise, async (req, res) => {
           };
         });
         
-        defaultResponse.timeSpent.byEmployee = employeeTime;
+        analyticsData.timeSpent.byEmployee = employeeTime;
       }
       
       // Si aucun employé n'est trouvé, ajouter des données pour permettre l'affichage des graphiques
