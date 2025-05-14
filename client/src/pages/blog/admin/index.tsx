@@ -77,6 +77,9 @@ const AdminBlogPage = () => {
   const { data: posts, isLoading: postsLoading } = useQuery<BlogPostWithDetails[]>({
     queryKey: ['/api/admin/blogs'],
     retry: false,
+    onSuccess: (data) => {
+      console.log("Articles de blog récupérés:", data);
+    }
   });
 
   // Récupérer les catégories
@@ -330,19 +333,23 @@ const AdminBlogPage = () => {
                           <TableCell className="font-medium max-w-[200px] truncate">
                             {post.title}
                           </TableCell>
-                          <TableCell>{post.author && post.author.displayName ? post.author.displayName : 'N/A'}</TableCell>
-                          <TableCell>{post.category && post.category.name ? post.category.name : 'N/A'}</TableCell>
+                          <TableCell>
+                            {post.author?.displayName || post.author?.username || 'N/A'}
+                          </TableCell>
+                          <TableCell>
+                            {post.category?.name || 'N/A'}
+                          </TableCell>
                           <TableCell>
                             {post.publishedAt 
                               ? formatDate(new Date(post.publishedAt)) 
-                              : formatDate(new Date(post.createdAt))}
+                              : (post.createdAt ? formatDate(new Date(post.createdAt)) : 'Date invalide')}
                           </TableCell>
                           <TableCell>
                             <Badge variant={getStatusBadgeVariant(post.status) as any}>
                               {translateStatus(post.status)}
                             </Badge>
                           </TableCell>
-                          <TableCell>{post.viewCount || 0}</TableCell>
+                          <TableCell>{typeof post.viewCount === 'number' ? post.viewCount : 0}</TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
