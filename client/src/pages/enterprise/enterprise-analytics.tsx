@@ -108,13 +108,13 @@ export function EnterpriseAnalytics() {
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="space-y-6 px-0 md:px-0 lg:px-0">
+      <Card className="px-2 md:px-4 lg:px-6">
         <CardHeader>
           <CardTitle>Analytiques</CardTitle>
           <CardDescription>Statistiques détaillées sur la formation de vos employés</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 md:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <Card>
               <CardHeader className="pb-2">
