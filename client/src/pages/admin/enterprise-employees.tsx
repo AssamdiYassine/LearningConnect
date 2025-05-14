@@ -873,8 +873,7 @@ export default function EnterpriseEmployeesPage() {
                   </div>
                   <Progress 
                     value={selectedEmployee.progress.overall}
-                    className="h-2.5"
-                    indicatorClassName={getProgressColor(selectedEmployee.progress.overall)}
+                    className={`h-2.5 ${getProgressColor(selectedEmployee.progress.overall)}`}
                   />
                 </div>
                 
@@ -897,8 +896,7 @@ export default function EnterpriseEmployeesPage() {
                           <div className="pt-2 pb-4 px-1">
                             <Progress 
                               value={courseProg.progress}
-                              className="h-2"
-                              indicatorClassName={getProgressColor(courseProg.progress)}
+                              className={`h-2 ${getProgressColor(courseProg.progress)}`}
                             />
                             
                             <div className="grid grid-cols-2 gap-2 mt-4">

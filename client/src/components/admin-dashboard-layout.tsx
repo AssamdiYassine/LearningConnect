@@ -285,6 +285,26 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({ chil
               isActive={location === "/admin/analytics"}
             />
             
+            <SidebarSection title="Entreprises" />
+            <SidebarItem 
+              icon={<Building2 size={18} />} 
+              text="Gestion des Entreprises" 
+              path="/admin/enterprises" 
+              isActive={location === "/admin/enterprises"}
+            />
+            <SidebarItem 
+              icon={<Bookmark size={18} />} 
+              text="Formations assignées" 
+              path="/admin/enterprise-courses" 
+              isActive={location === "/admin/enterprise-courses"}
+            />
+            <SidebarItem 
+              icon={<Users size={18} />} 
+              text="Employés" 
+              path="/admin/enterprise-employees" 
+              isActive={location === "/admin/enterprise-employees"}
+            />
+            
             <SidebarSection title="Système" />
             <SidebarItem 
               icon={<Bell size={18} />} 
