@@ -28,10 +28,13 @@ export function registerAdminApiExtensions(app: Express) {
   app.get('/api/admin/blogs/:id', hasAdminRole, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
-      const blog = await storage.getBlogPost(id);
+      console.log("Recherche du blog avec ID:", id);
+      const blog = await storage.getBlogPostWithDetails(id);
       if (!blog) {
+        console.log("Blog avec ID", id, "non trouvé");
         return res.status(404).json({ message: 'Blog post not found' });
       }
+      console.log("Blog trouvé avec succès:", blog.title);
       res.json(blog);
     } catch (error: any) {
       console.error('Error getting blog post:', error);
