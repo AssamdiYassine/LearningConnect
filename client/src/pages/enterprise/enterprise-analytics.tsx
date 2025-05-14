@@ -239,9 +239,12 @@ export function EnterpriseAnalytics() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <Card>
+            <Card className="hover:shadow-md transition-shadow duration-200">
               <CardHeader>
                 <CardTitle className="text-base">Complétion par catégorie</CardTitle>
+                <CardDescription className="text-xs text-muted-foreground">
+                  Pourcentage de complétion selon la catégorie de formation
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-72">
@@ -250,25 +253,48 @@ export function EnterpriseAnalytics() {
                       data={formatCategoryData()}
                       margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" />
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                       <XAxis 
                         dataKey="name" 
                         angle={-45} 
                         textAnchor="end" 
                         height={60}
+                        tick={{fill: '#666', fontSize: 12}}
                       />
-                      <YAxis domain={[0, 100]} />
-                      <Tooltip formatter={(value) => `${value}%`} />
-                      <Bar dataKey="percentage" fill="#5F8BFF" />
+                      <YAxis 
+                        domain={[0, 100]} 
+                        tickFormatter={(value) => `${value}%`}
+                        tick={{fill: '#666', fontSize: 12}}
+                      />
+                      <Tooltip 
+                        formatter={(value) => `${value}%`} 
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                          border: 'none'
+                        }}
+                        labelStyle={{fontWeight: 'bold', color: '#1D2B6C'}}
+                      />
+                      <Bar 
+                        dataKey="percentage" 
+                        fill="#5F8BFF"
+                        radius={[4, 4, 0, 0]}
+                        animationDuration={1500}
+                        animationEasing="ease-out"
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
             
-            <Card>
+            <Card className="hover:shadow-md transition-shadow duration-200">
               <CardHeader>
                 <CardTitle className="text-base">Taux de présence par mois</CardTitle>
+                <CardDescription className="text-xs text-muted-foreground">
+                  Évolution du taux de présence au fil des mois
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-72">
@@ -277,22 +303,50 @@ export function EnterpriseAnalytics() {
                       data={formatAttendanceData()}
                       margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" />
+                      <defs>
+                        <linearGradient id="colorPercentage" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#1D2B6C" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#1D2B6C" stopOpacity={0.1}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                       <XAxis 
                         dataKey="name" 
                         angle={-45} 
                         textAnchor="end" 
                         height={60}
+                        tick={{fill: '#666', fontSize: 12}}
                       />
-                      <YAxis domain={[0, 100]} />
-                      <Tooltip formatter={(value) => `${value}%`} />
+                      <YAxis 
+                        domain={[0, 100]} 
+                        tickFormatter={(value) => `${value}%`}
+                        tick={{fill: '#666', fontSize: 12}}
+                      />
+                      <Tooltip 
+                        formatter={(value) => `${value}%`} 
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                          border: 'none'
+                        }}
+                        labelStyle={{fontWeight: 'bold', color: '#1D2B6C'}}
+                      />
                       <Line 
                         type="monotone" 
                         dataKey="percentage" 
                         stroke="#1D2B6C"
-                        strokeWidth={2}
-                        dot={{ r: 4 }}
-                        activeDot={{ r: 6 }}
+                        strokeWidth={3}
+                        dot={{ r: 6, strokeWidth: 2, fill: '#fff' }}
+                        activeDot={{ r: 8, strokeWidth: 0, fill: '#7A6CFF' }}
+                        animationDuration={2000}
+                        animationEasing="ease-in-out"
+                      />
+                      <Legend 
+                        verticalAlign="top" 
+                        height={36} 
+                        iconType="circle"
+                        iconSize={10}
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -301,9 +355,12 @@ export function EnterpriseAnalytics() {
             </Card>
           </div>
           
-          <Card>
+          <Card className="hover:shadow-md transition-shadow duration-200">
             <CardHeader>
               <CardTitle className="text-base">Temps passé par employé (heures)</CardTitle>
+              <CardDescription className="text-xs text-muted-foreground">
+                Distribution des heures de formation par employé
+              </CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center">
               <div className="h-96 w-full max-w-xl">
@@ -355,8 +412,25 @@ export function EnterpriseAnalytics() {
             </CardContent>
           </Card>
           
-          <div className="mt-4 text-sm text-muted-foreground">
-            <p>Ces données sont calculées à partir des sessions suivies par vos employés et de leur progression dans les formations.</p>
+          <div className="mt-8 p-6 bg-slate-50 rounded-lg border border-slate-200">
+            <h3 className="text-lg font-medium mb-3">À propos de ces données</h3>
+            <div className="space-y-3 text-sm text-slate-700">
+              <p>
+                <span className="font-medium">Source des données :</span> Ces analytiques sont calculées à partir des sessions suivies par vos employés et de leur progression réelle dans les formations.
+              </p>
+              <p>
+                <span className="font-medium">Taux de complétion :</span> Pourcentage des modules de formation terminés par rapport au total des modules assignés.
+              </p>
+              <p>
+                <span className="font-medium">Taux de présence :</span> Pourcentage des sessions auxquelles vos employés ont assisté par rapport au total des sessions planifiées.
+              </p>
+              <p>
+                <span className="font-medium">Temps passé :</span> Nombre total d'heures de formation consommées par vos employés.
+              </p>
+              <p className="text-xs text-slate-500 mt-4">
+                Dernière mise à jour : {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: 'numeric' })}
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
