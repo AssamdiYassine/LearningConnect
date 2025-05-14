@@ -372,23 +372,8 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({ chil
       
       {/* Contenu principal */}
       <main className={`flex-1 transition-all duration-300 ${collapsed ? "md:ml-16" : "md:ml-64"}`}>
-        {/* Header */}
-        <header className="sticky top-0 z-10 h-16 flex items-center justify-between px-6 py-3 bg-white border-b shadow-sm">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="md:hidden">
-              <Layers size={20} />
-            </Button>
-            <div className="hidden md:block">
-              <h1 className="text-xl font-semibold text-gray-800">
-                Tableau de bord administrateur
-              </h1>
-            </div>
-          </div>
-          
-          <div className="text-sm text-gray-500">
-            {formatDateInFrench()}
-          </div>
-          
+        {/* Header - Simplifié pour éviter la duplication */}
+        <header className="sticky top-0 z-10 h-16 flex items-center justify-end px-6 py-3 bg-white border-b shadow-sm">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" asChild>
               <Link href="/">
