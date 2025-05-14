@@ -5,7 +5,8 @@ import { storage } from "./storage";
 import { z } from "zod"; 
 import { registerAdminDashboard } from "./admin-dashboard";
 import { registerAdminRoutes } from "./admin-routes";
-import { registerApprovalRoutes } from "./admin-approval-routes";
+// Approbations supprimées à la demande du client
+// import { registerApprovalRoutes } from "./admin-approval-routes";
 import { registerAdminUserRoutes } from "./admin-api-users";
 import { registerAdminCourseRoutes } from "./admin-api-courses";
 import { registerAdminNotificationRoutes } from "./admin-notifications-routes";
@@ -87,8 +88,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register admin dashboard routes
   registerAdminDashboard(app, pool);
   
-  // Register approval routes  
-  registerApprovalRoutes(app);
+  // Approbations supprimées à la demande du client  
+  // registerApprovalRoutes(app);
   
   // Register new admin API endpoints
   registerAdminUserRoutes(app);

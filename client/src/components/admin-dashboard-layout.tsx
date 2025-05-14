@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useNotifications } from "@/hooks/use-notifications";
+import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -113,6 +114,37 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({ chil
   const { unreadCount } = useNotifications();
   const [collapsed, setCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Récupérer les statistiques pour les compteurs
+  const { data: usersCount = 0 } = useQuery({
+    queryKey: ["/api/admin/stats/users-count"],
+    enabled: !!user && user.role === "admin",
+    queryFn: async () => {
+      const res = await fetch("/api/admin/stats/users-count");
+      const data = await res.json();
+      return data.count;
+    }
+  });
+
+  const { data: coursesCount = 0 } = useQuery({
+    queryKey: ["/api/admin/stats/courses-count"],
+    enabled: !!user && user.role === "admin",
+    queryFn: async () => {
+      const res = await fetch("/api/admin/stats/courses-count");
+      const data = await res.json();
+      return data.count;
+    }
+  });
+
+  const { data: enterprisesCount = 0 } = useQuery({
+    queryKey: ["/api/admin/stats/enterprises-count"],
+    enabled: !!user && user.role === "admin",
+    queryFn: async () => {
+      const res = await fetch("/api/admin/stats/enterprises-count");
+      const data = await res.json();
+      return data.count;
+    }
+  });
   
   const handleLogout = () => {
     logoutMutation.mutate();
