@@ -32,7 +32,7 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, postId }) => {
   };
 
   // Détecter si le commentaire est d'un administrateur
-  const isAdminComment = comment.user.role === 'admin';
+  const isAdminComment = comment.user?.role === 'admin';
   
   // Vérifier si le commentaire est en attente d'approbation
   const isPendingApproval = comment.isApproved === false;
@@ -45,14 +45,14 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, postId }) => {
     )}>
       <div className="flex items-start gap-3">
         <Avatar className={cn("h-8 w-8", isAdminComment && "border-2 border-primary")}>
-          <AvatarFallback>{getInitials(comment.user.displayName || comment.user.username)}</AvatarFallback>
+          <AvatarFallback>{getInitials(comment.user?.displayName || comment.user?.username)}</AvatarFallback>
         </Avatar>
         
         <div className="flex-1">
           <div className="flex justify-between items-center mb-1">
             <div className="flex items-center gap-2">
               <h4 className="font-semibold">
-                {comment.user.displayName || comment.user.username}
+                {comment.user?.displayName || comment.user?.username}
                 {isAdminComment && (
                   <Badge variant="default" className="ml-2 text-[10px] py-0">
                     <Shield className="h-3 w-3 mr-1" /> Admin

@@ -181,7 +181,7 @@ const EditBlogPostPage = () => {
           ? 'Article mis à jour avec succès' 
           : 'Article créé avec succès',
       });
-      navigate('/admin/blog');
+      navigate('/admin/blogs');
     },
     onError: (error: Error) => {
       toast({
@@ -219,7 +219,7 @@ Un autre paragraphe avec du contenu explicatif.`;
           variant="ghost" 
           size="sm"
           className="mr-4"
-          onClick={() => navigate('/admin/blog')}
+          onClick={() => navigate('/admin/blogs')}
         >
           <ChevronLeft className="mr-2 h-4 w-4" />
           Retour
