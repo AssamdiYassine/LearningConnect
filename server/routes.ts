@@ -14,6 +14,7 @@ import { registerResetPasswordRoutes } from "./reset-password-routes";
 import { registerAdminBlogCategoriesRoutes } from "./admin-blog-categories-routes";
 import enterpriseRoutes from "./enterprise-api/enterprise-routes";
 import enterpriseAdminRoutes from "./admin-api/enterprise-admin-routes";
+import enterpriseEmployeesRoutes from "./admin-api/enterprise-employees-routes";
 // Import des extensions pour les méthodes de stockage manquantes
 import "./db-storage-extensions";
 import { pool, db } from "./db";
@@ -99,6 +100,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Enregistrer les routes pour la gestion des entreprises
   app.use('/api/admin', enterpriseAdminRoutes);
+  app.use('/api/admin', enterpriseEmployeesRoutes);
   app.use('/api', enterpriseRoutes);
   
   // Register password reset routes
