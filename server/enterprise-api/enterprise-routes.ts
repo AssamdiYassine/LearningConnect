@@ -335,11 +335,12 @@ router.patch("/courses/:id", isEnterprise, async (req, res) => {
 // Obtenez les données d'analyse pour l'entreprise
 router.get("/analytics", isEnterprise, async (req, res) => {
   try {
-    if (!req.user || !req.user.enterpriseId) {
-      return res.status(401).json({ message: "Utilisateur non authentifié ou non associé à une entreprise" });
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: "Utilisateur non authentifié" });
     }
     
-    const enterpriseId = req.user.enterpriseId;
+    // Pour le rôle entreprise, l'id de l'utilisateur est l'id de l'entreprise
+    const enterpriseId = req.user.id;
     
     // Structure de réponse par défaut pour éviter les erreurs null
     const analyticsData = {

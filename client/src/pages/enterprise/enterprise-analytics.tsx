@@ -112,14 +112,82 @@ export function EnterpriseAnalytics() {
     }));
   };
 
+  // Fonction pour rafraîchir les données
+  const handleRefresh = () => {
+    refetch();
+  };
+
+  // Fonction pour le graphique camembert interactif
+  const onPieEnter = (_: any, index: number) => {
+    setActiveIndex(index);
+  };
+
+  const renderActiveShape = (props: any) => {
+    const RADIAN = Math.PI / 180;
+    const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
+    const sin = Math.sin(-RADIAN * midAngle);
+    const cos = Math.cos(-RADIAN * midAngle);
+    const sx = cx + (outerRadius + 10) * cos;
+    const sy = cy + (outerRadius + 10) * sin;
+    const mx = cx + (outerRadius + 30) * cos;
+    const my = cy + (outerRadius + 30) * sin;
+    const ex = mx + (cos >= 0 ? 1 : -1) * 22;
+    const ey = my;
+    const textAnchor = cos >= 0 ? 'start' : 'end';
+
+    return (
+      <g>
+        <text x={cx} y={cy} dy={8} textAnchor="middle" fill={fill}>
+          {payload.name}
+        </text>
+        <Sector
+          cx={cx}
+          cy={cy}
+          innerRadius={innerRadius}
+          outerRadius={outerRadius}
+          startAngle={startAngle}
+          endAngle={endAngle}
+          fill={fill}
+        />
+        <Sector
+          cx={cx}
+          cy={cy}
+          startAngle={startAngle}
+          endAngle={endAngle}
+          innerRadius={outerRadius + 6}
+          outerRadius={outerRadius + 10}
+          fill={fill}
+        />
+        <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
+        <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
+        <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} fill="#333">{`${value}h`}</text>
+        <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} dy={18} textAnchor={textAnchor} fill="#999">
+          {`(${(percent * 100).toFixed(2)}%)`}
+        </text>
+      </g>
+    );
+  };
+
   return (
-    <div className="space-y-6 px-0 md:px-0 lg:px-0">
-      <Card className="px-2 md:px-4 lg:px-6">
-        <CardHeader>
-          <CardTitle>Analytiques</CardTitle>
-          <CardDescription>Statistiques détaillées sur la formation de vos employés</CardDescription>
-        </CardHeader>
-        <CardContent className="px-4 md:px-6 lg:px-8">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Analytiques</h2>
+          <p className="text-muted-foreground">Statistiques détaillées sur la formation de vos employés</p>
+        </div>
+        <Button 
+          onClick={handleRefresh} 
+          variant="outline" 
+          size="sm" 
+          className="ml-auto"
+        >
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Actualiser
+        </Button>
+      </div>
+      
+      <Card>
+        <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <Card>
               <CardHeader className="pb-2">
@@ -243,21 +311,39 @@ export function EnterpriseAnalytics() {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
+                        activeIndex={activeIndex}
+                        activeShape={renderActiveShape}
                         data={formatTimeSpentData()}
                         cx="50%"
                         cy="50%"
-                        labelLine={true}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={120}
+                        innerRadius={60}
+                        outerRadius={80}
                         fill="#8884d8"
                         dataKey="value"
+                        onMouseEnter={onPieEnter}
                       >
                         {formatTimeSpentData().map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={COLORS[index % COLORS.length]} 
+                            stroke="#ffffff"
+                            strokeWidth={2}
+                          />
                         ))}
                       </Pie>
                       <Tooltip formatter={(value) => `${value}h`} />
-                      <Legend verticalAlign="bottom" height={36} />
+                      <Legend
+                        verticalAlign="bottom"
+                        height={36}
+                        payload={
+                          formatTimeSpentData().map((item, index) => ({
+                            id: item.name,
+                            type: 'square',
+                            value: `${item.name} (${item.value}h)`,
+                            color: COLORS[index % COLORS.length]
+                          }))
+                        }
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
