@@ -503,4 +503,187 @@ router.get("/analytics", isEnterprise, async (req, res) => {
   }
 });
 
+// Obtenir les activités récentes des employés
+router.get("/recent-activities", isEnterprise, async (req, res) => {
+  try {
+    const enterpriseId = req.user.id;
+    
+    // Récupérer les dernières présences aux sessions
+    const recentActivities = await db.execute(
+      sql`
+      SELECT 
+        u.display_name as employee_name,
+        c.title as course_title,
+        s.title as session_title,
+        esa.attendance_status,
+        esa.created_at as activity_date
+      FROM ${employeeSessionAttendance} esa
+      JOIN ${users} u ON esa.employee_id = u.id
+      JOIN sessions s ON esa.session_id = s.id
+      JOIN courses c ON s.course_id = c.id
+      WHERE u.enterprise_id = ${enterpriseId}
+      ORDER BY esa.created_at DESC
+      LIMIT 10
+      `
+    );
+    
+    const formattedActivities = recentActivities.rows.map(activity => ({
+      employeeName: String(activity.employee_name || ''),
+      courseTitle: String(activity.course_title || ''),
+      sessionTitle: String(activity.session_title || ''),
+      status: String(activity.attendance_status || 'unknown'),
+      date: activity.activity_date ? new Date(activity.activity_date).toISOString() : new Date().toISOString()
+    }));
+    
+    res.json(formattedActivities);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des activités récentes:", error);
+    res.status(500).json({ message: "Erreur interne du serveur" });
+  }
+});
+
+// Obtenir les prochaines sessions pour l'entreprise
+router.get("/upcoming-sessions", isEnterprise, async (req, res) => {
+  try {
+    const enterpriseId = req.user.id;
+    
+    // Récupérer les sessions à venir pour les cours accessibles à l'entreprise
+    const upcomingSessions = await db.execute(
+      sql`
+      SELECT 
+        s.id,
+        s.title,
+        c.title as course_title,
+        u.display_name as trainer_name,
+        s.start_time,
+        s.end_time,
+        s.zoom_link
+      FROM sessions s
+      JOIN courses c ON s.course_id = c.id
+      JOIN ${users} u ON c.trainer_id = u.id
+      JOIN ${enterpriseCourseAccess} eca ON eca.course_id = c.id
+      WHERE eca.enterprise_id = ${enterpriseId}
+      AND s.start_time > NOW()
+      ORDER BY s.start_time ASC
+      LIMIT 5
+      `
+    );
+    
+    const formattedSessions = upcomingSessions.rows.map(session => ({
+      id: Number(session.id),
+      title: String(session.title || ''),
+      courseTitle: String(session.course_title || ''),
+      trainerName: String(session.trainer_name || ''),
+      startTime: session.start_time ? new Date(session.start_time).toISOString() : '',
+      endTime: session.end_time ? new Date(session.end_time).toISOString() : '',
+      zoomLink: String(session.zoom_link || '')
+    }));
+    
+    res.json(formattedSessions);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des sessions à venir:", error);
+    res.status(500).json({ message: "Erreur interne du serveur" });
+  }
+});
+
+// Obtenir l'accès des employés aux formations
+router.get("/employee-course-access", isEnterprise, async (req, res) => {
+  try {
+    const enterpriseId = req.user.id;
+    
+    // Récupérer tous les employés de l'entreprise et leurs accès aux cours
+    const employeeAccess = await db.execute(
+      sql`
+      SELECT 
+        u.id as employee_id,
+        u.display_name as employee_name,
+        c.id as course_id,
+        c.title as course_title,
+        CASE WHEN eeca.id IS NOT NULL THEN true ELSE false END as has_access
+      FROM ${users} u
+      CROSS JOIN courses c
+      JOIN ${enterpriseCourseAccess} eca ON eca.course_id = c.id AND eca.enterprise_id = ${enterpriseId}
+      LEFT JOIN ${enterpriseEmployeeCourseAccess} eeca 
+        ON eeca.employee_id = u.id AND eeca.course_id = c.id
+      WHERE u.enterprise_id = ${enterpriseId}
+      ORDER BY u.display_name, c.title
+      `
+    );
+    
+    const formattedAccess = employeeAccess.rows.map(access => ({
+      employeeId: Number(access.employee_id),
+      employeeName: String(access.employee_name || ''),
+      courseId: Number(access.course_id),
+      courseTitle: String(access.course_title || ''),
+      hasAccess: Boolean(access.has_access)
+    }));
+    
+    res.json(formattedAccess);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des accès aux formations:", error);
+    res.status(500).json({ message: "Erreur interne du serveur" });
+  }
+});
+
+// Modifier l'accès d'un employé à un cours
+router.post("/toggle-employee-access", isEnterprise, async (req, res) => {
+  try {
+    const enterpriseId = req.user.id;
+    const { employeeId, courseId, hasAccess } = req.body;
+    
+    if (!employeeId || !courseId) {
+      return res.status(400).json({ message: "ID employé et ID cours requis" });
+    }
+    
+    // Vérifier que l'employé appartient à cette entreprise
+    const employee = await db.query.users.findFirst({
+      where: and(
+        eq(users.id, employeeId),
+        eq(users.enterpriseId, enterpriseId)
+      ),
+    });
+    
+    if (!employee) {
+      return res.status(404).json({ message: "Employé non trouvé" });
+    }
+    
+    // Vérifier que le cours est accessible à l'entreprise
+    const courseAccess = await db.query.enterpriseCourseAccess.findFirst({
+      where: and(
+        eq(enterpriseCourseAccess.enterpriseId, enterpriseId),
+        eq(enterpriseCourseAccess.courseId, courseId)
+      ),
+    });
+    
+    if (!courseAccess) {
+      return res.status(404).json({ message: "Cours non accessible à l'entreprise" });
+    }
+    
+    if (hasAccess) {
+      // Ajouter l'accès au cours pour l'employé
+      await db.insert(enterpriseEmployeeCourseAccess)
+        .values({
+          employeeId,
+          courseId,
+          assignedById: enterpriseId
+        })
+        .onConflictDoNothing();
+      
+      res.status(200).json({ message: "Accès accordé avec succès" });
+    } else {
+      // Supprimer l'accès au cours pour l'employé
+      await db.delete(enterpriseEmployeeCourseAccess)
+        .where(and(
+          eq(enterpriseEmployeeCourseAccess.employeeId, employeeId),
+          eq(enterpriseEmployeeCourseAccess.courseId, courseId)
+        ));
+      
+      res.status(200).json({ message: "Accès révoqué avec succès" });
+    }
+  } catch (error) {
+    console.error("Erreur lors de la modification de l'accès à un cours:", error);
+    res.status(500).json({ message: "Erreur interne du serveur" });
+  }
+});
+
 export default router;

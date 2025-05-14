@@ -2,19 +2,67 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Users, BookOpen, Calendar, BarChart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { Loader2, Users, BookOpen, Calendar, BarChart, ChevronRight, Clock, CheckCircle, Zap, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { EnterpriseEmployees } from './enterprise-employees';
+import { EnterpriseCourses } from './enterprise-courses';
+import { EnterpriseAnalytics } from './enterprise-analytics';
+import { Link } from 'wouter';
+
+// Types pour les données du tableau de bord
+interface DashboardData {
+  totalEmployees: number;
+  activeCourses: number;
+  totalSessions: number;
+  avgAttendance: number;
+  completionRate: number;
+}
+
+// Type pour les activités récentes
+interface RecentActivity {
+  employeeName: string;
+  courseTitle: string;
+  sessionTitle: string;
+  status: string;
+  date: string;
+}
+
+// Type pour les sessions à venir
+interface UpcomingSession {
+  id: number;
+  title: string;
+  courseTitle: string;
+  trainerName: string;
+  startTime: string;
+  endTime: string;
+  zoomLink: string;
+}
 
 export default function EnterpriseDashboard() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Fetch enterprise data
-  const { data: enterpriseData, isLoading: isLoadingEnterprise } = useQuery({
+  // Fetch enterprise dashboard data
+  const { data: dashboardData, isLoading: isLoadingDashboard } = useQuery<DashboardData>({
     queryKey: ['/api/enterprise/dashboard'],
   });
 
-  if (isLoadingEnterprise) {
+  // Fetch recent activities
+  const { data: recentActivities = [], isLoading: isLoadingActivities } = useQuery<RecentActivity[]>({
+    queryKey: ['/api/enterprise/recent-activities'],
+  });
+
+  // Fetch upcoming sessions
+  const { data: upcomingSessions = [], isLoading: isLoadingSessions } = useQuery<UpcomingSession[]>({
+    queryKey: ['/api/enterprise/upcoming-sessions'],
+  });
+
+  if (isLoadingDashboard) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -22,13 +70,36 @@ export default function EnterpriseDashboard() {
     );
   }
 
-  // Les données que nous devons afficher dans le tableau de bord (données temporaires)
-  const stats = {
-    totalEmployees: 12,
-    activeCourses: 4,
-    totalSessions: 28,
-    avgAttendance: 85,
-    completionRate: 73,
+  // Utiliser les données réelles du backend
+  const stats = dashboardData || {
+    totalEmployees: 0,
+    activeCourses: 0,
+    totalSessions: 0,
+    avgAttendance: 0,
+    completionRate: 0,
+  };
+
+  // Fonction pour formater une date
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), 'dd MMM yyyy à HH:mm', { locale: fr });
+    } catch (error) {
+      return 'Date invalide';
+    }
+  };
+
+  // Fonction pour obtenir la couleur de badge selon le statut
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'present':
+        return 'bg-green-100 text-green-800';
+      case 'absent':
+        return 'bg-red-100 text-red-800';
+      case 'late':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
   };
 
   return (
@@ -111,10 +182,34 @@ export default function EnterpriseDashboard() {
                 <CardDescription>Activités récentes de vos employés</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="p-4">
-                  {/* Placeholder pour les dernières activités */}
-                  <p className="text-sm text-muted-foreground">En cours d'implémentation...</p>
-                </div>
+                {isLoadingActivities ? (
+                  <div className="flex justify-center items-center p-6">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : recentActivities.length === 0 ? (
+                  <div className="p-6 text-center">
+                    <p className="text-sm text-muted-foreground">Aucune activité récente</p>
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {recentActivities.map((activity, index) => (
+                      <div key={index} className="p-4 hover:bg-muted/50">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium">{activity.employeeName}</p>
+                            <p className="text-sm text-muted-foreground">{activity.courseTitle} - {activity.sessionTitle}</p>
+                          </div>
+                          <Badge className={getStatusColor(activity.status)}>
+                            {activity.status === 'present' ? 'Présent' : 
+                             activity.status === 'absent' ? 'Absent' : 
+                             activity.status === 'late' ? 'En retard' : 'Inconnu'}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">{formatDate(activity.date)}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
             
@@ -124,52 +219,60 @@ export default function EnterpriseDashboard() {
                 <CardDescription>Sessions à venir pour votre entreprise</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="p-4">
-                  {/* Placeholder pour les prochaines sessions */}
-                  <p className="text-sm text-muted-foreground">En cours d'implémentation...</p>
-                </div>
+                {isLoadingSessions ? (
+                  <div className="flex justify-center items-center p-6">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : upcomingSessions.length === 0 ? (
+                  <div className="p-6 text-center">
+                    <p className="text-sm text-muted-foreground">Aucune session à venir</p>
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {upcomingSessions.map((session) => (
+                      <div key={session.id} className="p-4 hover:bg-muted/50">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium">{session.title}</p>
+                            <p className="text-sm text-muted-foreground">{session.courseTitle}</p>
+                            <p className="text-xs text-muted-foreground">Formateur: {session.trainerName}</p>
+                          </div>
+                          <div className="flex items-center text-sm">
+                            <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
+                            <span>{formatDate(session.startTime)}</span>
+                          </div>
+                        </div>
+                        <div className="mt-2 flex justify-end">
+                          {session.zoomLink && (
+                            <a 
+                              href={session.zoomLink} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-xs bg-[#1D2B6C] text-white py-1 px-2 rounded-md hover:bg-[#5F8BFF] transition-colors"
+                            >
+                              Lien Zoom
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
         </TabsContent>
         
         <TabsContent value="employees" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Gestion des employés</CardTitle>
-              <CardDescription>Ajoutez et gérez les accès de vos employés</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* Placeholder pour la gestion des employés */}
-              <p className="text-sm text-muted-foreground">Fonctionnalité en cours de développement...</p>
-            </CardContent>
-          </Card>
+          <EnterpriseEmployees />
         </TabsContent>
         
         <TabsContent value="courses" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Formations accessibles</CardTitle>
-              <CardDescription>Gérez l'accès aux formations pour vos employés</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* Placeholder pour les formations */}
-              <p className="text-sm text-muted-foreground">Fonctionnalité en cours de développement...</p>
-            </CardContent>
-          </Card>
+          <EnterpriseCourses />
         </TabsContent>
         
         <TabsContent value="analytics" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Analytiques</CardTitle>
-              <CardDescription>Statistiques détaillées sur la formation de vos employés</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* Placeholder pour les analytiques */}
-              <p className="text-sm text-muted-foreground">Fonctionnalité en cours de développement...</p>
-            </CardContent>
-          </Card>
+          <EnterpriseAnalytics />
         </TabsContent>
       </Tabs>
     </div>
