@@ -887,44 +887,50 @@ export default function EnterpriseEmployeesPage() {
                 
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium">Progression par formation</h3>
-                  {selectedEmployee.progress?.courses && selectedEmployee.progress.courses.length > 0 ? (
+                  
+                  {selectedEmployee.progress?.courses && selectedEmployee.progress.courses.length > 0 && (
                     <Accordion type="single" collapsible className="w-full">
                       {selectedEmployee.progress.courses.map((courseProg) => (
-                      <AccordionItem key={courseProg.courseId} value={courseProg.courseId.toString()}>
-                        <AccordionTrigger className="hover:no-underline">
-                          <div className="flex items-center justify-between w-full pr-4">
-                            <span>{courseProg.title}</span>
-                            <Badge variant="outline" className={`${getProgressColor(courseProg.progress)} text-white ml-auto mr-2`}>
-                              {courseProg.progress}%
-                            </Badge>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <div className="pt-2 pb-4 px-1">
-                            <Progress 
-                              value={courseProg.progress}
-                              className={`h-2 ${getProgressColor(courseProg.progress)}`}
-                            />
-                            
-                            <div className="grid grid-cols-2 gap-2 mt-4">
-                              <div className="rounded-md border p-3">
-                                <div className="text-sm font-medium">Temps passé</div>
-                                <div className="mt-1 text-2xl font-bold">
-                                  {Math.floor(courseProg.progress * 0.4)}h
+                        <AccordionItem key={courseProg.courseId} value={courseProg.courseId.toString()}>
+                          <AccordionTrigger className="hover:no-underline">
+                            <div className="flex items-center justify-between w-full pr-4">
+                              <span>{courseProg.title}</span>
+                              <Badge variant="outline" className={`${getProgressColor(courseProg.progress)} text-white ml-auto mr-2`}>
+                                {courseProg.progress}%
+                              </Badge>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="pt-2 pb-4 px-1">
+                              <Progress 
+                                value={courseProg.progress}
+                                className={`h-2 ${getProgressColor(courseProg.progress)}`}
+                              />
+                              
+                              <div className="grid grid-cols-2 gap-2 mt-4">
+                                <div className="rounded-md border p-3">
+                                  <div className="text-sm font-medium">Temps passé</div>
+                                  <div className="mt-1 text-2xl font-bold">
+                                    {Math.floor(courseProg.progress * 0.4)}h
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="rounded-md border p-3">
-                                <div className="text-sm font-medium">Modules complétés</div>
-                                <div className="mt-1 text-2xl font-bold">
-                                  {Math.floor(courseProg.progress / 20)}/{Math.ceil(100 / 20)}
+                                <div className="rounded-md border p-3">
+                                  <div className="text-sm font-medium">Modules complétés</div>
+                                  <div className="mt-1 text-2xl font-bold">
+                                    {Math.floor(courseProg.progress / 20)}/{Math.ceil(100 / 20)}
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  )}
+                  
+                  {(!selectedEmployee.progress?.courses || selectedEmployee.progress.courses.length === 0) && (
+                    <p className="text-sm text-gray-500">Aucun cours suivi pour le moment.</p>
+                  )}
                 </div>
               </div>
             )}
