@@ -397,10 +397,11 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
         LEFT JOIN 
           users u ON bp.author_id = u.id
         WHERE
-          bp.slug = $1
+          bp.slug = '${slug}'
       `;
       
-      const result = await db.execute(query, [slug]);
+      // Ici nous n'utilisons pas de paramètres préparés car le slug est déjà inséré dans la requête
+      const result = await db.execute(query);
       console.log("Résultat de la requête pour le slug:", slug, "Nombre de résultats:", result.rows.length);
       
       if (result.rows.length === 0) {
@@ -597,14 +598,28 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
   };
 
   dbStorage.incrementBlogPostViewCount = async function(id) {
-    const [post] = await db
-      .update(blogPosts)
-      .set({
-        viewCount: sql`${blogPosts.viewCount} + 1`
-      })
-      .where(eq(blogPosts.id, id))
-      .returning();
-    return post;
+    try {
+      // Utilisez une requête SQL directe pour éviter les problèmes de type
+      const query = `
+        UPDATE blog_posts 
+        SET view_count = COALESCE(view_count, 0) + 1 
+        WHERE id = ${id}
+        RETURNING *
+      `;
+      const result = await db.execute(query);
+      return result.rows[0];
+    } catch (error) {
+      console.error("Erreur lors de l'incrémentation du compteur de vues:", error);
+      // Essayer la méthode Drizzle ORM en cas d'échec
+      const [post] = await db
+        .update(blogPosts)
+        .set({
+          viewCount: sql`${blogPosts.viewCount} + 1`
+        })
+        .where(eq(blogPosts.id, id))
+        .returning();
+      return post;
+    }
   };
 
   // Implémentations des méthodes pour les commentaires
