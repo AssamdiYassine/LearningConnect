@@ -191,6 +191,12 @@ export default function AuthPage() {
                       }}>
                         Admin
                       </Button>
+                      <Button variant="outline" size="sm" onClick={() => {
+                        loginForm.setValue("username", "enterprise1");
+                        loginForm.setValue("password", "Entreprise123");
+                      }}>
+                        Entreprise
+                      </Button>
                     </div>
                   </div>
                 </TabsContent>
