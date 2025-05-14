@@ -93,31 +93,32 @@ export default function EnterpriseCoursesPage() {
     { id: 5, title: "Sécurité Web", description: "Sécurisation des applications web", level: "Avancé", duration: 5, price: 1600 }
   ];
 
-  // Fetch enterprises (Mock for now)
-  const { data: enterprises = mockEnterprises, isLoading: isLoadingEnterprises } = useQuery<Enterprise[]>({
+  // Fetch enterprises
+  const { data: enterprises = [], isLoading: isLoadingEnterprises } = useQuery<Enterprise[]>({
     queryKey: ['/api/admin/enterprises'],
-    // À remplacer par un vrai appel API
-    queryFn: () => Promise.resolve(mockEnterprises),
     enabled: true
   });
 
-  // Fetch courses (Mock for now)
-  const { data: courses = mockCourses, isLoading: isLoadingCourses } = useQuery<Course[]>({
+  // Fetch courses
+  const { data: courses = [], isLoading: isLoadingCourses } = useQuery<Course[]>({
     queryKey: ['/api/admin/courses'],
-    // À remplacer par un vrai appel API
-    queryFn: () => Promise.resolve(mockCourses),
     enabled: true
   });
 
-  // Assign courses mutation (Mock for now)
+  // Assign courses mutation
   const assignCoursesMutation = useMutation({
     mutationFn: async (data: EnterpriseCoursesFormData) => {
-      // Remplacer par un vrai appel API
-      console.log("Attribution de formations:", data);
-      return data;
+      const response = await apiRequest('POST', `/api/admin/enterprises/${data.enterpriseId}/courses`, {
+        courseIds: data.courseIds
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erreur lors de l'attribution des cours");
+      }
+      return await response.json();
     },
     onSuccess: () => {
-      // Remplacer par queryClient.invalidateQueries
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/enterprises'] });
       toast({
         title: "Succès",
         description: "Formations attribuées avec succès!",
@@ -141,7 +142,7 @@ export default function EnterpriseCoursesPage() {
     
     setFormData({
       enterpriseId,
-      courseIds: selectedEnt ? [...selectedEnt.courseIds] : []
+      courseIds: selectedEnt && selectedEnt.courseIds ? [...selectedEnt.courseIds] : []
     });
   };
 
@@ -237,7 +238,7 @@ export default function EnterpriseCoursesPage() {
                           setSelectedEnterprise(enterprise);
                           setFormData({
                             enterpriseId: enterprise.id,
-                            courseIds: [...enterprise.courseIds]
+                            courseIds: enterprise.courseIds ? [...enterprise.courseIds] : []
                           });
                           setAssignDialogOpen(true);
                         }}
