@@ -31,8 +31,9 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, postId }) => {
     setShowReplyForm(prev => !prev);
   };
 
-  // Détecter si le commentaire est d'un administrateur
-  const isAdminComment = comment.user?.role === 'admin';
+  // Détecter si le commentaire est d'un administrateur 
+  // Utiliser la propriété role directement du commentaire si user est undefined
+  const isAdminComment = (comment.user ? comment.user.role === 'admin' : comment.role === 'admin');
   
   // Vérifier si le commentaire est en attente d'approbation
   const isPendingApproval = comment.isApproved === false;
@@ -52,7 +53,7 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, postId }) => {
           <div className="flex justify-between items-center mb-1">
             <div className="flex items-center gap-2">
               <h4 className="font-semibold">
-                {comment.user?.displayName || comment.user?.username}
+                {comment.user?.displayName || comment.user?.username || comment.displayName || comment.username || "Utilisateur"}
                 {isAdminComment && (
                   <Badge variant="default" className="ml-2 text-[10px] py-0">
                     <Shield className="h-3 w-3 mr-1" /> Admin
