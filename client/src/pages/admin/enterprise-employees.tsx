@@ -75,7 +75,9 @@ type Employee = {
   email: string;
   displayName: string;
   enterpriseId: number;
-  progress: {
+  enterpriseName?: string;
+  courseCount?: number;
+  progress?: {
     overall: number;
     courses: {
       courseId: number;
@@ -543,12 +545,12 @@ export default function EnterpriseEmployeesPage() {
                         <div className="flex items-center gap-2 w-full max-w-[200px]">
                           <div className="flex-grow">
                             <Progress 
-                              value={employee.progress.overall} 
-                              className={`h-2 ${getProgressColor(employee.progress.overall)}`}
+                              value={employee.progress?.overall || 0} 
+                              className={`h-2 ${getProgressColor(employee.progress?.overall || 0)}`}
                             />
                           </div>
                           <span className="text-sm whitespace-nowrap">
-                            {employee.progress.overall}%
+                            {employee.progress?.overall || 0}%
                           </span>
                         </div>
                       </TableCell>
@@ -871,13 +873,13 @@ export default function EnterpriseEmployeesPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <h3 className="text-sm font-medium">Progression globale</h3>
-                    <Badge variant="outline" className={`${getProgressColor(selectedEmployee.progress.overall)} text-white`}>
-                      {selectedEmployee.progress.overall}%
+                    <Badge variant="outline" className={`${getProgressColor(selectedEmployee.progress?.overall || 0)} text-white`}>
+                      {selectedEmployee.progress?.overall || 0}%
                     </Badge>
                   </div>
                   <Progress 
-                    value={selectedEmployee.progress.overall}
-                    className={`h-2.5 ${getProgressColor(selectedEmployee.progress.overall)}`}
+                    value={selectedEmployee.progress?.overall || 0}
+                    className={`h-2.5 ${getProgressColor(selectedEmployee.progress?.overall || 0)}`}
                   />
                 </div>
                 
@@ -885,8 +887,9 @@ export default function EnterpriseEmployeesPage() {
                 
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium">Progression par formation</h3>
-                  <Accordion type="single" collapsible className="w-full">
-                    {selectedEmployee.progress.courses.map((courseProg) => (
+                  {selectedEmployee.progress?.courses && selectedEmployee.progress.courses.length > 0 ? (
+                    <Accordion type="single" collapsible className="w-full">
+                      {selectedEmployee.progress.courses.map((courseProg) => (
                       <AccordionItem key={courseProg.courseId} value={courseProg.courseId.toString()}>
                         <AccordionTrigger className="hover:no-underline">
                           <div className="flex items-center justify-between w-full pr-4">
