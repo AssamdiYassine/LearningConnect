@@ -550,3 +550,71 @@ export const insertEmployeeSessionAttendanceSchema = createInsertSchema(employee
 });
 export type EmployeeSessionAttendance = typeof employeeSessionAttendance.$inferSelect;
 export type InsertEmployeeSessionAttendance = z.infer<typeof insertEmployeeSessionAttendanceSchema>;
+
+// =========== Structures pour les entreprises ===========
+
+// Table principale des entreprises 
+export const enterprises = pgTable("enterprises", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  contactEmail: text("contact_email").notNull(),
+  contactName: text("contact_name").notNull(),
+  employeeLimit: integer("employee_limit").notNull().default(10),
+  subscriptionEndDate: date("subscription_end_date").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Table de liaison entreprises-formations
+export const enterpriseAssignedCourses = pgTable("enterprise_assigned_courses", {
+  id: serial("id").primaryKey(),
+  enterpriseId: integer("enterprise_id").notNull().references(() => enterprises.id, { onDelete: 'cascade' }),
+  courseId: integer("course_id").notNull().references(() => courses.id, { onDelete: 'cascade' }),
+  assignedAt: timestamp("assigned_at").notNull().defaultNow(),
+});
+
+// Relations
+export const enterprisesRelations = relations(enterprises, ({ many }) => ({
+  assignedCourses: many(enterpriseAssignedCourses),
+  employees: many(users, { relationName: "enterprise_employees" }),
+}));
+
+export const enterpriseAssignedCoursesRelations = relations(enterpriseAssignedCourses, ({ one }) => ({
+  enterprise: one(enterprises, {
+    fields: [enterpriseAssignedCourses.enterpriseId],
+    references: [enterprises.id],
+  }),
+  course: one(courses, {
+    fields: [enterpriseAssignedCourses.courseId],
+    references: [courses.id],
+  }),
+}));
+
+// Relation users-enterprises
+export const usersToEnterpriseRelations = relations(users, ({ one }) => ({
+  enterprise: one(enterprises, {
+    fields: [users.enterpriseId],
+    references: [enterprises.id],
+    relationName: "enterprise_employees",
+  }),
+}));
+
+// Schémas pour manipuler les données
+export const insertEnterpriseSchema = createInsertSchema(enterprises).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertEnterpriseAssignedCoursesSchema = createInsertSchema(enterpriseAssignedCourses).omit({
+  id: true,
+  assignedAt: true,
+});
+
+// Types pour TypeScript
+export type Enterprise = typeof enterprises.$inferSelect;
+export type InsertEnterprise = z.infer<typeof insertEnterpriseSchema>;
+
+export type EnterpriseAssignedCourse = typeof enterpriseAssignedCourses.$inferSelect;
+export type InsertEnterpriseAssignedCourse = z.infer<typeof insertEnterpriseAssignedCoursesSchema>;
