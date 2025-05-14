@@ -154,15 +154,20 @@ export default function AdminEnterprises() {
     }
   });
 
-  // Update enterprise mutation (Mock for now)
+  // Update enterprise mutation
   const updateEnterpriseMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<EnterpriseFormData> }) => {
-      // Remplacer par un vrai appel API
-      console.log("Mise à jour entreprise:", id, data);
-      return { id, ...data };
+      const response = await apiRequest("PUT", `/api/admin/enterprises/${id}`, data);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Échec de la mise à jour de l'entreprise");
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
-      // Remplacer par queryClient.invalidateQueries
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/enterprises'] });
       toast({
         title: "Succès",
         description: "Entreprise mise à jour avec succès!",
@@ -178,14 +183,20 @@ export default function AdminEnterprises() {
     }
   });
 
-  // Delete enterprise mutation (Mock for now)
+  // Delete enterprise mutation
   const deleteEnterpriseMutation = useMutation({
     mutationFn: async (id: number) => {
-      // Remplacer par un vrai appel API
-      console.log("Suppression entreprise:", id);
+      const response = await apiRequest("DELETE", `/api/admin/enterprises/${id}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Échec de la suppression de l'entreprise");
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
-      // Remplacer par queryClient.invalidateQueries
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/enterprises'] });
       toast({
         title: "Succès",
         description: "Entreprise supprimée avec succès!",
@@ -296,10 +307,22 @@ export default function AdminEnterprises() {
     setEditDialogOpen(true);
   };
 
+  // State for delete confirmation dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [enterpriseToDelete, setEnterpriseToDelete] = useState<Enterprise | null>(null);
+
   // Handle delete enterprise
   const handleDeleteEnterprise = (enterprise: Enterprise) => {
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer l'entreprise "${enterprise.name}" ?`)) {
-      deleteEnterpriseMutation.mutate(enterprise.id);
+    setEnterpriseToDelete(enterprise);
+    setDeleteDialogOpen(true);
+  };
+  
+  // Confirm deletion
+  const confirmDelete = () => {
+    if (enterpriseToDelete) {
+      deleteEnterpriseMutation.mutate(enterpriseToDelete.id);
+      setDeleteDialogOpen(false);
+      setEnterpriseToDelete(null);
     }
   };
 
@@ -671,6 +694,34 @@ export default function AdminEnterprises() {
                 className="bg-[#1D2B6C]"
               >
                 {updateEnterpriseMutation.isPending ? "Mise à jour..." : "Mettre à jour"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Confirmation de suppression</DialogTitle>
+              <DialogDescription>
+                Êtes-vous sûr de vouloir supprimer l'entreprise {enterpriseToDelete?.name} ?
+                Cette action ne peut pas être annulée.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex space-x-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setDeleteDialogOpen(false)}
+              >
+                Annuler
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmDelete}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Supprimer
               </Button>
             </DialogFooter>
           </DialogContent>
