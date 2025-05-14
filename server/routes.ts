@@ -96,6 +96,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register blog categories routes
   registerAdminBlogCategoriesRoutes(app);
+
+  // Enregistrer les routes pour la gestion des entreprises
+  app.use('/api/admin', enterpriseAdminRoutes);
+  app.use('/api', enterpriseRoutes);
   
   // Register password reset routes
   registerResetPasswordRoutes(app);

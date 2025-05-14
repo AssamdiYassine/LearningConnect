@@ -212,39 +212,36 @@ export default function EnterpriseEmployeesPage() {
     }
   ];
 
-  // Fetch enterprises (Mock for now)
-  const { data: enterprises = mockEnterprises, isLoading: isLoadingEnterprises } = useQuery<Enterprise[]>({
+  // Fetch enterprises
+  const { data: enterprises = [], isLoading: isLoadingEnterprises } = useQuery<Enterprise[]>({
     queryKey: ['/api/admin/enterprises'],
-    // À remplacer par un vrai appel API
-    queryFn: () => Promise.resolve(mockEnterprises),
     enabled: true
   });
 
-  // Fetch courses (Mock for now)
-  const { data: courses = mockCourses, isLoading: isLoadingCourses } = useQuery<Course[]>({
+  // Fetch courses
+  const { data: courses = [], isLoading: isLoadingCourses } = useQuery<Course[]>({
     queryKey: ['/api/admin/courses'],
-    // À remplacer par un vrai appel API
-    queryFn: () => Promise.resolve(mockCourses),
     enabled: true
   });
 
-  // Fetch employees (Mock for now)
-  const { data: employees = mockEmployees, isLoading: isLoadingEmployees } = useQuery<Employee[]>({
+  // Fetch employees
+  const { data: employees = [], isLoading: isLoadingEmployees } = useQuery<Employee[]>({
     queryKey: ['/api/admin/enterprise-employees'],
-    // À remplacer par un vrai appel API
-    queryFn: () => Promise.resolve(mockEmployees),
     enabled: true
   });
 
-  // Create employee mutation (Mock for now)
+  // Create employee mutation
   const createEmployeeMutation = useMutation({
     mutationFn: async (employeeData: Omit<EmployeeFormData, 'confirmPassword'>) => {
-      // Remplacer par un vrai appel API
-      console.log("Création d'employé:", employeeData);
-      return { id: Math.random(), ...employeeData, progress: { overall: 0, courses: [] } };
+      const response = await apiRequest('POST', '/api/admin/enterprise-employees', employeeData);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erreur lors de la création de l\'employé');
+      }
+      return await response.json();
     },
     onSuccess: () => {
-      // Remplacer par queryClient.invalidateQueries
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/enterprise-employees'] });
       toast({
         title: "Succès",
         description: "Employé créé avec succès!",
@@ -261,15 +258,18 @@ export default function EnterpriseEmployeesPage() {
     }
   });
 
-  // Update employee mutation (Mock for now)
+  // Update employee mutation
   const updateEmployeeMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<EmployeeFormData> }) => {
-      // Remplacer par un vrai appel API
-      console.log("Mise à jour employé:", id, data);
-      return { id, ...data };
+      const response = await apiRequest('PUT', `/api/admin/enterprise-employees/${id}`, data);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erreur lors de la mise à jour de l\'employé');
+      }
+      return await response.json();
     },
     onSuccess: () => {
-      // Remplacer par queryClient.invalidateQueries
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/enterprise-employees'] });
       toast({
         title: "Succès",
         description: "Employé mis à jour avec succès!",
@@ -285,14 +285,18 @@ export default function EnterpriseEmployeesPage() {
     }
   });
 
-  // Delete employee mutation (Mock for now)
+  // Delete employee mutation
   const deleteEmployeeMutation = useMutation({
     mutationFn: async (id: number) => {
-      // Remplacer par un vrai appel API
-      console.log("Suppression employé:", id);
+      const response = await apiRequest('DELETE', `/api/admin/enterprise-employees/${id}`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erreur lors de la suppression de l\'employé');
+      }
+      return await response.json();
     },
     onSuccess: () => {
-      // Remplacer par queryClient.invalidateQueries
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/enterprise-employees'] });
       toast({
         title: "Succès",
         description: "Employé supprimé avec succès!",
