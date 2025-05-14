@@ -178,27 +178,10 @@ export function registerAdminDashboard(app: Express, pool: Pool) {
     }
   });
 
-  app.get('/api/admin/blogs/:id', hasAdminRole, async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      const { rows } = await pool.query(`
-        SELECT bp.*, u.display_name as author_name, c.name as category_name
-        FROM blog_posts bp
-        LEFT JOIN users u ON bp.author_id = u.id
-        LEFT JOIN categories c ON bp.category_id = c.id
-        WHERE bp.id = $1
-      `, [id]);
-      
-      if (rows.length === 0) {
-        return res.status(404).json({ message: 'Blog post not found' });
-      }
-      
-      res.json(rows[0]);
-    } catch (error: any) {
-      console.error(`Error fetching blog post ${req.params.id}:`, error);
-      res.status(500).json({ message: `Failed to fetch blog post: ${error.message}` });
-    }
-  });
+  // La route GET /api/admin/blogs/:id est déjà définie dans admin-api-extensions.ts
+  // Nous la supprimons ici pour éviter les conflits
+  // Cette route utilisait une structure de données plate qui causait des problèmes
+  // avec le formulaire d'édition qui s'attend à des objets imbriqués (author, category)
 
   app.patch('/api/admin/blogs/:id', hasAdminRole, async (req: Request, res: Response) => {
     try {
