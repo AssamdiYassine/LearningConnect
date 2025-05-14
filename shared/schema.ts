@@ -568,7 +568,7 @@ export const enterprises = pgTable("enterprises", {
 
 // Table de liaison entreprises-formations
 export const enterpriseAssignedCourses = pgTable("enterprise_assigned_courses", {
-  id: serial("id").primaryKey(),
+  // Pas de colonne id car la table utilise une clé primaire composée dans la base de données
   enterpriseId: integer("enterprise_id").notNull().references(() => enterprises.id, { onDelete: 'cascade' }),
   courseId: integer("course_id").notNull().references(() => courses.id, { onDelete: 'cascade' }),
   assignedAt: timestamp("assigned_at").notNull().defaultNow(),
@@ -608,7 +608,6 @@ export const insertEnterpriseSchema = createInsertSchema(enterprises).omit({
 });
 
 export const insertEnterpriseAssignedCoursesSchema = createInsertSchema(enterpriseAssignedCourses).omit({
-  id: true,
   assignedAt: true,
 });
 
