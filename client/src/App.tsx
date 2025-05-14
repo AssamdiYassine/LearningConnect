@@ -58,7 +58,7 @@ import AdminRevenueWithDashboard from "@/pages/admin/admin-revenue";
 import AdminSettingsWithDashboard from "@/pages/admin/admin-settings";
 import SubscriptionsWithAdminDashboard from "@/pages/admin/admin-subscriptions";
 import AdminCategoriesWithDashboard from "@/pages/admin/admin-categories";
-import AdminApprovalsWithDashboard from "@/pages/admin/admin-approvals";
+// Import AdminApprovalsWithDashboard supprimé
 import AdminNotificationsWithDashboard from "@/pages/admin/admin-notifications";
 import AdminBlogsPage from "@/pages/admin/admin-blogs";
 import AdminApiSettings from "@/pages/admin/admin-api-settings";
@@ -289,9 +289,7 @@ function Router() {
         <ProtectedRoute component={AdminCategoriesWithDashboard} allowedRoles={["admin"]} />
       </Route>
       
-      <Route path="/admin/approvals">
-        <ProtectedRoute component={AdminApprovalsWithDashboard} allowedRoles={["admin"]} />
-      </Route>
+      {/* Route d'approbations supprimée */}
       
       <Route path="/admin/notifications">
         <ProtectedRoute component={AdminNotificationsWithDashboard} allowedRoles={["admin"]} />
