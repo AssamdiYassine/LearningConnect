@@ -27,7 +27,8 @@ import {
   ChevronLeft, 
   Home,
   LineChart, 
-  Key, 
+  Key,
+  MessageSquare, 
   Mail,
   Layers,
   LayoutDashboard,
@@ -284,6 +285,12 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({ chil
               text="Blog" 
               path="/admin/blogs" 
               isActive={location === "/admin/blogs"}
+            />
+            <SidebarItem 
+              icon={<MessageSquare size={18} />} 
+              text="Commentaires" 
+              path="/admin/blog-comments" 
+              isActive={location === "/admin/blog-comments"}
             />
             <SidebarItem 
               icon={<ListFilter size={18} />} 
