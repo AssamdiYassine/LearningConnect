@@ -63,6 +63,11 @@ import AdminNotificationsWithDashboard from "@/pages/admin/admin-notifications";
 import AdminBlogsPage from "@/pages/admin/admin-blogs";
 import AdminApiSettings from "@/pages/admin/admin-api-settings";
 
+// Admin pages - Gestion des Entreprises
+import AdminEnterprises from "@/pages/admin/enterprises";
+import EnterpriseCoursesPage from "@/pages/admin/enterprise-courses";
+import EnterpriseEmployeesPage from "@/pages/admin/enterprise-employees";
+
 // Blog pages
 import BlogPage from "@/pages/blog";
 import BlogPostPage from "@/pages/blog/[slug]";
@@ -324,6 +329,19 @@ function Router() {
       
       <Route path="/admin/api-settings">
         <ProtectedRoute component={AdminApiSettings} allowedRoles={["admin"]} />
+      </Route>
+      
+      {/* Routes de gestion des entreprises */}
+      <Route path="/admin/enterprises">
+        <ProtectedRoute component={AdminEnterprises} allowedRoles={["admin"]} />
+      </Route>
+      
+      <Route path="/admin/enterprise-courses">
+        <ProtectedRoute component={EnterpriseCoursesPage} allowedRoles={["admin"]} />
+      </Route>
+      
+      <Route path="/admin/enterprise-employees">
+        <ProtectedRoute component={EnterpriseEmployeesPage} allowedRoles={["admin"]} />
       </Route>
       
       {/* Enterprise routes */}

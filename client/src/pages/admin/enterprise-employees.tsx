@@ -57,6 +57,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import AdminDashboardLayout from '@/components/admin-dashboard-layout';
@@ -539,8 +540,7 @@ export default function EnterpriseEmployeesPage() {
                           <div className="flex-grow">
                             <Progress 
                               value={employee.progress.overall} 
-                              className="h-2"
-                              indicatorClassName={getProgressColor(employee.progress.overall)}
+                              className={`h-2 ${getProgressColor(employee.progress.overall)}`}
                             />
                           </div>
                           <span className="text-sm whitespace-nowrap">
