@@ -267,12 +267,78 @@ router.get("/courses", isAdmin, async (req, res) => {
         trainerId: courses.trainerId
       })
       .from(courses)
-      .where(eq(courses.isPublished, true))
       .orderBy(asc(courses.title));
     
     res.json(allCourses);
   } catch (error) {
     console.error("Erreur lors de la récupération des cours:", error);
+    res.status(500).json({ 
+      message: "Erreur interne du serveur",
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// Assigner des cours à une entreprise
+router.post("/enterprises/:id/courses", isAdmin, async (req, res) => {
+  try {
+    const enterpriseId = parseInt(req.params.id);
+    const { courseIds } = req.body;
+    
+    if (!Array.isArray(courseIds)) {
+      return res.status(400).json({ message: "Le format de courseIds est invalide" });
+    }
+    
+    // Vérifier si l'entreprise existe
+    const existingEnterprise = await db
+      .select()
+      .from(enterprises)
+      .where(eq(enterprises.id, enterpriseId))
+      .limit(1);
+      
+    if (!existingEnterprise || existingEnterprise.length === 0) {
+      return res.status(404).json({ message: "Entreprise non trouvée" });
+    }
+    
+    // Supprimer les associations existantes
+    await db
+      .delete(enterpriseAssignedCourses)
+      .where(eq(enterpriseAssignedCourses.enterpriseId, enterpriseId));
+    
+    // Ajouter les nouvelles associations si des cours sont fournis
+    if (courseIds.length > 0) {
+      try {
+        const courseAssignments = courseIds.map(courseId => ({
+          enterpriseId,
+          courseId: Number(courseId)
+        }));
+        
+        await db
+          .insert(enterpriseAssignedCourses)
+          .values(courseAssignments);
+      } catch (err) {
+        console.error("Erreur lors de l'insertion des cours:", err);
+        return res.status(500).json({ 
+          message: "Erreur lors de l'assignation des cours",
+          error: err instanceof Error ? err.message : String(err)
+        });
+      }
+    }
+    
+    // Récupérer les cours assignés mis à jour
+    const coursesAssigned = await db
+      .select({ courseId: enterpriseAssignedCourses.courseId })
+      .from(enterpriseAssignedCourses)
+      .where(eq(enterpriseAssignedCourses.enterpriseId, enterpriseId));
+    
+    const courseIdsAssigned = coursesAssigned.map(course => course.courseId);
+    
+    res.status(200).json({
+      enterpriseId,
+      courseIds: courseIdsAssigned
+    });
+  } catch (error) {
+    console.error("Erreur lors de l'assignation des cours:", error);
     res.status(500).json({ 
       message: "Erreur interne du serveur",
       error: error instanceof Error ? error.message : String(error)
