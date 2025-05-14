@@ -278,6 +278,8 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
   };
 
   dbStorage.getBlogPostWithDetails = async function(id) {
+    console.log("getBlogPostWithDetails appelé avec ID:", id);
+    
     const result = await db
       .select({
         post: blogPosts,
@@ -289,21 +291,28 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
       .leftJoin(users, eq(blogPosts.authorId, users.id))
       .where(eq(blogPosts.id, id));
 
-    if (result.length === 0) return undefined;
+    if (result.length === 0) {
+      console.log("Aucun article trouvé avec l'ID:", id);
+      return undefined;
+    }
 
     const { post, category, author } = result[0];
+    
+    // Récupérer le nombre de commentaires pour cet article
+    const commentsCount = await db
+      .select({ count: sql`count(*)` })
+      .from(blogComments)
+      .where(eq(blogComments.postId, id));
+    
+    const commentCount = Number(commentsCount[0]?.count || 0);
+    
+    console.log("Article trouvé avec l'ID:", id, "Titre:", post.title);
+    
     return {
       ...post,
-      category: {
-        id: category.id,
-        name: category.name,
-        slug: category.slug
-      },
-      author: {
-        id: author.id,
-        username: author.username,
-        displayName: author.displayName
-      }
+      category,
+      author,
+      commentCount
     };
   };
 
@@ -333,18 +342,22 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
       console.log("Catégorie:", category);
       console.log("Auteur:", author);
       
+      // Récupérer le nombre de commentaires pour cet article
+      const commentsCount = await db
+        .select({ count: sql`count(*)` })
+        .from(blogComments)
+        .where(eq(blogComments.postId, post.id));
+      
+      const commentCount = Number(commentsCount[0]?.count || 0);
+      
+      // Incrémenter le compteur de vues
+      console.log("Article trouvé:", post.title, "Statut:", post.status);
+      
       return {
         ...post,
-        category: {
-          id: category.id,
-          name: category.name,
-          slug: category.slug
-        },
-        author: {
-          id: author.id,
-          username: author.username,
-          displayName: author.displayName
-        }
+        category,
+        author,
+        commentCount
       };
     } catch (error) {
       console.error("Erreur dans getBlogPostBySlugWithDetails:", error);
@@ -352,8 +365,16 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
     }
   };
 
-  dbStorage.getAllBlogPostsWithDetails = async function() {
-    const result = await db
+  dbStorage.getAllBlogPostsWithDetails = async function(params?: {
+    status?: string;
+    limit?: number;
+    offset?: number;
+    categoryId?: number;
+  }) {
+    console.log("getAllBlogPostsWithDetails appelé avec paramètres:", params);
+    
+    // Construire la requête SQL pour récupérer tous les posts avec détails
+    let query = db
       .select({
         post: blogPosts,
         category: blogCategories,
@@ -361,22 +382,54 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
       })
       .from(blogPosts)
       .leftJoin(blogCategories, eq(blogPosts.categoryId, blogCategories.id))
-      .leftJoin(users, eq(blogPosts.authorId, users.id))
-      .orderBy(desc(blogPosts.createdAt));
-
-    return result.map(({ post, category, author }) => ({
-      ...post,
-      category: {
-        id: category.id,
-        name: category.name,
-        slug: category.slug
-      },
-      author: {
-        id: author.id,
-        username: author.username,
-        displayName: author.displayName
-      }
-    }));
+      .leftJoin(users, eq(blogPosts.authorId, users.id));
+    
+    // Appliquer les filtres
+    if (params?.status) {
+      query = query.where(eq(blogPosts.status, params.status));
+    }
+    
+    if (params?.categoryId) {
+      query = query.where(eq(blogPosts.categoryId, params.categoryId));
+    }
+    
+    // Tri par date (les plus récents d'abord)
+    query = query.orderBy(desc(blogPosts.createdAt));
+    
+    // Pagination
+    if (params?.offset !== undefined && params?.limit !== undefined) {
+      query = query.limit(params.limit).offset(params.offset);
+    } else if (params?.limit !== undefined) {
+      query = query.limit(params.limit);
+    }
+    
+    const result = await query;
+    
+    console.log("Nombre d'articles trouvés:", result.length);
+    
+    // Transformer les résultats
+    const detailedPosts = [];
+    
+    for (const { post, category, author } of result) {
+      // Récupérer le nombre de commentaires pour cet article
+      const commentsCount = await db
+        .select({ count: sql`count(*)` })
+        .from(blogComments)
+        .where(eq(blogComments.postId, post.id));
+      
+      const commentCount = Number(commentsCount[0]?.count || 0);
+      
+      // Construire l'objet article avec tous les détails
+      detailedPosts.push({
+        ...post,
+        category,
+        author,
+        commentCount
+      });
+    }
+    
+    console.log("Articles traités avec tous les détails");
+    return detailedPosts;
   };
 
   dbStorage.getBlogPostsByAuthor = async function(authorId) {
