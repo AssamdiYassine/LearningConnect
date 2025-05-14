@@ -495,6 +495,7 @@ export default function AdminUsers() {
                 <SelectContent>
                   <SelectItem value="student">Étudiant</SelectItem>
                   <SelectItem value="trainer">Formateur</SelectItem>
+                  <SelectItem value="enterprise">Entreprise</SelectItem>
                   <SelectItem value="admin">Administrateur</SelectItem>
                 </SelectContent>
               </Select>
@@ -614,6 +615,7 @@ export default function AdminUsers() {
                 <SelectContent>
                   <SelectItem value="student">Étudiant</SelectItem>
                   <SelectItem value="trainer">Formateur</SelectItem>
+                  <SelectItem value="enterprise">Entreprise</SelectItem>
                   <SelectItem value="admin">Administrateur</SelectItem>
                 </SelectContent>
               </Select>
