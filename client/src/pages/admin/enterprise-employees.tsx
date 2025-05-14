@@ -479,14 +479,14 @@ export default function EnterpriseEmployeesPage() {
                 />
               </div>
               <Select
-                value={selectedEnterpriseFilter === null ? "" : selectedEnterpriseFilter.toString()}
-                onValueChange={(value) => setSelectedEnterpriseFilter(value === "" ? null : parseInt(value))}
+                value={selectedEnterpriseFilter === null ? "all" : selectedEnterpriseFilter.toString()}
+                onValueChange={(value) => setSelectedEnterpriseFilter(value === "all" ? null : parseInt(value))}
               >
                 <SelectTrigger className="w-full md:w-[250px]">
                   <SelectValue placeholder="Filtrer par entreprise" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Toutes les entreprises</SelectItem>
+                  <SelectItem value="all">Toutes les entreprises</SelectItem>
                   {enterprises.map(enterprise => (
                     <SelectItem key={enterprise.id} value={enterprise.id.toString()}>
                       {enterprise.name}

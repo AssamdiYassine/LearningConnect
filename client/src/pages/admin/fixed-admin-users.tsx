@@ -244,14 +244,14 @@ export default function FixedAdminUsers() {
             />
           </div>
           <Select
-            value={filterRole || ""}
-            onValueChange={(value) => setFilterRole(value === "" ? null : value)}
+            value={filterRole || "all"}
+            onValueChange={(value) => setFilterRole(value === "all" ? null : value)}
           >
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Filtrer par rôle" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Tous les rôles</SelectItem>
+              <SelectItem value="all">Tous les rôles</SelectItem>
               <SelectItem value="admin">Administrateur</SelectItem>
               <SelectItem value="trainer">Formateur</SelectItem>
               <SelectItem value="student">Étudiant</SelectItem>
