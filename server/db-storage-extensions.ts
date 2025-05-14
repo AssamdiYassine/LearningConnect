@@ -306,11 +306,12 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
         LEFT JOIN 
           users u ON bp.author_id = u.id
         WHERE
-          bp.id = $1
+          bp.id = ${id}
       `;
       
       console.log("Exécution de la requête pour l'ID:", id);
-      const result = await db.execute(query, [id]);
+      // Ici nous n'utilisons pas de paramètres préparés car l'ID est déjà inséré dans la requête
+      const result = await db.execute(query);
       console.log("Résultat obtenu, nombre de lignes:", result.rows.length);
       
       if (result.rows.length === 0) {

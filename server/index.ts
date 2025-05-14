@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { registerAdminRoutes } from "./admin-routes";
 import { registerAdminSubscriptionRoutes } from "./admin-subscription-routes";
 import { registerAdminApiSettingsRoutes } from "./admin-api-settings-routes";
+import { registerAdminApiExtensions } from "./admin-api-extensions";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedBlogDemoData } from "./blog-demo-data";
 import seedNotifications from "./seed-notifications";
@@ -53,8 +54,11 @@ app.use((req, res, next) => {
   // Register admin subscription routes
   registerAdminSubscriptionRoutes(app);
   
-  // Extend database storage with API functions
+  // Étendre la base de données avec les fonctions API
   extendDatabaseStorageForApi(storage as any);
+  
+  // Enregistrer les extensions d'API admin (pour le blog, etc.)
+  registerAdminApiExtensions(app);
   
   // Register admin API settings routes
   registerAdminApiSettingsRoutes(app);
