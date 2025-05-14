@@ -30,7 +30,10 @@ import {
   Mail,
   Layers,
   LayoutDashboard,
-  ListFilter
+  ListFilter,
+  Building2,
+  GraduationCap,
+  Briefcase
 } from "lucide-react";
 
 // Format date in French
@@ -216,6 +219,28 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({ chil
               isActive={location === "/admin/categories"}
               badge={3}
               badgeVariant="secondary"
+            />
+            
+            <SidebarSection title="Gestion des Entreprises" />
+            <SidebarItem 
+              icon={<Building2 size={18} />} 
+              text="Entreprises" 
+              path="/admin/enterprises" 
+              isActive={location === "/admin/enterprises"}
+            />
+            <SidebarItem 
+              icon={<Briefcase size={18} />} 
+              text="Formations Entreprises" 
+              path="/admin/enterprise-courses" 
+              isActive={location === "/admin/enterprise-courses"}
+            />
+            <SidebarItem 
+              icon={<GraduationCap size={18} />} 
+              text="Employés" 
+              path="/admin/enterprise-employees" 
+              isActive={location === "/admin/enterprise-employees"}
+              badge={5}
+              badgeVariant="outline"
             />
             
             <SidebarSection title="Contenu" />
