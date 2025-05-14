@@ -103,6 +103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enregistrer les routes pour la gestion des entreprises
   app.use('/api/admin', enterpriseAdminRoutes);
   app.use('/api/admin', enterpriseEmployeesRoutes);
+  app.use('/api/blog', blogCommentsRoutes);
   app.use('/api', enterpriseRoutes);
   
   // Register password reset routes
