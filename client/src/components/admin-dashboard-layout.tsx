@@ -232,12 +232,16 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({ chil
               text="Utilisateurs" 
               path="/admin/users" 
               isActive={location === "/admin/users"}
+              badge={usersCount}
+              badgeVariant="outline"
             />
             <SidebarItem 
               icon={<BookOpen size={18} />} 
               text="Formations" 
               path="/admin/courses" 
               isActive={location === "/admin/courses"}
+              badge={coursesCount}
+              badgeVariant="outline"
             />
             <SidebarItem 
               icon={<Calendar size={18} />} 
@@ -258,6 +262,8 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({ chil
               text="Entreprises" 
               path="/admin/enterprises" 
               isActive={location === "/admin/enterprises"}
+              badge={enterprisesCount}
+              badgeVariant="outline"
             />
             <SidebarItem 
               icon={<Briefcase size={18} />} 

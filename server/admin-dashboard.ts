@@ -722,4 +722,35 @@ export function registerAdminDashboard(app: Express, pool: Pool) {
       res.status(500).json({ message: `Failed to fetch trainer revenue stats: ${error.message}` });
     }
   });
+  
+  // Routes pour les compteurs de statistiques utilisées dans la barre latérale admin
+  app.get('/api/admin/stats/users-count', hasAdminRole, async (req: Request, res: Response) => {
+    try {
+      const { rows } = await pool.query(`SELECT COUNT(*) FROM users`);
+      res.json({ count: parseInt(rows[0].count) });
+    } catch (error: any) {
+      console.error("Error fetching users count:", error);
+      res.status(500).json({ message: `Failed to fetch users count: ${error.message}` });
+    }
+  });
+
+  app.get('/api/admin/stats/courses-count', hasAdminRole, async (req: Request, res: Response) => {
+    try {
+      const { rows } = await pool.query(`SELECT COUNT(*) FROM courses`);
+      res.json({ count: parseInt(rows[0].count) });
+    } catch (error: any) {
+      console.error("Error fetching courses count:", error);
+      res.status(500).json({ message: `Failed to fetch courses count: ${error.message}` });
+    }
+  });
+
+  app.get('/api/admin/stats/enterprises-count', hasAdminRole, async (req: Request, res: Response) => {
+    try {
+      const { rows } = await pool.query(`SELECT COUNT(*) FROM enterprises`);
+      res.json({ count: parseInt(rows[0].count) });
+    } catch (error: any) {
+      console.error("Error fetching enterprises count:", error);
+      res.status(500).json({ message: `Failed to fetch enterprises count: ${error.message}` });
+    }
+  });
 }
