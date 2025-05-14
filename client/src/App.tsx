@@ -61,6 +61,7 @@ import AdminCategoriesWithDashboard from "@/pages/admin/admin-categories";
 // Import AdminApprovalsWithDashboard supprimé
 import AdminNotificationsWithDashboard from "@/pages/admin/admin-notifications";
 import AdminBlogsPage from "@/pages/admin/admin-blogs";
+import AdminBlogCommentsPage from "@/pages/admin/admin-blog-comments";
 import AdminApiSettings from "@/pages/admin/admin-api-settings";
 
 // Admin pages - Gestion des Entreprises
@@ -297,6 +298,10 @@ function Router() {
       
       <Route path="/admin/blogs">
         <ProtectedRoute component={AdminBlogsPage} allowedRoles={["admin"]} />
+      </Route>
+      
+      <Route path="/admin/blog-comments">
+        <ProtectedRoute component={AdminBlogCommentsPage} allowedRoles={["admin"]} />
       </Route>
       
       <Route path="/admin/blogs/edit-post">

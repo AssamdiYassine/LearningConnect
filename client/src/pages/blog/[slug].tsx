@@ -21,6 +21,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { BlogPostWithDetails, BlogCommentWithUser } from '@shared/schema';
 import { formatDate } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/use-auth';
+import CommentForm from '@/components/blog/comment-form';
+import CommentItem from '@/components/blog/comment-item';
 
 // Un simple parser Markdown pour le rendu du contenu
 const MarkdownRenderer = ({ content }: { content: string }) => {
@@ -57,44 +60,7 @@ const MarkdownRenderer = ({ content }: { content: string }) => {
   );
 };
 
-// Composant pour un commentaire individuel
-const CommentItem = ({ comment }: { comment: BlogCommentWithUser }) => {
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase();
-  };
-
-  return (
-    <div className="mb-6 pl-4 border-l-2 border-muted">
-      <div className="flex items-start gap-3">
-        <Avatar className="h-8 w-8">
-          <AvatarFallback>{getInitials(comment.user.displayName)}</AvatarFallback>
-        </Avatar>
-        <div className="flex-1">
-          <div className="flex justify-between items-center mb-1">
-            <h4 className="font-semibold">{comment.user.displayName}</h4>
-            <span className="text-xs text-muted-foreground">
-              {formatDate(new Date(comment.createdAt))}
-            </span>
-          </div>
-          <p className="text-sm">{comment.content}</p>
-          
-          {/* Afficher les réponses si elles existent */}
-          {comment.replies && comment.replies.length > 0 && (
-            <div className="mt-4 ml-4 space-y-4">
-              {comment.replies.map(reply => (
-                <CommentItem key={reply.id} comment={reply} />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
+// Nous utilisons maintenant le CommentItem importé depuis le dossier components/blog
 
 // Composant principal de la page d'article
 const BlogPostDetail = () => {
@@ -295,20 +261,34 @@ const BlogPostDetail = () => {
               {comments
                 .filter(comment => !comment.parentId) // Filtrer les commentaires de premier niveau
                 .map(comment => (
-                  <CommentItem key={comment.id} comment={comment} />
+                  <CommentItem key={comment.id} comment={comment} postId={post.id} />
                 ))}
             </div>
           )}
           
-          {/* Ajouter un commentaire - Formulaire à implémenter */}
+          {/* Ajouter un commentaire */}
           <div className="mt-8">
             <h3 className="text-lg font-semibold mb-4">Laisser un commentaire</h3>
-            <p className="text-muted-foreground mb-4">
-              Connectez-vous pour laisser un commentaire.
-            </p>
-            <Button asChild>
-              <Link href="/auth">Se connecter</Link>
-            </Button>
+            
+            {/* Utiliser le hook useAuth pour vérifier si l'utilisateur est connecté */}
+            {(() => {
+              const { user } = useAuth();
+              
+              if (!user) {
+                return (
+                  <>
+                    <p className="text-muted-foreground mb-4">
+                      Connectez-vous pour laisser un commentaire.
+                    </p>
+                    <Button asChild>
+                      <Link href="/auth">Se connecter</Link>
+                    </Button>
+                  </>
+                );
+              }
+              
+              return <CommentForm postId={post.id} />;
+            })()}
           </div>
         </div>
       </div>
