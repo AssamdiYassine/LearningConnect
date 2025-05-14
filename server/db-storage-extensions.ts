@@ -280,39 +280,78 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
   dbStorage.getBlogPostWithDetails = async function(id) {
     console.log("getBlogPostWithDetails appelé avec ID:", id);
     
-    const result = await db
-      .select({
-        post: blogPosts,
-        category: blogCategories,
-        author: users
-      })
-      .from(blogPosts)
-      .leftJoin(blogCategories, eq(blogPosts.categoryId, blogCategories.id))
-      .leftJoin(users, eq(blogPosts.authorId, users.id))
-      .where(eq(blogPosts.id, id));
-
-    if (result.length === 0) {
+    // Même approche SQL brute pour garantir la cohérence des structures de données
+    const query = `
+      SELECT 
+        bp.*,
+        bc.id as "category.id",
+        bc.name as "category.name", 
+        bc.slug as "category.slug",
+        bc.description as "category.description",
+        bc.created_at as "category.createdAt",
+        bc.updated_at as "category.updatedAt",
+        u.id as "author.id",
+        u.username as "author.username",
+        u.display_name as "author.displayName",
+        u.email as "author.email",
+        u.role as "author.role",
+        u.created_at as "author.createdAt",
+        u.updated_at as "author.updatedAt",
+        (SELECT COUNT(*) FROM blog_comments WHERE post_id = bp.id) as "commentCount"
+      FROM 
+        blog_posts bp
+      LEFT JOIN 
+        blog_categories bc ON bp.category_id = bc.id
+      LEFT JOIN 
+        users u ON bp.author_id = u.id
+      WHERE
+        bp.id = $1
+    `;
+    
+    const result = await db.execute(query, [id]);
+    
+    if (result.rows.length === 0) {
       console.log("Aucun article trouvé avec l'ID:", id);
       return undefined;
     }
-
-    const { post, category, author } = result[0];
     
-    // Récupérer le nombre de commentaires pour cet article
-    const commentsCount = await db
-      .select({ count: sql`count(*)` })
-      .from(blogComments)
-      .where(eq(blogComments.postId, id));
+    const post = result.rows[0];
     
-    const commentCount = Number(commentsCount[0]?.count || 0);
+    // Créer les objets author et category structurés correctement
+    const author = {
+      id: post["author.id"],
+      username: post["author.username"],
+      displayName: post["author.displayName"],
+      email: post["author.email"],
+      role: post["author.role"],
+      createdAt: post["author.createdAt"],
+      updatedAt: post["author.updatedAt"]
+    };
     
-    console.log("Article trouvé avec l'ID:", id, "Titre:", post.title);
+    const category = {
+      id: post["category.id"],
+      name: post["category.name"],
+      slug: post["category.slug"],
+      description: post["category.description"],
+      createdAt: post["category.createdAt"],
+      updatedAt: post["category.updatedAt"]
+    };
+    
+    // Supprimons les propriétés aplaties et reconstruisons l'objet proprement
+    const cleanedPost = Object.keys(post).reduce((obj, key) => {
+      if (!key.includes('.')) {
+        obj[key] = post[key];
+      }
+      return obj;
+    }, {});
+    
+    console.log("Article trouvé et structuré correctement:", cleanedPost.title);
     
     return {
-      ...post,
-      category,
+      ...cleanedPost,
       author,
-      commentCount
+      category,
+      commentCount: parseInt(post.commentCount || '0', 10)
     };
   };
 
@@ -373,63 +412,77 @@ export function extendDatabaseStorage(dbStorage: DatabaseStorage) {
   }) {
     console.log("getAllBlogPostsWithDetails appelé avec paramètres:", params);
     
-    // Construire la requête SQL pour récupérer tous les posts avec détails
-    let query = db
-      .select({
-        post: blogPosts,
-        category: blogCategories,
-        author: users
-      })
-      .from(blogPosts)
-      .leftJoin(blogCategories, eq(blogPosts.categoryId, blogCategories.id))
-      .leftJoin(users, eq(blogPosts.authorId, users.id));
+    // Ce code utilise SQL brut pour récupérer les données avec la bonne structure
+    const query = `
+      SELECT 
+        bp.*,
+        bc.id as "category.id",
+        bc.name as "category.name", 
+        bc.slug as "category.slug",
+        bc.description as "category.description",
+        bc.created_at as "category.createdAt",
+        bc.updated_at as "category.updatedAt",
+        u.id as "author.id",
+        u.username as "author.username",
+        u.display_name as "author.displayName",
+        u.email as "author.email",
+        u.role as "author.role",
+        u.created_at as "author.createdAt",
+        u.updated_at as "author.updatedAt",
+        (SELECT COUNT(*) FROM blog_comments WHERE post_id = bp.id) as "commentCount"
+      FROM 
+        blog_posts bp
+      LEFT JOIN 
+        blog_categories bc ON bp.category_id = bc.id
+      LEFT JOIN 
+        users u ON bp.author_id = u.id
+      ORDER BY 
+        bp.created_at DESC
+    `;
     
-    // Appliquer les filtres
-    if (params?.status) {
-      query = query.where(eq(blogPosts.status, params.status));
-    }
+    const result = await db.execute(query);
+    const postsData = result.rows;
     
-    if (params?.categoryId) {
-      query = query.where(eq(blogPosts.categoryId, params.categoryId));
-    }
-    
-    // Tri par date (les plus récents d'abord)
-    query = query.orderBy(desc(blogPosts.createdAt));
-    
-    // Pagination
-    if (params?.offset !== undefined && params?.limit !== undefined) {
-      query = query.limit(params.limit).offset(params.offset);
-    } else if (params?.limit !== undefined) {
-      query = query.limit(params.limit);
-    }
-    
-    const result = await query;
-    
-    console.log("Nombre d'articles trouvés:", result.length);
-    
-    // Transformer les résultats
-    const detailedPosts = [];
-    
-    for (const { post, category, author } of result) {
-      // Récupérer le nombre de commentaires pour cet article
-      const commentsCount = await db
-        .select({ count: sql`count(*)` })
-        .from(blogComments)
-        .where(eq(blogComments.postId, post.id));
+    // Transformer les résultats pour avoir la structure attendue
+    const transformedPosts = postsData.map(post => {
+      // Créer les objets author et category structurés correctement
+      const author = {
+        id: post["author.id"],
+        username: post["author.username"],
+        displayName: post["author.displayName"],
+        email: post["author.email"],
+        role: post["author.role"],
+        createdAt: post["author.createdAt"],
+        updatedAt: post["author.updatedAt"]
+      };
       
-      const commentCount = Number(commentsCount[0]?.count || 0);
+      const category = {
+        id: post["category.id"],
+        name: post["category.name"],
+        slug: post["category.slug"],
+        description: post["category.description"],
+        createdAt: post["category.createdAt"],
+        updatedAt: post["category.updatedAt"]
+      };
       
-      // Construire l'objet article avec tous les détails
-      detailedPosts.push({
-        ...post,
-        category,
+      // Supprimons les propriétés aplaties et reconstruisons l'objet proprement
+      const cleanedPost = Object.keys(post).reduce((obj, key) => {
+        if (!key.includes('.')) {
+          obj[key] = post[key];
+        }
+        return obj;
+      }, {});
+      
+      return {
+        ...cleanedPost,
         author,
-        commentCount
-      });
-    }
+        category,
+        commentCount: parseInt(post.commentCount || '0', 10)
+      };
+    });
     
-    console.log("Articles traités avec tous les détails");
-    return detailedPosts;
+    console.log("Articles traités avec succès, structure correcte établie");
+    return transformedPosts;
   };
 
   dbStorage.getBlogPostsByAuthor = async function(authorId) {
