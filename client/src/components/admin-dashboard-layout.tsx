@@ -33,7 +33,8 @@ import {
   ListFilter,
   Building2,
   GraduationCap,
-  Briefcase
+  Briefcase,
+  Bookmark
 } from "lucide-react";
 
 // Format date in French
