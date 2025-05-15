@@ -95,8 +95,8 @@ const BlogPostDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-8 px-4 md:px-0">
-        <div className="max-w-3xl mx-auto">
+      <div className="container-narrow py-12 md:py-16">
+        <div>
           <Skeleton className="h-8 w-1/4 mb-6" />
           <Skeleton className="h-20 w-full mb-8" />
           <div className="flex justify-between mb-6">
@@ -111,8 +111,8 @@ const BlogPostDetail = () => {
 
   if (error || !post) {
     return (
-      <div className="container mx-auto py-8 px-4 md:px-0">
-        <div className="max-w-3xl mx-auto">
+      <div className="container-narrow py-12 md:py-16">
+        <div>
           <Alert variant="destructive" className="mb-6">
             <AlertDescription>
               Impossible de charger l'article. Il est possible qu'il ait été supprimé ou que le lien soit incorrect.
@@ -129,8 +129,8 @@ const BlogPostDetail = () => {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 md:px-0">
-      <div className="max-w-3xl mx-auto">
+    <div className="container-narrow py-12 md:py-16">
+      <div>
         {/* Bouton de retour */}
         <Button 
           variant="ghost" 

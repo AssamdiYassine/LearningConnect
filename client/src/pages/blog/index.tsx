@@ -40,7 +40,7 @@ const BlogIndex = () => {
   console.log("Articles de blog récupérés:", blogPosts);
 
   // Récupérer les catégories uniques à partir des articles
-  const { data: categories } = useQuery({
+  const { data: categories = [] } = useQuery<{ id: number, name: string }[]>({
     queryKey: ['/api/blog/categories'],
     retry: false,
   });
@@ -68,8 +68,8 @@ const BlogIndex = () => {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 md:px-6">
-      <h1 className="text-3xl md:text-4xl font-bold mb-6 text-center text-primary">Blog NecForm</h1>
+    <div className="container-wide py-12 md:py-16">
+      <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 text-center text-primary">Blog NecForm</h1>
       <div className="text-center mb-8">
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
           Découvrez nos derniers articles sur les technologies de l'informatique, le développement web et les meilleures pratiques du secteur IT.
@@ -189,7 +189,7 @@ const BlogIndex = () => {
   
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-2 mt-8">
+            <div className="flex justify-center items-center gap-2 mt-12">
               <Button
                 variant="outline"
                 size="icon"
@@ -224,15 +224,15 @@ const BlogIndex = () => {
         </>
       )}
       
-      <Separator className="my-10" />
+      <Separator className="my-16" />
       
-      <div className="text-center">
-        <h2 className="text-2xl font-bold mb-4">Vous souhaitez contribuer au blog ?</h2>
-        <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+      <div className="text-center max-w-3xl mx-auto">
+        <h2 className="text-2xl md:text-3xl font-bold mb-6">Vous souhaitez contribuer au blog ?</h2>
+        <p className="text-muted-foreground mb-8 text-lg">
           Partagez votre expertise et vos connaissances avec la communauté NecForm.
           Contactez-nous pour proposer un sujet d'article.
         </p>
-        <Button asChild>
+        <Button size="lg" asChild>
           <Link href="/contact">Nous contacter</Link>
         </Button>
       </div>
