@@ -101,17 +101,17 @@ export default function Catalog() {
   const hasActiveFilters = searchTerm !== "" || categoryFilter !== "all" || levelFilter !== "all" || sortOrder !== "date-asc";
 
   return (
-    <div className="space-y-8">
+    <div className="container-wide py-12 md:py-16 space-y-10">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 font-heading">Course Catalog</h1>
-        <p className="mt-2 text-gray-600">
-          Browse our live training courses and register for upcoming sessions
+      <div className="text-center">
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary mb-4">Catalogue des formations</h1>
+        <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          Parcourez nos formations en direct et inscrivez-vous aux prochaines sessions
         </p>
       </div>
       
       {/* Search and Filters */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className="bg-white rounded-xl shadow-sm p-6 md:p-8">
         <div className="space-y-4">
           {/* Search */}
           <div className="relative">
