@@ -112,7 +112,7 @@ export function registerAdminUserRoutes(app: Express) {
         email: z.string().email("Email invalide"),
         password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
         displayName: z.string().optional(),
-        role: z.enum(["student", "trainer", "admin"]).optional(),
+        role: z.enum(["student", "trainer", "admin", "enterprise"]).optional(),
         isSubscribed: z.boolean().nullable().optional(),
         subscriptionType: z.enum(["monthly", "annual"]).nullable().optional(),
         subscriptionEndDate: z.date().nullable().optional()
@@ -202,7 +202,7 @@ export function registerAdminUserRoutes(app: Express) {
         email: z.string().email("Email invalide").optional(),
         password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères").optional().or(z.literal('')), // Permettre un mot de passe vide
         displayName: z.string().optional(),
-        role: z.enum(["student", "trainer", "admin"]).optional(),
+        role: z.enum(["student", "trainer", "admin", "enterprise"]).optional(),
         isSubscribed: z.boolean().nullable().optional(),
         subscriptionType: z.enum(["monthly", "annual", "business"]).nullable().optional(),
         subscriptionEndDate: z.date().nullable().optional(),
