@@ -4,6 +4,7 @@ import { registerAdminRoutes } from "./admin-routes";
 import { registerAdminSubscriptionRoutes } from "./admin-subscription-routes";
 import { registerAdminApiSettingsRoutes } from "./admin-api-settings-routes";
 import { registerAdminApiExtensions } from "./admin-api-extensions";
+import { registerResetPasswordRoutes } from "./reset-password-routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedBlogDemoData } from "./blog-demo-data";
 import seedNotifications from "./seed-notifications";

@@ -42,15 +42,20 @@ router.get("/enterprises", isAdmin, async (req, res) => {
     );
 
     // Récupération des cours assignés à chaque entreprise
-    const enterpriseIds = results.rows.map((e: any) => e.id);
+    const enterpriseIds = results.rows.map((e: any) => Number(e.id));
     
-    const coursesAssigned = await db
-      .select({
-        enterpriseId: enterpriseAssignedCourses.enterpriseId,
-        courseId: enterpriseAssignedCourses.courseId
-      })
-      .from(enterpriseAssignedCourses)
-      .where(sql`${enterpriseAssignedCourses.enterpriseId} IN (${enterpriseIds.length > 0 ? enterpriseIds.join(',') : 0})`);
+    // Pour éviter l'erreur de syntaxe SQL, nous utiliserons une autre approche
+    let coursesAssigned = [];
+    
+    if (enterpriseIds.length > 0) {
+      // Récupérer les cours assignés pour toutes les entreprises
+      coursesAssigned = await db
+        .select({
+          enterpriseId: enterpriseAssignedCourses.enterpriseId,
+          courseId: enterpriseAssignedCourses.courseId
+        })
+        .from(enterpriseAssignedCourses);
+    }
     
     // Organisation des cours par entreprise
     const courseMap: Record<number, number[]> = {};
