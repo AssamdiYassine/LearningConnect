@@ -89,6 +89,8 @@ function FunctionalAdminUsers() {
   // Mise à jour d'un utilisateur
   const updateUserMutation = useMutation({
     mutationFn: async ({ id, userData }: { id: number; userData: typeof editFormData }) => {
+      // Mise à jour du type pour supporter le rôle enterprise
+      userData.role = userData.role as "student" | "trainer" | "admin" | "enterprise";
       const response = await apiRequest("PATCH", `/api/admin/users/${id}`, userData);
       return response.json();
     },
@@ -263,6 +265,7 @@ function FunctionalAdminUsers() {
               <SelectItem value="admin">Administrateur</SelectItem>
               <SelectItem value="trainer">Formateur</SelectItem>
               <SelectItem value="student">Étudiant</SelectItem>
+              <SelectItem value="enterprise">Entreprise</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -424,6 +427,7 @@ function FunctionalAdminUsers() {
                   <SelectItem value="student">Étudiant</SelectItem>
                   <SelectItem value="trainer">Formateur</SelectItem>
                   <SelectItem value="admin">Administrateur</SelectItem>
+                  <SelectItem value="enterprise">Entreprise</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -526,6 +530,7 @@ function FunctionalAdminUsers() {
                   <SelectItem value="student">Étudiant</SelectItem>
                   <SelectItem value="trainer">Formateur</SelectItem>
                   <SelectItem value="admin">Administrateur</SelectItem>
+                  <SelectItem value="enterprise">Entreprise</SelectItem>
                 </SelectContent>
               </Select>
             </div>
