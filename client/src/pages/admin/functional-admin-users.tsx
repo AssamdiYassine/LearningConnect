@@ -15,7 +15,7 @@ interface User {
   username: string;
   email: string;
   displayName: string;
-  role: "student" | "trainer" | "admin";
+  role: "student" | "trainer" | "admin" | "enterprise";
   isSubscribed: boolean | null;
   subscriptionType: string | null;
   subscriptionEndDate: string | null;
@@ -39,7 +39,7 @@ function FunctionalAdminUsers() {
     email: "",
     password: "",
     displayName: "",
-    role: "student" as "student" | "trainer" | "admin"
+    role: "student" as "student" | "trainer" | "admin" | "enterprise"
   });
 
   const [editFormData, setEditFormData] = useState({
@@ -47,7 +47,7 @@ function FunctionalAdminUsers() {
     email: "",
     displayName: "",
     password: "",
-    role: "student" as "student" | "trainer" | "admin",
+    role: "student" as "student" | "trainer" | "admin" | "enterprise",
     courseAccess: [] as number[]
   });
 
@@ -144,7 +144,7 @@ function FunctionalAdminUsers() {
   const handleAddSelectChange = (value: string) => {
     setAddFormData({
       ...addFormData,
-      role: value as "student" | "trainer" | "admin",
+      role: value as "student" | "trainer" | "admin" | "enterprise",
     });
   };
 
@@ -159,7 +159,7 @@ function FunctionalAdminUsers() {
   const handleEditSelectChange = (value: string) => {
     setEditFormData({
       ...editFormData,
-      role: value as "student" | "trainer" | "admin",
+      role: value as "student" | "trainer" | "admin" | "enterprise",
     });
   };
 
@@ -220,6 +220,8 @@ function FunctionalAdminUsers() {
         return "Formateur";
       case "student":
         return "Étudiant";
+      case "enterprise":
+        return "Entreprise";
       default:
         return role;
     }
