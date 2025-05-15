@@ -72,8 +72,8 @@ const staggerContainer = {
 
 export default function PartnersSection() {
   return (
-    <section className="py-20 bg-gradient-to-b from-white to-[#F7F9FC]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-20 md:py-24 bg-gradient-to-b from-white to-[#F7F9FC]">
+      <div className="w-full max-w-[1200px] mx-auto px-6 md:px-12 lg:px-20">
         <div className="text-center mb-16">
           <span className="px-4 py-1 rounded-full bg-[#5F8BFF]/10 text-[#5F8BFF] text-sm font-medium">
             Écosystème

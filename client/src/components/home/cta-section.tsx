@@ -6,8 +6,8 @@ export default function CtaSection() {
   const [location, setLocation] = useLocation();
   
   return (
-    <section className="py-16 bg-gradient-to-r from-primary-900 to-indigo-900 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-20 md:py-24 bg-gradient-to-r from-primary-900 to-indigo-900 text-white">
+      <div className="w-full max-w-[1200px] mx-auto px-6 md:px-12 lg:px-20">
         <div className="relative">
           {/* Background decorative elements */}
           <div className="absolute -top-16 -left-16 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>

@@ -302,9 +302,9 @@ html {
 
 /* Container classes */
 .container-narrow {
-  @apply max-w-5xl mx-auto px-4 sm:px-6 lg:px-8;
+  @apply w-full max-w-[960px] mx-auto px-6 md:px-12 lg:px-16;
 }
 
 .container-wide {
-  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  @apply w-full max-w-[1200px] mx-auto px-6 md:px-12 lg:px-20;
 }
