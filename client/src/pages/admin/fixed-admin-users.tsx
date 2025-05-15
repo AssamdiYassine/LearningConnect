@@ -210,6 +210,8 @@ export default function FixedAdminUsers() {
         return "Formateur";
       case "student":
         return "Étudiant";
+      case "enterprise":
+        return "Entreprise";
       default:
         return role;
     }
@@ -303,6 +305,8 @@ export default function FixedAdminUsers() {
                             ? "bg-purple-100 text-purple-800"
                             : user.role === "trainer"
                             ? "bg-blue-100 text-blue-800"
+                            : user.role === "enterprise"
+                            ? "bg-amber-100 text-amber-800"
                             : "bg-green-100 text-green-800"
                         }`}
                       >
@@ -427,6 +431,7 @@ export default function FixedAdminUsers() {
                         <SelectItem value="student">Étudiant</SelectItem>
                         <SelectItem value="trainer">Formateur</SelectItem>
                         <SelectItem value="admin">Administrateur</SelectItem>
+                        <SelectItem value="enterprise">Entreprise</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -541,6 +546,7 @@ export default function FixedAdminUsers() {
                         <SelectItem value="student">Étudiant</SelectItem>
                         <SelectItem value="trainer">Formateur</SelectItem>
                         <SelectItem value="admin">Administrateur</SelectItem>
+                        <SelectItem value="enterprise">Entreprise</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
