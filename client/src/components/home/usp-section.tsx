@@ -52,8 +52,8 @@ const staggerContainer = {
 
 export default function USPSection() {
   return (
-    <section className="py-16 bg-[#F7F9FC]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-20 md:py-24 bg-[#F7F9FC]">
+      <div className="w-full max-w-[1200px] mx-auto px-6 md:px-12 lg:px-20">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-[#1D2B6C] mb-4">Pourquoi choisir nos formations ?</h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
