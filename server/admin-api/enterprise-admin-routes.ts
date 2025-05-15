@@ -101,6 +101,9 @@ router.post("/enterprises", isAdmin, async (req, res) => {
     }
     
     // Insérer l'entreprise
+    // Convertir la date en string pour éviter les problèmes de type
+    const endDate = new Date(subscriptionEndDate).toISOString();
+    
     const [enterprise] = await db
       .insert(enterprises)
       .values({
@@ -108,18 +111,18 @@ router.post("/enterprises", isAdmin, async (req, res) => {
         contactEmail,
         contactName,
         employeeLimit: employeeLimit || 10,
-        subscriptionEndDate: new Date(subscriptionEndDate),
+        subscriptionEndDate: endDate,
         isActive: isActive !== undefined ? isActive : true,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       })
       .returning();
     
     // Si des cours sont fournis, les associer à l'entreprise
     if (courseIds && courseIds.length > 0 && enterprise) {
-      const courseAssignments = courseIds.map(courseId => ({
+      const courseAssignments = courseIds.map((courseId: number) => ({
         enterpriseId: enterprise.id,
-        courseId: courseId
+        courseId: Number(courseId)
       }));
       
       await db
@@ -165,9 +168,9 @@ router.put("/enterprises/:id", isAdmin, async (req, res) => {
     if (contactEmail !== undefined) updateData.contactEmail = contactEmail;
     if (contactName !== undefined) updateData.contactName = contactName;
     if (employeeLimit !== undefined) updateData.employeeLimit = employeeLimit;
-    if (subscriptionEndDate !== undefined) updateData.subscriptionEndDate = new Date(subscriptionEndDate);
+    if (subscriptionEndDate !== undefined) updateData.subscriptionEndDate = new Date(subscriptionEndDate).toISOString();
     if (isActive !== undefined) updateData.isActive = isActive;
-    updateData.updatedAt = new Date();
+    updateData.updatedAt = new Date().toISOString();
     
     // Mettre à jour l'entreprise
     const [updatedEnterprise] = await db
@@ -185,9 +188,9 @@ router.put("/enterprises/:id", isAdmin, async (req, res) => {
       
       // Ajouter les nouvelles associations
       if (courseIds.length > 0) {
-        const courseAssignments = courseIds.map(courseId => ({
+        const courseAssignments = courseIds.map((courseId: number) => ({
           enterpriseId,
-          courseId
+          courseId: Number(courseId)
         }));
         
         await db
