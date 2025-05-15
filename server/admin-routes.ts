@@ -66,7 +66,7 @@ export function registerAdminRoutes(app: Express) {
     try {
       // Validation du schema utilisateur
       const userSchema = insertUserSchema.extend({
-        role: z.enum(['student', 'trainer', 'admin']).default('student'),
+        role: z.enum(['student', 'trainer', 'admin', 'enterprise']).default('student'),
         password: z.string().min(6),
         confirmPassword: z.string().min(6)
       }).refine((data) => data.password === data.confirmPassword, {
@@ -126,7 +126,7 @@ export function registerAdminRoutes(app: Express) {
       
       // Validation des données de mise à jour
       const updateSchema = z.object({
-        role: z.enum(['student', 'trainer', 'admin']).optional(),
+        role: z.enum(['student', 'trainer', 'admin', 'enterprise']).optional(),
         displayName: z.string().min(2).optional(),
         email: z.string().email().optional(),
         isSubscribed: z.boolean().nullable().optional(),

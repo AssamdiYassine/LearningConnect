@@ -63,7 +63,7 @@ export function registerAdminNotificationRoutes(app: Express) {
       // Schéma de validation pour la requête
       const schema = z.object({
         userIds: z.array(z.number()).optional(),
-        role: z.enum(['all', 'student', 'trainer']).optional(),
+        role: z.enum(['all', 'student', 'trainer', 'admin', 'enterprise']).optional(),
         message: z.string().min(1),
         type: z.string().default('admin')
       });
