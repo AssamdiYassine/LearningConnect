@@ -20,7 +20,7 @@ const createUserSchema = z.object({
   email: z.string().email("Email invalide"),
   password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
   displayName: z.string().optional(),
-  role: z.enum(["student", "trainer", "admin"]),
+  role: z.enum(["student", "trainer", "admin", "enterprise"]),
 });
 
 const updateUserSchema = z.object({
@@ -28,7 +28,7 @@ const updateUserSchema = z.object({
   email: z.string().email("Email invalide").optional(),
   password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères").optional(),
   displayName: z.string().optional(),
-  role: z.enum(["student", "trainer", "admin"]).optional(),
+  role: z.enum(["student", "trainer", "admin", "enterprise"]).optional(),
 });
 
 interface User {
@@ -36,7 +36,7 @@ interface User {
   username: string;
   email: string;
   displayName: string;
-  role: "student" | "trainer" | "admin";
+  role: "student" | "trainer" | "admin" | "enterprise";
   isSubscribed: boolean | null;
   subscriptionType: string | null;
   subscriptionEndDate: string | null;
@@ -255,6 +255,7 @@ export default function FixedAdminUsers() {
               <SelectItem value="admin">Administrateur</SelectItem>
               <SelectItem value="trainer">Formateur</SelectItem>
               <SelectItem value="student">Étudiant</SelectItem>
+              <SelectItem value="enterprise">Entreprise</SelectItem>
             </SelectContent>
           </Select>
         </div>
