@@ -62,6 +62,7 @@ export default function CreateCourse() {
         description: "Your course has been created successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/courses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/public/courses"] });
       setLocation("/trainer");
     },
     onError: (error: Error) => {

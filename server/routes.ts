@@ -240,6 +240,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch categories" });
     }
   });
+  
+  // Route publique pour les catégories (accessible sans authentification)
+  app.get("/api/public/categories", async (req, res) => {
+    try {
+      const categories = await storage.getAllCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching public categories:", error);
+      res.status(500).json({ message: "Impossible de récupérer les catégories" });
+    }
+  });
 
   app.post("/api/categories", hasRole(["admin"]), async (req, res) => {
     try {
