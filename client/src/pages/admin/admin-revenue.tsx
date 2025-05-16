@@ -99,6 +99,9 @@ function AdminRevenue() {
     },
     enabled: !!user && user.role === "admin"
   });
+  
+  // Initialiser les données si elles sont nulles
+  const safeTrainerData = trainerRevenueData?.trainers || [];
 
   // Transformer les données de revenus pour l'affichage dans les graphiques
   const monthlyRevenueData = revenueData?.dailyRevenue?.map((item: any) => {
