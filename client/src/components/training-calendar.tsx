@@ -185,12 +185,12 @@ export default function TrainingCalendar({
     : [];
 
   // Get category name by id
-  const getCategoryName = (categoryId: string) => {
+  const getCategoryName = (categoryId: string): string => {
     const category = sessions.find(session => 
-      session.course?.category?.id.toString() === categoryId
+      session.course?.category?.id && session.course.category.id.toString() === categoryId
     )?.course?.category;
     
-    return category ? category.name : 'Unknown';
+    return category?.name || 'Catégorie inconnue';
   };
 
   if (isLoading) {
@@ -239,7 +239,7 @@ export default function TrainingCalendar({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Toutes catégories</SelectItem>
-                  {categories.map(categoryId => (
+                  {categories.map(categoryId => categoryId && (
                     <SelectItem key={categoryId} value={categoryId}>
                       {getCategoryName(categoryId)}
                     </SelectItem>

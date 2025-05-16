@@ -437,10 +437,12 @@ export default function StudentDashboard() {
               </Card>
             </div>
 
-            {/* Subscription Status */}
-            <div>
-              <SubscriptionCard user={user} />
-            </div>
+            {/* Subscription Status - Caché pour les employés d'entreprise */}
+            {(!user?.enterpriseId) && (
+              <div>
+                <SubscriptionCard user={user} />
+              </div>
+            )}
           </div>
         </TabsContent>
       </Tabs>
