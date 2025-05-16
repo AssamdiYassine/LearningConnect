@@ -158,7 +158,7 @@ router.post("/enterprises", isAdmin, async (req, res) => {
     
     try {
       // En utilisant directement les noms de colonnes de la base de données
-      const [enterpriseAdmin] = await db.execute(sql`
+      const result = await db.execute(sql`
         INSERT INTO users (
           username, 
           email, 
@@ -185,6 +185,8 @@ router.post("/enterprises", isAdmin, async (req, res) => {
         )
         RETURNING *
       `);
+      
+      const enterpriseAdmin = result.rows[0];
       
       console.log("Administrateur d'entreprise créé avec succès:", adminUsername);
       

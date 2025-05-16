@@ -372,17 +372,20 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({ chil
       
       {/* Contenu principal */}
       <main className={`flex-1 transition-all duration-300 ${collapsed ? "md:ml-16" : "md:ml-64"}`}>
-        {/* Header - Simplifié pour éviter la duplication */}
-        <header className="sticky top-0 z-10 h-16 flex items-center justify-end px-6 py-3 bg-white border-b shadow-sm">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/">
-                <Home size={18} />
-              </Link>
-            </Button>
-            <NotificationBell />
-          </div>
-        </header>
+        {/* Header - Simplifié pour éviter la duplication 
+            Ne pas afficher le header sur les pages de blog */}
+        {!location.startsWith("/blog") && !location.startsWith("/admin/blogs") && (
+          <header className="sticky top-0 z-10 h-16 flex items-center justify-end px-6 py-3 bg-white border-b shadow-sm">
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="icon" asChild>
+                <Link href="/">
+                  <Home size={18} />
+                </Link>
+              </Button>
+              <NotificationBell />
+            </div>
+          </header>
+        )}
         
         {/* Contenu de la page avec meilleur espacement et max-width */}
         <div className="px-4 sm:px-5 md:px-6 lg:px-8 py-6">
