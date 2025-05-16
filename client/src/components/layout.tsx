@@ -11,7 +11,7 @@ export default function Layout({ children }: LayoutProps) {
     <div className="flex flex-col min-h-screen">
       <Navbar />
       <main className="flex-grow">
-        <div className="w-full px-6 md:px-12 lg:px-20 mx-auto max-w-[1200px]">
+        <div className="w-full px-4 sm:px-5 md:px-6 lg:px-8 mx-auto max-w-[1400px]">
           {children}
         </div>
       </main>

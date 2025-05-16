@@ -385,8 +385,8 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({ chil
         </header>
         
         {/* Contenu de la page avec meilleur espacement et max-width */}
-        <div className="px-6 md:px-12 lg:px-20 py-8">
-          <div className="w-full mx-auto max-w-[1200px]">
+        <div className="px-4 sm:px-5 md:px-6 lg:px-8 py-6">
+          <div className="w-full mx-auto max-w-[1400px]">
             {children}
           </div>
         </div>
