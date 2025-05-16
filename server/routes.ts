@@ -817,67 +817,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { sessionId } = req.body;
       
+      console.log("Starting enrollment process for sessionId:", sessionId, "and userId:", req.user.id);
+      console.log("User details:", JSON.stringify(req.user));
+      
       // Check if the session exists
       const session = await storage.getSession(sessionId);
       if (!session) {
+        console.log("Session not found:", sessionId);
         return res.status(404).json({ message: "Session not found" });
       }
+      
+      console.log("Session found:", JSON.stringify(session));
       
       // Check if user is already enrolled
       const existingEnrollment = await storage.getEnrollment(req.user.id, sessionId);
       if (existingEnrollment) {
+        console.log("User already enrolled:", JSON.stringify(existingEnrollment));
         return res.status(400).json({ message: "Already enrolled in this session" });
       }
       
+      console.log("User not enrolled yet. Checking subscription...");
+      console.log("User isSubscribed:", req.user.isSubscribed);
+      console.log("User enterpriseId:", req.user.enterpriseId);
+      console.log("User role:", req.user.role);
+      
       // Check if user has an active subscription - skipping for enterprise employees
       if (!req.user.isSubscribed && !req.user.enterpriseId && req.user.role !== 'enterprise_employee') {
+        console.log("User needs subscription to enroll");
         return res.status(403).json({ message: "You need an active subscription to enroll in sessions" });
       }
+      
+      console.log("Subscription check passed. Checking available spots...");
       
       // Check if there are available spots
       const course = await storage.getCourse(session.courseId);
       const enrollments = await storage.getEnrollmentsBySession(sessionId);
       
+      console.log("Course:", JSON.stringify(course));
+      console.log("Current enrollments:", enrollments.length);
+      
       if (course && enrollments.length >= course.maxStudents) {
+        console.log("Session is full");
         return res.status(400).json({ message: "Session is full" });
       }
       
-      const enrollment = await storage.createEnrollment({
-        userId: req.user.id,
-        sessionId
-      });
+      console.log("Creating enrollment...");
       
-      // Create notification for the user
-      const sessionWithDetails = await storage.getSessionWithDetails(sessionId);
-      if (sessionWithDetails) {
-        await storage.createNotification({
+      try {
+        const enrollment = await storage.createEnrollment({
           userId: req.user.id,
-          message: `You have successfully enrolled in "${sessionWithDetails.course.title}" on ${new Date(sessionWithDetails.date).toLocaleDateString()}`,
-          type: "confirmation",
-          isRead: false
+          sessionId
         });
         
-        // Send email notification
-        try {
-          await transporter.sendMail({
-            from: '"TechFormPro" <noreply@techformpro.fr>',
-            to: req.user.email,
-            subject: `Enrollment Confirmation - ${sessionWithDetails.course.title}`,
-            text: `You have successfully enrolled in "${sessionWithDetails.course.title}" on ${new Date(sessionWithDetails.date).toLocaleDateString()}. The session will be held via Zoom.`,
-            html: `
-              <h1>Enrollment Confirmation</h1>
-              <p>You have successfully enrolled in <strong>${sessionWithDetails.course.title}</strong> on ${new Date(sessionWithDetails.date).toLocaleDateString()}.</p>
-              <p>The session will be held via Zoom. A link will be provided closer to the date.</p>
-            `
+        console.log("Enrollment created:", JSON.stringify(enrollment));
+        
+        // Create notification for the user
+        const sessionWithDetails = await storage.getSessionWithDetails(sessionId);
+        if (sessionWithDetails) {
+          await storage.createNotification({
+            userId: req.user.id,
+            message: `You have successfully enrolled in "${sessionWithDetails.course.title}" on ${new Date(sessionWithDetails.date).toLocaleDateString()}`,
+            type: "confirmation",
+            isRead: false
           });
-        } catch (error) {
-          console.error("Failed to send email notification", error);
+          
+          console.log("Notification created");
+          
+          // Send email notification
+          try {
+            await transporter.sendMail({
+              from: '"TechFormPro" <noreply@techformpro.fr>',
+              to: req.user.email,
+              subject: `Enrollment Confirmation - ${sessionWithDetails.course.title}`,
+              text: `You have successfully enrolled in "${sessionWithDetails.course.title}" on ${new Date(sessionWithDetails.date).toLocaleDateString()}. The session will be held via Zoom.`,
+              html: `
+                <h1>Enrollment Confirmation</h1>
+                <p>You have successfully enrolled in <strong>${sessionWithDetails.course.title}</strong> on ${new Date(sessionWithDetails.date).toLocaleDateString()}.</p>
+                <p>The session will be held via Zoom. A link will be provided closer to the date.</p>
+              `
+            });
+            console.log("Email sent");
+          } catch (error) {
+            console.error("Failed to send email notification", error);
+          }
         }
+        
+        res.status(201).json(enrollment);
+      } catch (innerError) {
+        console.error("Error creating enrollment:", innerError);
+        throw innerError;
       }
-      
-      res.status(201).json(enrollment);
     } catch (error) {
-      res.status(500).json({ message: "Failed to create enrollment" });
+      console.error("Failed to create enrollment:", error);
+      res.status(500).json({ message: "Failed to create enrollment", error: error.message });
     }
   });
 
