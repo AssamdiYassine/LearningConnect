@@ -52,11 +52,11 @@ app.use((req, res, next) => {
   // Then register admin routes after authentication is set up
   registerAdminRoutes(app);
   
-  // Register admin subscription routes
-  registerAdminSubscriptionRoutes(app);
-  
   // Étendre la base de données avec les fonctions API
   extendDatabaseStorageForApi(storage as any);
+  
+  // Register admin subscription routes
+  registerAdminSubscriptionRoutes(app);
   
   // Enregistrer les extensions d'API admin (pour le blog, etc.)
   registerAdminApiExtensions(app);
