@@ -466,16 +466,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let sessionData = { 
         courseId: req.body.courseId,
         zoomLink: req.body.zoomLink,
-        date: typeof req.body.date === 'string' ? new Date(req.body.date) : req.body.date
+        date: typeof req.body.date === 'string' ? new Date(req.body.date) : req.body.date,
+        title: req.body.title,
+        description: req.body.description,
+        materialsLink: req.body.materialsLink
       };
       
       console.log("Données de session à enregistrer:", sessionData);
       
-      // On définit un schéma de validation simplifié qui correspond à la structure réelle de la table
+      // On définit un schéma de validation qui inclut les nouveaux champs
       const sessionSchema = z.object({
         courseId: z.number(),
         zoomLink: z.string(),
-        date: z.date()
+        date: z.date(),
+        title: z.string().optional(),
+        description: z.string().optional(),
+        materialsLink: z.string().optional()
       });
       
       const validatedData = sessionSchema.parse(sessionData);

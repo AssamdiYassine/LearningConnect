@@ -44,6 +44,9 @@ const updateSessionSchema = z.object({
     hour: z.string(),
     minute: z.string(),
   }),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  materialsLink: z.string().url("Veuillez entrer une URL valide").optional().or(z.literal('')),
 });
 
 type UpdateSessionFormValues = z.infer<typeof updateSessionSchema>;
@@ -74,6 +77,9 @@ export default function EditSession({ id }: { id: number }) {
         hour: "09",
         minute: "00",
       },
+      title: "",
+      description: "",
+      materialsLink: "",
     },
   });
 
@@ -88,6 +94,9 @@ export default function EditSession({ id }: { id: number }) {
           hour: sessionDate.getHours().toString().padStart(2, "0"),
           minute: sessionDate.getMinutes().toString().padStart(2, "0"),
         },
+        title: session.title || "",
+        description: session.description || "",
+        materialsLink: session.materialsLink || "",
       });
     }
   }, [session, form]);
@@ -117,6 +126,9 @@ export default function EditSession({ id }: { id: number }) {
       const response = await apiRequest("PATCH", `/api/sessions/${id}`, {
         date: dateWithTime.toISOString(),
         zoomLink: values.zoomLink,
+        title: values.title,
+        description: values.description,
+        materialsLink: values.materialsLink,
       });
 
       if (!response.ok) {
@@ -271,6 +283,44 @@ export default function EditSession({ id }: { id: number }) {
 
                     <FormField
                       control={form.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Titre de la session</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ex: Introduction à React" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            Donnez un titre spécifique à cette session (optionnel)
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description</FormLabel>
+                          <FormControl>
+                            <textarea
+                              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              placeholder="Décrivez le contenu de cette session..."
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Informations sur ce qui sera couvert dans cette session (optionnel)
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
                       name="zoomLink"
                       render={({ field }) => (
                         <FormItem>
@@ -280,6 +330,23 @@ export default function EditSession({ id }: { id: number }) {
                           </FormControl>
                           <FormDescription>
                             Entrez le lien de réunion Zoom complet pour cette session
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="materialsLink"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Supports de cours</FormLabel>
+                          <FormControl>
+                            <Input placeholder="https://drive.google.com/..." {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            Lien vers les supports de cette session (optionnel)
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
