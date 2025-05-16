@@ -102,8 +102,8 @@ export default function CourseCard({ course }: CourseCardProps) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black opacity-60"></div>
         <div className="absolute bottom-0 left-0 p-4">
-          <Badge className={getCategoryBadgeColor(course.category.name)}>
-            {course.category.name}
+          <Badge className={getCategoryBadgeColor(course.category?.name)}>
+            {course.category?.name || "Catégorie non spécifiée"}
           </Badge>
         </div>
       </div>

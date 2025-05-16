@@ -363,11 +363,13 @@ export default function TrainingCalendar({
                       </div>
                     </div>
                     <Badge className="ml-2 capitalize">
-                      {session.course?.level === 'beginner' 
-                        ? 'Débutant' 
-                        : session.course?.level === 'intermediate' 
-                          ? 'Intermédiaire' 
-                          : 'Avancé'}
+                      {!session.course?.level 
+                        ? 'Niveau non spécifié'
+                        : session.course.level === 'beginner' 
+                          ? 'Débutant' 
+                          : session.course.level === 'intermediate' 
+                            ? 'Intermédiaire' 
+                            : 'Avancé'}
                     </Badge>
                   </div>
                 ))}
