@@ -79,7 +79,16 @@ export default function StudentDashboard() {
   
   // Get course categories by category
   const categoryCounts = categories?.reduce((acc, category) => {
-    const count = courses?.filter(course => course.category?.id === category.id)?.length || 0;
+    // S'assurer que la catégorie a un ID valide
+    if (!category || !category.id || !category.name) {
+      return acc;
+    }
+    
+    // Filtrer les cours qui ont une catégorie correspondante et un ID de catégorie valide
+    const count = courses?.filter(course => 
+      course && course.category && course.category.id === category.id
+    )?.length || 0;
+    
     if (count > 0) {
       acc[category.name] = count;
     }
@@ -146,7 +155,7 @@ export default function StudentDashboard() {
                 <p className="text-sm font-medium text-gray-500">Formations inscrites</p>
                 <h3 className="text-2xl font-bold text-[#1D2B6C]">
                   {Array.isArray(enrolledSessions) 
-                    ? new Set(enrolledSessions.map(s => s.course?.id)).size 
+                    ? new Set(enrolledSessions.filter(s => s.course?.id).map(s => s.course?.id)).size 
                     : 0}
                 </h3>
               </div>
@@ -202,7 +211,11 @@ export default function StudentDashboard() {
                 <p className="text-sm font-medium text-gray-500">Heures de formation</p>
                 <h3 className="text-2xl font-bold text-[#7A6CFF]">
                   {enrolledSessions?.reduce((total, session) => {
-                    return total + (session.course?.duration ? Math.floor(session.course.duration / 60) : 0);
+                    // Vérifier que session.course existe et a une durée valide
+                    if (!session.course || typeof session.course.duration !== 'number') {
+                      return total;
+                    }
+                    return total + Math.floor(session.course.duration / 60);
                   }, 0) || 0}h
                 </h3>
               </div>
