@@ -66,6 +66,9 @@ app.use((req, res, next) => {
   // Register admin API settings routes
   registerAdminApiSettingsRoutes(app);
   
+  // Register admin revenue routes
+  registerAdminRevenueRoutes(app);
+  
   // Enregistrer les routes pour la réinitialisation des mots de passe
   registerResetPasswordRoutes(app);
 
