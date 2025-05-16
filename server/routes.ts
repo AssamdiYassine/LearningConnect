@@ -832,6 +832,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to delete enrollment" });
     }
   });
+  
+  // Récupérer toutes les inscriptions pour un cours spécifique
+  app.get("/api/courses/:id/enrollments", hasRole(["trainer", "admin"]), async (req, res) => {
+    try {
+      const courseId = parseInt(req.params.id);
+      
+      // Récupérer les inscriptions pour ce cours
+      const enrollments = await storage.getEnrollmentsByCourse(courseId);
+      
+      // Enrichir les inscriptions avec les détails utilisateur
+      const enrollmentsWithUsers = await Promise.all(
+        enrollments.map(async (enrollment) => {
+          const user = await storage.getUser(enrollment.userId);
+          return {
+            ...enrollment,
+            user
+          };
+        })
+      );
+      
+      console.log(`Returning ${enrollmentsWithUsers.length} enrollments for course ${courseId}`);
+      res.json(enrollmentsWithUsers);
+    } catch (error) {
+      console.error("Error fetching course enrollments:", error);
+      res.status(500).json({ message: "Failed to fetch course enrollments" });
+    }
+  });
 
   // Récupérer les sessions auxquelles un utilisateur est inscrit
   app.get("/api/enrollments/user", isAuthenticated, async (req, res) => {
