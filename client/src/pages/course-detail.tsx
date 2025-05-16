@@ -330,10 +330,24 @@ export default function CourseDetail({ id }: CourseDetailProps) {
                       onClick={() => setLocation(`/session/${session.id}`)}
                     >
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <div className="space-y-3 w-full sm:w-auto">
-                          <div className="flex items-center text-gray-700">
-                            <Calendar className="h-5 w-5 text-indigo-500 mr-2 flex-shrink-0" />
-                            <span className="font-medium">{formatDate(session.date)}, {formatTime(session.date)}</span>
+                        <div className="space-y-3 w-full">
+                          <div>
+                            <h4 className="font-medium text-lg text-indigo-700">
+                              {session.title || `Session du ${formatDate(session.date)}`}
+                            </h4>
+                            {session.description && (
+                              <p className="text-sm text-gray-600 mt-1">{session.description}</p>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-3">
+                            <div className="flex items-center text-gray-700 bg-indigo-50 px-3 py-1 rounded-full">
+                              <Calendar className="h-4 w-4 text-indigo-500 mr-2 flex-shrink-0" />
+                              <span className="text-sm">{formatDate(session.date)}, {formatTime(session.date)}</span>
+                            </div>
+                            <div className="flex items-center text-gray-700 bg-indigo-50 px-3 py-1 rounded-full">
+                              <Clock className="h-4 w-4 text-indigo-500 mr-2 flex-shrink-0" />
+                              <span className="text-sm">{formatDuration(course.duration)}</span>
+                            </div>
                           </div>
                           <div className="flex items-center text-gray-700">
                             <Users className="h-5 w-5 text-indigo-500 mr-2 flex-shrink-0" />

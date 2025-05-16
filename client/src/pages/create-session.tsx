@@ -170,16 +170,14 @@ export default function CreateSession() {
 
   // Fonction de soumission du formulaire
   const onSubmit = (values: z.infer<typeof createSessionSchema>) => {
-    // N'envoyer que les colonnes qui existent réellement dans la base de données
-    // D'après la structure réelle de la table, nous n'avons que:
-    // id, course_id, date, zoom_link, created_at, updated_at, is_completed
+    // Inclure tous les champs pertinents dans les données de la session
     const sessionData = {
       courseId: values.courseId,
       zoomLink: values.zoomLink,
-      // S'assurer que les dates sont en format ISO
-      date: values.date
-      // Notez que les colonnes title, description, materialsLink, etc. ne sont PAS incluses
-      // car elles n'existent pas dans la base de données
+      date: values.date,
+      title: values.title,
+      description: values.description,
+      materialsLink: values.materialsLink
     };
     
     console.log("Données de session simplifiées:", sessionData);
