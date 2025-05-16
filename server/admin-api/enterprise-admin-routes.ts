@@ -101,8 +101,22 @@ router.post("/enterprises", isAdmin, async (req, res) => {
     }
     
     // Insérer l'entreprise
-    // Convertir la date en string pour éviter les problèmes de type
-    const endDate = new Date(subscriptionEndDate).toISOString();
+    let parsedDate: Date;
+    try {
+      // Essayer de parser la date reçue, qui peut être au format YYYY-MM-DD
+      parsedDate = new Date(subscriptionEndDate);
+      
+      // Vérifier si la date est valide
+      if (isNaN(parsedDate.getTime())) {
+        return res.status(400).json({ message: "Format de date de fin d'abonnement invalide" });
+      }
+    } catch (error) {
+      console.error("Erreur lors du parsing de la date:", error);
+      return res.status(400).json({ message: "Format de date de fin d'abonnement invalide" });
+    }
+    
+    const endDate = parsedDate.toISOString();
+    console.log("Date convertie:", endDate);
     
     const [enterprise] = await db
       .insert(enterprises)
@@ -168,7 +182,24 @@ router.put("/enterprises/:id", isAdmin, async (req, res) => {
     if (contactEmail !== undefined) updateData.contactEmail = contactEmail;
     if (contactName !== undefined) updateData.contactName = contactName;
     if (employeeLimit !== undefined) updateData.employeeLimit = employeeLimit;
-    if (subscriptionEndDate !== undefined) updateData.subscriptionEndDate = new Date(subscriptionEndDate).toISOString();
+    
+    if (subscriptionEndDate !== undefined) {
+      try {
+        // Essayer de parser la date reçue
+        const parsedDate = new Date(subscriptionEndDate);
+        
+        // Vérifier si la date est valide
+        if (isNaN(parsedDate.getTime())) {
+          return res.status(400).json({ message: "Format de date de fin d'abonnement invalide" });
+        }
+        
+        updateData.subscriptionEndDate = parsedDate.toISOString();
+      } catch (error) {
+        console.error("Erreur lors du parsing de la date:", error);
+        return res.status(400).json({ message: "Format de date de fin d'abonnement invalide" });
+      }
+    }
+    
     if (isActive !== undefined) updateData.isActive = isActive;
     updateData.updatedAt = new Date().toISOString();
     
