@@ -325,7 +325,7 @@ export default function TrainingCalendar({
                       <div className="sr-only">
                         {sessionsForDay.map(session => (
                           <div key={session.id}>
-                            <div>{session.course?.title}</div>
+                            <div>{session.course?.title || "Titre non spécifié"}</div>
                             <div>{formatTime(new Date(session.date))}</div>
                           </div>
                         ))}
@@ -353,7 +353,7 @@ export default function TrainingCalendar({
                     <div className="flex-1 min-w-0">
                       <Link href={`/session/${session.id}`}>
                         <p className="font-medium truncate hover:text-primary">
-                          {session.course?.title}
+                          {session.course?.title || "Titre non spécifié"}
                         </p>
                       </Link>
                       <div className="flex items-center text-sm text-gray-500">
@@ -401,26 +401,28 @@ export default function TrainingCalendar({
                   <div className="flex-1 min-w-0">
                     <Link href={`/session/${session.id}`}>
                       <h3 className="font-medium text-lg truncate hover:text-primary">
-                        {session.course?.title}
+                        {session.course?.title || "Titre non spécifié"}
                       </h3>
                     </Link>
                     <div className="flex flex-wrap gap-2 mt-1">
                       <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                        {session.course?.category?.name}
+                        {session.course?.category?.name || "Catégorie non spécifiée"}
                       </Badge>
                       <Badge variant="outline" className="capitalize">
-                        {session.course?.level === 'beginner' 
-                          ? 'Débutant' 
-                          : session.course?.level === 'intermediate' 
-                            ? 'Intermédiaire' 
-                            : 'Avancé'}
+                        {!session.course?.level 
+                          ? 'Niveau non spécifié'
+                          : session.course.level === 'beginner' 
+                            ? 'Débutant' 
+                            : session.course.level === 'intermediate' 
+                              ? 'Intermédiaire' 
+                              : 'Avancé'}
                       </Badge>
                       <Badge variant="outline">
-                        {Math.floor(session.course?.duration / 60)} heures
+                        {session.course?.duration ? Math.floor(session.course.duration / 60) : 0} heures
                       </Badge>
                     </div>
                     <div className="mt-2 text-sm text-gray-500">
-                      {session.course?.trainer?.displayName}
+                      {session.course?.trainer?.displayName || "Formateur non spécifié"}
                     </div>
                   </div>
                   
