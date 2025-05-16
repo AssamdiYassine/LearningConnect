@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { SessionWithDetails } from "@shared/schema";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SocialShare } from "@/components/social-share";
 import { AchievementShare } from "@/components/achievement-share";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 // Extended interface to include the isEnrolled property
 interface SessionWithEnrollment extends SessionWithDetails {
@@ -30,11 +32,38 @@ interface SessionDetailProps {
 export default function SessionDetail({ id }: SessionDetailProps) {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [showZoomDialog, setShowZoomDialog] = useState(false);
   
   // Fetch session details
   const { data: session, isLoading: isSessionLoading } = useQuery<SessionWithEnrollment>({
     queryKey: [`/api/sessions/${id}`],
+  });
+  
+  const enrollMutation = useMutation({
+    mutationFn: async (sessionId: number) => {
+      const res = await apiRequest("POST", "/api/enrollments", { sessionId });
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Inscription réussie",
+        description: `Vous êtes maintenant inscrit à cette session`,
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/sessions/${id}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/enrollments/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/sessions/upcoming"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      // Rafraîchir la page pour mettre à jour l'état d'inscription
+      window.location.reload();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Échec de l'inscription",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   if (isSessionLoading) {
