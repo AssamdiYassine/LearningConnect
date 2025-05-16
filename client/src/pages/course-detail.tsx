@@ -179,38 +179,53 @@ export default function CourseDetail({ id }: CourseDetailProps) {
                 <div className="mt-8 bg-indigo-50 p-6 rounded-lg border border-indigo-100">
                   <h3 className="text-lg font-semibold mb-3 text-indigo-800">Ce que vous apprendrez</h3>
                   <ul className="list-none space-y-3">
-                    <li className="flex items-start">
-                      <div className="bg-indigo-500 rounded-full p-1 mt-1 mr-3">
-                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      <span>Compréhension approfondie des concepts de {course.title}</span>
-                    </li>
-                    <li className="flex items-start">
-                      <div className="bg-indigo-500 rounded-full p-1 mt-1 mr-3">
-                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      <span>Expérience pratique à travers des formations en direct</span>
-                    </li>
-                    <li className="flex items-start">
-                      <div className="bg-indigo-500 rounded-full p-1 mt-1 mr-3">
-                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      <span>Meilleures pratiques et applications du monde réel</span>
-                    </li>
-                    <li className="flex items-start">
-                      <div className="bg-indigo-500 rounded-full p-1 mt-1 mr-3">
-                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      <span>Interaction directe avec des formateurs experts</span>
-                    </li>
+                    {course.learningOutcomes && course.learningOutcomes.length > 0 ? (
+                      course.learningOutcomes.map((outcome, index) => (
+                        <li key={index} className="flex items-start">
+                          <div className="bg-indigo-500 rounded-full p-1 mt-1 mr-3">
+                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                          <span>{outcome}</span>
+                        </li>
+                      ))
+                    ) : (
+                      <>
+                        <li className="flex items-start">
+                          <div className="bg-indigo-500 rounded-full p-1 mt-1 mr-3">
+                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                          <span>Compréhension approfondie des concepts de {course.title}</span>
+                        </li>
+                        <li className="flex items-start">
+                          <div className="bg-indigo-500 rounded-full p-1 mt-1 mr-3">
+                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                          <span>Expérience pratique à travers des formations en direct</span>
+                        </li>
+                        <li className="flex items-start">
+                          <div className="bg-indigo-500 rounded-full p-1 mt-1 mr-3">
+                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                          <span>Meilleures pratiques et applications du monde réel</span>
+                        </li>
+                        <li className="flex items-start">
+                          <div className="bg-indigo-500 rounded-full p-1 mt-1 mr-3">
+                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                          <span>Interaction directe avec des formateurs experts</span>
+                        </li>
+                      </>
+                    )}
                   </ul>
                 </div>
                 

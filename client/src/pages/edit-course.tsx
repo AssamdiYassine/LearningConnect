@@ -57,7 +57,9 @@ export default function EditCourse() {
     level: z.enum(["beginner", "intermediate", "advanced"]),
     duration: z.number().min(30, "La durée minimum est de 30 minutes"),
     maxStudents: z.number().min(1, "Au moins 1 étudiant est requis").max(100, "Maximum 100 étudiants"),
-    categoryId: z.number()
+    categoryId: z.number(),
+    learningOutcomes: z.array(z.string()).optional().default([]),
+    targetAudience: z.array(z.string()).optional().default([])
   });
 
   // Initialiser le formulaire
@@ -71,7 +73,9 @@ export default function EditCourse() {
       duration: 60,
       maxStudents: 20,
       categoryId: 0,
-      trainerId: user?.id || 0
+      trainerId: user?.id || 0,
+      learningOutcomes: [],
+      targetAudience: []
     }
   });
 
@@ -86,7 +90,9 @@ export default function EditCourse() {
         duration: course.duration,
         maxStudents: course.maxStudents,
         categoryId: course.categoryId,
-        trainerId: course.trainerId
+        trainerId: course.trainerId,
+        learningOutcomes: course.learningOutcomes || [],
+        targetAudience: course.targetAudience || []
       });
     }
   }, [course, form]);
@@ -101,7 +107,7 @@ export default function EditCourse() {
       toast({
         title: "Cours mis à jour",
         description: "Le cours a été mis à jour avec succès",
-        variant: "success"
+        variant: "default"
       });
       queryClient.invalidateQueries({ queryKey: ["/api/courses"] });
       queryClient.invalidateQueries({ queryKey: ["/api/courses/trainer"] });
@@ -287,7 +293,119 @@ export default function EditCourse() {
                 />
               </div>
 
-              <div className="flex justify-end">
+              <div className="mt-6 space-y-4">
+                <div className="border-t pt-4">
+                  <h3 className="text-lg font-medium mb-3">Ce que vous apprendrez</h3>
+                  <p className="text-sm text-gray-500 mb-3">
+                    Ajoutez les points d'apprentissage clés de votre formation. Ces éléments seront affichés sur la page de détail du cours.
+                  </p>
+                  
+                  <FormField
+                    control={form.control}
+                    name="learningOutcomes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="space-y-2">
+                          {field.value.map((outcome, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <Input
+                                value={outcome}
+                                onChange={(e) => {
+                                  const newOutcomes = [...field.value];
+                                  newOutcomes[index] = e.target.value;
+                                  field.onChange(newOutcomes);
+                                }}
+                                className="flex-1"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                  const newOutcomes = [...field.value];
+                                  newOutcomes.splice(index, 1);
+                                  field.onChange(newOutcomes);
+                                }}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M18 6L6 18M6 6l12 12"></path>
+                                </svg>
+                              </Button>
+                            </div>
+                          ))}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              field.onChange([...field.value, ""]);
+                            }}
+                          >
+                            Ajouter un point d'apprentissage
+                          </Button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="border-t pt-4">
+                  <h3 className="text-lg font-medium mb-3">À qui s'adresse cette formation</h3>
+                  <p className="text-sm text-gray-500 mb-3">
+                    Indiquez à qui s'adresse cette formation. Ces informations seront affichées sur la page de détail du cours.
+                  </p>
+                  
+                  <FormField
+                    control={form.control}
+                    name="targetAudience"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="space-y-2">
+                          {field.value.map((audience, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <Input
+                                value={audience}
+                                onChange={(e) => {
+                                  const newAudience = [...field.value];
+                                  newAudience[index] = e.target.value;
+                                  field.onChange(newAudience);
+                                }}
+                                className="flex-1"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                  const newAudience = [...field.value];
+                                  newAudience.splice(index, 1);
+                                  field.onChange(newAudience);
+                                }}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M18 6L6 18M6 6l12 12"></path>
+                                </svg>
+                              </Button>
+                            </div>
+                          ))}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              field.onChange([...field.value, ""]);
+                            }}
+                          >
+                            Ajouter un public cible
+                          </Button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end mt-6 pt-4 border-t">
                 <Button 
                   type="submit" 
                   className="flex items-center gap-2"
