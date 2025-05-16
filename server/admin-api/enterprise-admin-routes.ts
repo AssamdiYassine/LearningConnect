@@ -122,7 +122,7 @@ router.post("/enterprises", isAdmin, async (req, res) => {
       return res.status(400).json({ message: "Format de date de fin d'abonnement invalide" });
     }
     
-    console.log("Date formatée:", subscriptionEndDate);
+    console.log("Date formatée:", formattedDate);
     
     const [enterprise] = await db
       .insert(enterprises)
@@ -131,7 +131,7 @@ router.post("/enterprises", isAdmin, async (req, res) => {
         contactEmail,
         contactName,
         employeeLimit: employeeLimit || 10,
-        subscriptionEndDate, // Utiliser la chaîne YYYY-MM-DD
+        subscriptionEndDate: formattedDate, // Utiliser la chaîne YYYY-MM-DD
         isActive: isActive !== undefined ? isActive : true,
         createdAt: new Date(), // Pour les timestamp, on utilise un objet Date
         updatedAt: new Date() // Pour les timestamp, on utilise un objet Date
@@ -191,16 +191,21 @@ router.put("/enterprises/:id", isAdmin, async (req, res) => {
     
     if (subscriptionEndDate !== undefined) {
       try {
-        // Essayer de parser la date reçue
-        const parsedDate = new Date(subscriptionEndDate);
-        
-        // Vérifier si la date est valide
-        if (isNaN(parsedDate.getTime())) {
+        // Vérifier d'abord si la date est valide
+        const testDate = new Date(subscriptionEndDate);
+        if (isNaN(testDate.getTime())) {
           return res.status(400).json({ message: "Format de date de fin d'abonnement invalide" });
         }
         
-        // Utiliser directement l'objet Date sans conversion en ISO string
-        updateData.subscriptionEndDate = parsedDate;
+        // Formater la date au format YYYY-MM-DD
+        let formattedDate: string;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(subscriptionEndDate)) {
+          formattedDate = testDate.toISOString().split('T')[0];
+        } else {
+          formattedDate = subscriptionEndDate;
+        }
+        
+        updateData.subscriptionEndDate = formattedDate;
       } catch (error) {
         console.error("Erreur lors du parsing de la date:", error);
         return res.status(400).json({ message: "Format de date de fin d'abonnement invalide" });
