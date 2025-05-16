@@ -25,43 +25,57 @@ import { useAuth } from '@/hooks/use-auth';
 import CommentForm from '@/components/blog/comment-form';
 import CommentItem from '@/components/blog/comment-item';
 
-// Un simple parser Markdown pour le rendu du contenu
+// Un parser Markdown amélioré pour le rendu du contenu
 const MarkdownRenderer = ({ content }: { content: string }) => {
   const renderMarkdown = (md: string) => {
-    // Prétraitement: forcer les sauts de ligne pour être sûr qu'ils sont bien pris en compte
-    let processedMd = md.replace(/\n/g, '\n\n').replace(/\n\n\n+/g, '\n\n');
+    if (!md) return '';
+    
+    // Nettoyer les caractères étranges que nous avons vus dans les captures d'écran
+    const cleanContent = md.replace(/cxnbgrfvdcxynuhtgbfv/g, '');
+    
+    // Prétraitement: normaliser les sauts de ligne
+    let processedMd = cleanContent
+      .replace(/\r\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n');
     
     // Convertir les # Titres
     let html = processedMd.replace(/^# (.+)$/gm, '<h1 class="text-3xl font-bold my-6">$1</h1>');
     html = html.replace(/^## (.+)$/gm, '<h2 class="text-2xl font-bold my-5">$1</h2>');
     html = html.replace(/^### (.+)$/gm, '<h3 class="text-xl font-bold my-4">$1</h3>');
     
-    // Traiter chaque ligne comme un paragraphe
-    const lines = html.split('\n\n');
-    html = lines.map(line => {
-      // Ne pas toucher aux balises HTML déjà converties
-      if (line.trim() === '' || line.match(/^<[a-z]|^$/)) {
-        return line;
+    // Convertir les blocs de code
+    html = html.replace(/```(.+?)```/gs, '<pre class="bg-gray-100 p-4 rounded my-4 overflow-x-auto"><code>$1</code></pre>');
+    
+    // Traiter chaque bloc de contenu comme un paragraphe
+    const blocks = html.split(/\n\n+/);
+    html = blocks.map(block => {
+      // Ignorer les blocs vides
+      if (!block.trim()) return '';
+      
+      // Ne pas modifier les blocs qui sont déjà des éléments HTML
+      if (block.trim().startsWith('<') && 
+          !block.trim().startsWith('<strong>') && 
+          !block.trim().startsWith('<em>')) {
+        return block;
       }
-      // Si la ligne ne commence pas par une balise HTML, on la met dans un paragraphe
-      if (!line.trim().startsWith('<')) {
-        return `<p class="my-4">${line}</p>`;
-      }
-      return line;
-    }).join('\n\n');
+      
+      // Créer un paragraphe
+      return `<p class="my-4 text-gray-800">${block}</p>`;
+    }).join('\n');
+    
+    // Formatage inline - à appliquer après le traitement des paragraphes
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); // Gras
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>'); // Italique
+    html = html.replace(/`(.+?)`/g, '<code class="bg-gray-100 px-1 rounded">$1</code>'); // Code inline
     
     // Convertir les listes
-    html = html.replace(/^- (.+)$/gm, '<li class="ml-6 list-disc">$1</li>');
-    html = html.replace(/(<li[^>]*>.*<\/li>\n)+/g, '<ul class="my-4">$&</ul>');
-    
-    // Convertir le texte en gras
-    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    
-    // Convertir le texte en italique
-    html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    html = html.replace(/<p class="my-4[^"]*">- (.+?)<\/p>/g, '<li>$1</li>');
+    html = html.replace(/(<li>.+<\/li>\n*)+/g, match => 
+      `<ul class="list-disc pl-6 my-4 space-y-1">${match}</ul>`);
     
     // Convertir les liens
-    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-primary hover:underline">$1</a>');
+    html = html.replace(/\[(.+?)\]\((.+?)\)/g, 
+      '<a href="$2" class="text-primary hover:underline" target="_blank" rel="noopener noreferrer">$1</a>');
     
     return html;
   };

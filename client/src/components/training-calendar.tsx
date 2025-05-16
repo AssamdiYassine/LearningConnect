@@ -173,14 +173,14 @@ export default function TrainingCalendar({
   // Get unique categories from sessions
   const categories = sessions
     ? Array.from(new Set(sessions.map(session => 
-        session.course?.category?.id.toString())
+        session.course?.category?.id ? session.course.category.id.toString() : undefined)
       )).filter(Boolean)
     : [];
 
   // Get unique levels from sessions
   const levels = sessions
     ? Array.from(new Set(sessions.map(session => 
-        session.course?.level)
+        session.course?.level || undefined)
       )).filter(Boolean)
     : [];
 

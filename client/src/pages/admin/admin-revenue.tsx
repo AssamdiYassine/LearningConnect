@@ -497,32 +497,37 @@ function AdminRevenue() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {trainerRevenueData.map((trainer) => (
-                    <TableRow key={trainer.id}>
-                      <TableCell className="font-medium">{trainer.nom}</TableCell>
-                      <TableCell>{trainer.coursComptes}</TableCell>
-                      <TableCell>{trainer.revenue} €</TableCell>
-                      <TableCell>{trainer.pourcentage.toFixed(1)}%</TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          {trainer.revenue > 1500 ? (
-                            <Badge className="bg-green-100 text-green-800 border-green-200">
-                              <TrendingUp className="h-3 w-3 mr-1" />
-                              Excellent
-                            </Badge>
-                          ) : trainer.revenue > 1000 ? (
-                            <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                              Bon
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-amber-100 text-amber-800 border-amber-200">
-                              Moyen
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {safeTrainerData.map((trainer) => {
+                    const percentage = trainerRevenueData?.totalRevenue ? 
+                      (trainer.revenue / trainerRevenueData.totalRevenue * 100) : 0;
+                    
+                    return (
+                      <TableRow key={trainer.id}>
+                        <TableCell className="font-medium">{trainer.name || trainer.username}</TableCell>
+                        <TableCell>{trainer.courseCount}</TableCell>
+                        <TableCell>{trainer.revenue} €</TableCell>
+                        <TableCell>{percentage.toFixed(1)}%</TableCell>
+                        <TableCell>
+                          <div className="flex items-center">
+                            {trainer.revenue > 1500 ? (
+                              <Badge className="bg-green-100 text-green-800 border-green-200">
+                                <TrendingUp className="h-3 w-3 mr-1" />
+                                Excellent
+                              </Badge>
+                            ) : trainer.revenue > 1000 ? (
+                              <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                                Bon
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-amber-100 text-amber-800 border-amber-200">
+                                Moyen
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </CardContent>
