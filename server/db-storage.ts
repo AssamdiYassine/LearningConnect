@@ -282,7 +282,7 @@ export class DatabaseStorage implements IStorage {
 
   async getSessionsByTrainer(trainerId: number): Promise<SessionWithDetails[]> {
     try {
-      // Utiliser une requête SQL directe pour éviter les problèmes avec le schéma
+      // Utiliser une requête SQL paramétrée pour éviter les injections SQL
       const result = await db.execute(`
         SELECT 
           s.id, s.course_id, s.date, s.zoom_link, s.created_at, s.updated_at, s.is_completed,
@@ -301,12 +301,12 @@ export class DatabaseStorage implements IStorage {
         LEFT JOIN 
           enrollments e ON s.id = e.session_id
         WHERE 
-          c.trainer_id = ${trainerId}
+          c.trainer_id = $1
         GROUP BY 
           s.id, c.id, cat.id, u.id
         ORDER BY 
           s.date DESC
-      `);
+      `, [trainerId]);
       
       console.log("Résultat getSessionsByTrainer:", result);
       
