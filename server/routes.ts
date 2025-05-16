@@ -274,18 +274,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(courses);
       }
       
-      // Si c'est un employé d'entreprise, vérifier les cours autorisés
-      if (req.user && req.user.role === 'student' && req.user.enterpriseId) {
+      // Si c'est un employé d'entreprise ou un admin d'entreprise, vérifier les cours autorisés
+      if (req.user && (req.user.role === 'student' || req.user.role === 'enterprise_admin') && req.user.enterpriseId) {
         try {
           // Récupérer les cours accessibles pour cet employé d'entreprise
           const { db } = require('./db');
           const { sql } = require('drizzle-orm');
           
+          // Récupérer à la fois les cours attribués à l'entreprise et ceux attribués spécifiquement à l'employé
           const authorizedCourses = await db.execute(
             sql`
-            SELECT course_id 
-            FROM enterprise_course_access 
-            WHERE enterprise_id = ${req.user.enterpriseId}
+            SELECT c.id AS course_id 
+            FROM courses c
+            JOIN enterprise_assigned_courses eac ON c.id = eac.course_id
+            WHERE eac.enterprise_id = ${req.user.enterpriseId}
+            AND c.is_approved = true
             UNION
             SELECT course_id 
             FROM enterprise_employee_course_access 
@@ -293,15 +296,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
             `
           );
           
+          console.log("Requête SQL pour les cours autorisés exécutée pour l'entreprise ID:", req.user.enterpriseId);
+          console.log("Résultat de la requête:", authorizedCourses.rows);
+          
           const authorizedCourseIds = authorizedCourses.rows.map(row => 
             Number(row.course_id)
           );
           
-          // Ne retourner que les cours approuvés ET accessibles à l'employé
+          console.log("IDs des cours autorisés:", authorizedCourseIds);
+          
+          // Ne retourner que les cours approuvés ET accessibles à l'employé/entreprise
           const filteredCourses = courses.filter(course => 
             course.isApproved === true && 
             authorizedCourseIds.includes(course.id)
           );
+          
+          console.log(`${filteredCourses.length} cours filtrés sur ${courses.length} pour l'employé d'entreprise`);
           
           return res.json(filteredCourses);
         } catch (dbError) {
@@ -1038,9 +1048,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Subscription plans routes - Pour afficher les plans aux utilisateurs normaux
   app.get("/api/subscription-plans", async (req, res) => {
     try {
+      // Si c'est un utilisateur d'entreprise, renvoyer un tableau vide
+      if (req.user && (req.user.role === 'enterprise' || req.user.role === 'enterprise_admin')) {
+        console.log("Utilisateur d'entreprise, aucun plan d'abonnement renvoyé");
+        return res.json([]);
+      }
+      
       const plans = await storage.getAllSubscriptionPlans();
       // Ne renvoyer que les plans actifs aux utilisateurs réguliers
       const activePlans = plans.filter(plan => plan.isActive);
+      
+      // Log pour debug
+      console.log("Plans récupérés:", activePlans);
+      
       res.json(activePlans);
     } catch (error) {
       console.error("Failed to fetch subscription plans:", error);

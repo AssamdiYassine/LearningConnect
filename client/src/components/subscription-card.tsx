@@ -10,7 +10,8 @@ interface SubscriptionCardProps {
 }
 
 export default function SubscriptionCard({ user }: SubscriptionCardProps) {
-  if (!user) return null;
+  // Ne pas afficher la carte d'abonnement pour les utilisateurs d'entreprise
+  if (!user || user.role === 'enterprise' || user.role === 'enterprise_admin') return null;
 
   // Format the subscription end date if it exists
   const formatEndDate = (date: string | Date | null | undefined) => {
