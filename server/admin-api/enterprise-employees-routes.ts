@@ -86,15 +86,11 @@ router.post("/enterprise-employees", isAdmin, async (req, res) => {
     }
     
     // Vérifier si le nom d'utilisateur ou l'email est déjà utilisé
-    const existingUser = await db
-      .select()
-      .from(users)
-      .where(
-        sql`username = ${username} OR email = ${email}`
-      )
-      .limit(1);
+    const existingUser = await db.execute(
+      sql`SELECT * FROM users WHERE username = ${username} OR email = ${email} LIMIT 1`
+    );
       
-    if (existingUser && existingUser.length > 0) {
+    if (existingUser.rows && existingUser.rows.length > 0) {
       return res.status(400).json({ message: "Nom d'utilisateur ou email déjà utilisé" });
     }
     

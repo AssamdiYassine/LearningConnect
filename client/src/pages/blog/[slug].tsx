@@ -28,13 +28,27 @@ import CommentItem from '@/components/blog/comment-item';
 // Un simple parser Markdown pour le rendu du contenu
 const MarkdownRenderer = ({ content }: { content: string }) => {
   const renderMarkdown = (md: string) => {
+    // Prétraitement: forcer les sauts de ligne pour être sûr qu'ils sont bien pris en compte
+    let processedMd = md.replace(/\n/g, '\n\n').replace(/\n\n\n+/g, '\n\n');
+    
     // Convertir les # Titres
-    let html = md.replace(/^# (.+)$/gm, '<h1 class="text-3xl font-bold my-6">$1</h1>');
+    let html = processedMd.replace(/^# (.+)$/gm, '<h1 class="text-3xl font-bold my-6">$1</h1>');
     html = html.replace(/^## (.+)$/gm, '<h2 class="text-2xl font-bold my-5">$1</h2>');
     html = html.replace(/^### (.+)$/gm, '<h3 class="text-xl font-bold my-4">$1</h3>');
     
-    // Convertir les paragraphes (lignes vides)
-    html = html.replace(/\n\n([^#\n][^\n]+)/g, '\n\n<p class="my-4">$1</p>');
+    // Traiter chaque ligne comme un paragraphe
+    const lines = html.split('\n\n');
+    html = lines.map(line => {
+      // Ne pas toucher aux balises HTML déjà converties
+      if (line.trim() === '' || line.match(/^<[a-z]|^$/)) {
+        return line;
+      }
+      // Si la ligne ne commence pas par une balise HTML, on la met dans un paragraphe
+      if (!line.trim().startsWith('<')) {
+        return `<p class="my-4">${line}</p>`;
+      }
+      return line;
+    }).join('\n\n');
     
     // Convertir les listes
     html = html.replace(/^- (.+)$/gm, '<li class="ml-6 list-disc">$1</li>');
