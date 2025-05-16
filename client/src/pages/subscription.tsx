@@ -29,6 +29,17 @@ export default function Subscription() {
   const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual" | "business">("monthly");
   const [, setLocation] = useLocation();
+  
+  // Si l'utilisateur est un employé d'entreprise, le rediriger vers le catalogue de formations
+  useEffect(() => {
+    if (user && (user.enterpriseId || user.role === 'enterprise_employee')) {
+      toast({
+        title: "Accès automatique",
+        description: "En tant qu'employé d'entreprise, vous avez déjà accès aux formations via votre entreprise.",
+      });
+      setLocation('/courses');
+    }
+  }, [user, setLocation, toast]);
 
   // Récupérer les plans d'abonnement depuis l'API
   const { data: plans, isLoading: isLoadingPlans } = useQuery<SubscriptionPlan[]>({

@@ -54,10 +54,14 @@ export default function Navbar() {
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
+  // Filtrer les éléments de navigation en fonction du rôle de l'utilisateur
   const navItems = [
     { name: "Catalogue", path: "/catalog" },
     { name: "Calendrier", path: "/schedule" },
-    { name: "Tarifs", path: "/subscription" },
+    // Masquer les tarifs pour les employés d'entreprise
+    ...(user && (user.enterpriseId || user.role === 'enterprise_employee') 
+      ? [] 
+      : [{ name: "Tarifs", path: "/subscription" }]),
     { name: "Blog", path: "/blog" },
     { name: "À propos", path: "/about" },
   ];

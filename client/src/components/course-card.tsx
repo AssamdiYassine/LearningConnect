@@ -56,10 +56,11 @@ export default function CourseCard({ course }: CourseCardProps) {
   });
 
   const handleEnroll = () => {
-    if (!user?.isSubscribed) {
+    // Les employés d'entreprise n'ont pas besoin d'abonnement car l'entreprise paie déjà
+    if (!user?.isSubscribed && !user?.enterpriseId && user?.role !== 'enterprise_employee') {
       toast({
-        title: "Subscription required",
-        description: "You need an active subscription to enroll in courses",
+        title: "Abonnement requis",
+        description: "Vous avez besoin d'un abonnement actif pour vous inscrire aux formations",
         variant: "destructive",
       });
       return;
