@@ -5,12 +5,13 @@ import { registerAdminSubscriptionRoutes } from "./admin-subscription-routes";
 import { registerAdminApiSettingsRoutes } from "./admin-api-settings-routes";
 import { registerAdminApiExtensions } from "./admin-api-extensions";
 import { registerResetPasswordRoutes } from "./reset-password-routes";
+import { registerAdminRevenueRoutes } from "./admin-revenue-routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedBlogDemoData } from "./blog-demo-data";
 import seedNotifications from "./seed-notifications";
 import seedPayments from "./seed-payments";
 import { extendDatabaseStorageForApi } from "./db-storage-api";
-import { storage } from "./storage";
+import { storage } from "./storage_fixed";
 
 const app = express();
 app.use(express.json());

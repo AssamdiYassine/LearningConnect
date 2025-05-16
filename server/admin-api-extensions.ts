@@ -185,6 +185,7 @@ export function registerAdminApiExtensions(app: Express) {
   app.get('/api/admin/revenue', hasAdminRole, async (req: Request, res: Response) => {
     try {
       const { timeframe = 'month' } = req.query;
+      // On utilise le storage_fixed qui contient les implémentations pour les paiements
       const revenue = await storage.getRevenueStats(timeframe.toString());
       res.json(revenue);
     } catch (error: any) {
@@ -195,6 +196,7 @@ export function registerAdminApiExtensions(app: Express) {
 
   app.get('/api/admin/revenue/trainers', hasAdminRole, async (req: Request, res: Response) => {
     try {
+      // On utilise le storage_fixed qui contient les implémentations pour les revenus des formateurs
       const trainerRevenue = await storage.getTrainerRevenueStats();
       res.json(trainerRevenue);
     } catch (error: any) {

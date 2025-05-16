@@ -1287,135 +1287,195 @@ export class MemStorage implements IStorage {
     this.payments.set(id, newPayment);
     return newPayment;
   }
-
+  
+  // Analyse des revenus par période (semaine, mois, année)
   async getRevenueStats(timeframe: string): Promise<any> {
-    // Récupérer tous les paiements
-    const allPayments = await this.getAllPayments();
-    
-    // Définir la période selon le timeframe
+    const payments = Array.from(this.payments.values());
     const now = new Date();
-    let startDate = new Date();
+    let startDate: Date;
     
+    // Déterminer la date de début en fonction de la période
     switch(timeframe) {
       case 'week':
+        startDate = new Date(now);
         startDate.setDate(now.getDate() - 7);
         break;
       case 'month':
+        startDate = new Date(now);
         startDate.setMonth(now.getMonth() - 1);
         break;
       case 'year':
+        startDate = new Date(now);
         startDate.setFullYear(now.getFullYear() - 1);
         break;
       default:
-        startDate.setMonth(now.getMonth() - 1); // Par défaut: dernier mois
+        startDate = new Date(now);
+        startDate.setMonth(now.getMonth() - 1); // Par défaut, 1 mois
     }
     
-    // Filtrer les paiements dans la période spécifiée
-    const paymentsInPeriod = allPayments.filter(
-      payment => payment.createdAt >= startDate && payment.createdAt <= now
+    // Filtrer les paiements dans la période demandée
+    const filteredPayments = payments.filter(payment => 
+      payment.createdAt >= startDate && payment.createdAt <= now
     );
+
+    // Convertir les montants en nombres pour les calculs
+    filteredPayments.forEach(payment => {
+      if (typeof payment.amount === 'string') {
+        payment.amount = parseFloat(payment.amount);
+      }
+      if (payment.trainerShare && typeof payment.trainerShare === 'string') {
+        payment.trainerShare = parseFloat(payment.trainerShare);
+      }
+      if (payment.platformFee && typeof payment.platformFee === 'string') {
+        payment.platformFee = parseFloat(payment.platformFee);
+      }
+    });
+
+    // Calculer les revenus quotidiens
+    const dailyRevenueMap = new Map();
     
-    // Calculer les revenus journaliers
-    const dailyRevenue = this.calculateDailyRevenue(paymentsInPeriod);
+    filteredPayments.forEach(payment => {
+      const date = payment.createdAt.toISOString().split('T')[0]; // Format YYYY-MM-DD
+      const amount = typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount;
+      
+      if (dailyRevenueMap.has(date)) {
+        dailyRevenueMap.set(date, dailyRevenueMap.get(date) + amount);
+      } else {
+        dailyRevenueMap.set(date, amount);
+      }
+    });
+    
+    // Convertir la Map en tableau pour le retour
+    const dailyRevenue = Array.from(dailyRevenueMap.entries()).map(([date, total]) => ({
+      date,
+      total
+    })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
     // Calculer les revenus par type
-    const revenueByType = this.calculateRevenueByType(paymentsInPeriod);
+    const revenueByTypeMap = new Map();
     
-    // Calculer les statistiques globales
-    const totalRevenue = paymentsInPeriod.reduce(
-      (sum, payment) => sum + Number(payment.amount), 0
-    );
+    filteredPayments.forEach(payment => {
+      const type = payment.type || 'other';
+      const amount = typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount;
+      
+      if (revenueByTypeMap.has(type)) {
+        revenueByTypeMap.set(type, revenueByTypeMap.get(type) + amount);
+      } else {
+        revenueByTypeMap.set(type, amount);
+      }
+    });
     
-    const totalCount = paymentsInPeriod.length;
+    // Convertir la Map en tableau pour le retour
+    const revenueByType = Array.from(revenueByTypeMap.entries()).map(([type, total]) => ({
+      type,
+      total
+    }));
     
-    const platformFees = paymentsInPeriod.reduce(
-      (sum, payment) => sum + (Number(payment.platformFee) || 0), 0
-    );
+    // Calculer les métriques globales
+    const totalRevenue = filteredPayments.reduce((sum, payment) => {
+      const amount = typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount;
+      return sum + amount;
+    }, 0);
+    
+    const trainerPayouts = filteredPayments.reduce((sum, payment) => {
+      if (!payment.trainerShare) return sum;
+      const trainerShare = typeof payment.trainerShare === 'string' ? 
+        parseFloat(payment.trainerShare) : payment.trainerShare;
+      return sum + trainerShare;
+    }, 0);
+    
+    const platformRevenue = filteredPayments.reduce((sum, payment) => {
+      if (!payment.platformFee) return sum;
+      const platformFee = typeof payment.platformFee === 'string' ? 
+        parseFloat(payment.platformFee) : payment.platformFee;
+      return sum + platformFee;
+    }, 0);
+    
+    // Transactions récentes (les 10 dernières)
+    const recentTransactions = filteredPayments
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, 10);
     
     return {
+      timeframe,
       dailyRevenue,
       revenueByType,
-      stats: {
-        total_revenue: totalRevenue,
-        total_count: totalCount,
-        platform_fees: platformFees
-      }
+      totalRevenue,
+      trainerPayouts,
+      platformRevenue,
+      recentTransactions
     };
   }
-
+  
+  // Analyse des revenus par formateur
   async getTrainerRevenueStats(): Promise<any> {
-    const allPayments = await this.getAllPayments();
+    const payments = Array.from(this.payments.values());
+    const trainers = Array.from(this.users.values()).filter(user => user.role === 'trainer');
     
-    // Filtrer les paiements avec un formateur
-    const paymentsWithTrainer = allPayments.filter(payment => payment.trainerId);
-    
-    // Grouper par formateur
-    const trainerMap = new Map();
-    
-    for (const payment of paymentsWithTrainer) {
-      const trainerId = payment.trainerId as number;
+    const trainerStats = await Promise.all(trainers.map(async trainer => {
+      // Paiements liés à ce formateur
+      const trainerPayments = payments.filter(payment => payment.trainerId === trainer.id);
       
-      if (!trainerMap.has(trainerId)) {
-        const trainer = await this.getUser(trainerId);
-        
-        trainerMap.set(trainerId, {
-          trainer_id: trainerId,
-          trainer_name: trainer?.displayName || 'Formateur inconnu',
-          total: 0,
-          trainer_share: 0,
-          count: 0
-        });
-      }
+      // Calcul du revenu total du formateur
+      const totalRevenue = trainerPayments.reduce((sum, payment) => {
+        if (!payment.trainerShare) return sum;
+        const trainerShare = typeof payment.trainerShare === 'string' ? 
+          parseFloat(payment.trainerShare) : payment.trainerShare;
+        return sum + trainerShare;
+      }, 0);
       
-      const stats = trainerMap.get(trainerId);
+      // Commissions de la plateforme
+      const platformFees = trainerPayments.reduce((sum, payment) => {
+        if (!payment.platformFee) return sum;
+        const platformFee = typeof payment.platformFee === 'string' ? 
+          parseFloat(payment.platformFee) : payment.platformFee;
+        return sum + platformFee;
+      }, 0);
       
-      stats.total += Number(payment.amount) || 0;
-      stats.trainer_share += Number(payment.trainerShare) || 0;
-      stats.count += 1;
-    }
+      // Nombre de cours/sessions/paiements distincts
+      const courseCount = new Set(trainerPayments
+        .filter(p => p.courseId)
+        .map(p => p.courseId)).size;
+      
+      const sessionCount = new Set(trainerPayments
+        .filter(p => p.sessionId)
+        .map(p => p.sessionId)).size;
+      
+      const paymentCount = trainerPayments.length;
+      
+      return {
+        id: trainer.id,
+        name: trainer.displayName,
+        username: trainer.username,
+        revenue: totalRevenue,
+        platformFees,
+        courseCount,
+        sessionCount,
+        paymentCount,
+        lastPayment: trainerPayments.length > 0 ? 
+          trainerPayments.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0].createdAt : null
+      };
+    }));
     
-    return Array.from(trainerMap.values())
-      .sort((a, b) => b.total - a.total); // Trier par montant décroissant
-  }
-
-  private calculateDailyRevenue(payments: Payment[]): any[] {
-    // Regrouper les paiements par date
-    const dailyMap = new Map();
+    // Trier par revenu total (décroissant)
+    trainerStats.sort((a, b) => b.revenue - a.revenue);
     
-    for (const payment of payments) {
-      const date = payment.createdAt.toISOString().split('T')[0]; // Format YYYY-MM-DD
-      
-      if (!dailyMap.has(date)) {
-        dailyMap.set(date, { date, total: 0, count: 0 });
-      }
-      
-      const daily = dailyMap.get(date);
-      daily.total += Number(payment.amount) || 0;
-      daily.count += 1;
-    }
+    // Calculer les revenus globaux de tous les formateurs
+    const totalTrainerRevenue = trainerStats.reduce((sum, trainer) => sum + trainer.revenue, 0);
     
-    return Array.from(dailyMap.values())
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }
-
-  private calculateRevenueByType(payments: Payment[]): any[] {
-    // Regrouper les paiements par type
-    const typeMap = new Map();
+    // Ajouter le pourcentage du revenu total pour chaque formateur
+    trainerStats.forEach(trainer => {
+      trainer.percentage = totalTrainerRevenue > 0 ? 
+        ((trainer.revenue / totalTrainerRevenue) * 100) : 0;
+    });
     
-    for (const payment of payments) {
-      const type = payment.type;
-      
-      if (!typeMap.has(type)) {
-        typeMap.set(type, { type, total: 0, count: 0 });
-      }
-      
-      const typeStats = typeMap.get(type);
-      typeStats.total += Number(payment.amount) || 0;
-      typeStats.count += 1;
-    }
-    
-    return Array.from(typeMap.values());
+    return {
+      trainers: trainerStats,
+      totalRevenue: totalTrainerRevenue,
+      trainerCount: trainerStats.length
+    };
   }
 }
 
+// Export an instance of the storage
 export const storage = new MemStorage();
