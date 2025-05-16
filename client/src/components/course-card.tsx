@@ -125,12 +125,20 @@ export default function CourseCard({ course }: CourseCardProps) {
           <svg className="mr-1.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
-          <span>{course.trainer.displayName}</span>
+          <span>{course.trainer?.displayName || "Formateur non spécifié"}</span>
         </div>
         
         <div className="mt-2 flex items-center text-sm text-gray-500">
           <SignalHigh className="mr-1.5 h-5 w-5 text-gray-400" />
-          <span className="capitalize">{course.level}</span>
+          <span className="capitalize">{
+            !course.level 
+              ? 'Niveau non spécifié'
+              : course.level === 'beginner' 
+                ? 'Débutant' 
+                : course.level === 'intermediate' 
+                  ? 'Intermédiaire' 
+                  : 'Avancé'
+          }</span>
           <Clock className="ml-4 mr-1.5 h-5 w-5 text-gray-400" />
           <span>{formatDuration(course.duration)}</span>
         </div>
