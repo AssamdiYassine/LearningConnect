@@ -61,14 +61,9 @@ function isAuthenticated(req: any, res: any, next: any) {
   res.status(401).json({ message: "Unauthorized" });
 }
 
-// Middleware pour vérifier l'authentification mais permettre aux requêtes non-authentifiées de continuer
-function optionalAuth(req: any, res: any, next: any) {
-  // Cette fonction ne bloque pas les requêtes non-authentifiées
-  // Mais elle vérifie si l'utilisateur est authentifié 
-  if (!req.isAuthenticated) {
-    req.isAuthenticated = () => false;
-    req.user = null;
-  }
+// Middleware pour permettre l'accès même sans authentification
+function publicAccess(req: any, res: any, next: any) {
+  // Cette fonction permet d'accéder à l'API sans authentification
   next();
 }
 
@@ -255,15 +250,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Course routes
-  app.get("/api/courses", optionalAuth, async (req, res) => {
+  // Routes de cours - version avec authentification
+  app.get("/api/courses", isAuthenticated, async (req, res) => {
     try {
       const courses = await storage.getAllCoursesWithDetails();
       
-      // Filtrer pour ne montrer que les cours approuvés dans l'interface utilisateur
-      // Si l'utilisateur est admin ou formateur, montrer tous les cours
-      const isAdminOrTrainer = req.isAuthenticated && req.isAuthenticated() && 
-        req.user && ['admin', 'trainer'].includes(req.user.role);
+      // Filtrer en fonction du rôle
+      let isAdminOrTrainer = req.user && ['admin', 'trainer'].includes(req.user.role);
       
       const filteredCourses = isAdminOrTrainer
         ? courses
@@ -275,8 +268,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Impossible de récupérer les cours" });
     }
   });
+  
+  // Route publique pour les cours (accessible sans authentification)
+  app.get("/api/public/courses", async (req, res) => {
+    try {
+      const courses = await storage.getAllCoursesWithDetails();
+      
+      // Filtrer pour ne montrer que les cours approuvés
+      const filteredCourses = courses.filter(course => course.isApproved === true);
+      
+      res.json(filteredCourses);
+    } catch (error) {
+      console.error("Error fetching public courses:", error);
+      res.status(500).json({ message: "Impossible de récupérer les cours" });
+    }
+  });
 
-  app.get("/api/courses/:id", optionalAuth, async (req, res) => {
+  app.get("/api/courses/:id", publicAccess, async (req, res) => {
     try {
       const { id } = req.params;
       const course = await storage.getCourseWithDetails(parseInt(id));
@@ -286,8 +294,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Vérifier si le cours est approuvé, sauf pour les formateurs et les admins
-      const isAdminOrTrainer = req.isAuthenticated && req.isAuthenticated() && 
-        req.user && ['admin', 'trainer'].includes(req.user.role);
+      let isAdminOrTrainer = false;
+      
+      if (req.isAuthenticated && typeof req.isAuthenticated === 'function') {
+        isAdminOrTrainer = req.isAuthenticated() && 
+          req.user && ['admin', 'trainer'].includes(req.user.role);
+      }
       
       if (!course.isApproved && !isAdminOrTrainer) {
         return res.status(403).json({ message: "Ce cours n'est pas encore disponible" });
