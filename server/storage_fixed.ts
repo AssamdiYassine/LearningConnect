@@ -75,6 +75,7 @@ export interface IStorage {
   createEnrollment(enrollment: InsertEnrollment): Promise<Enrollment>;
   getEnrollmentsByUser(userId: number): Promise<Enrollment[]>;
   getEnrollmentsBySession(sessionId: number): Promise<Enrollment[]>;
+  getEnrollmentsByCourse(courseId: number): Promise<Enrollment[]>;
   getEnrollment(userId: number, sessionId: number): Promise<Enrollment | undefined>;
   deleteEnrollment(id: number): Promise<void>;
   getUserEnrolledSessions(userId: number): Promise<SessionWithDetails[]>;
@@ -820,6 +821,23 @@ export class MemStorage implements IStorage {
   async getEnrollmentsBySession(sessionId: number): Promise<Enrollment[]> {
     return Array.from(this.enrollments.values()).filter(
       (enrollment) => enrollment.sessionId === sessionId
+    );
+  }
+  
+  async getEnrollmentsByCourse(courseId: number): Promise<Enrollment[]> {
+    // 1. Récupérer toutes les sessions pour ce cours
+    const courseSessions = Array.from(this.sessions.values()).filter(
+      (session) => session.courseId === courseId
+    );
+    
+    if (!courseSessions || courseSessions.length === 0) {
+      return [];
+    }
+    
+    // 2. Récupérer toutes les inscriptions pour ces sessions
+    const sessionIds = courseSessions.map(session => session.id);
+    return Array.from(this.enrollments.values()).filter(
+      (enrollment) => sessionIds.includes(enrollment.sessionId)
     );
   }
 
