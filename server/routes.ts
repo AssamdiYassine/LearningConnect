@@ -61,6 +61,17 @@ function isAuthenticated(req: any, res: any, next: any) {
   res.status(401).json({ message: "Unauthorized" });
 }
 
+// Middleware pour vérifier l'authentification mais permettre aux requêtes non-authentifiées de continuer
+function optionalAuth(req: any, res: any, next: any) {
+  // Cette fonction ne bloque pas les requêtes non-authentifiées
+  // Mais elle vérifie si l'utilisateur est authentifié 
+  if (!req.isAuthenticated) {
+    req.isAuthenticated = () => false;
+    req.user = null;
+  }
+  next();
+}
+
 // Middleware to check if user has specific role
 function hasRole(roles: string[]) {
   return (req: any, res: any, next: any) => {
@@ -245,13 +256,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Course routes
-  app.get("/api/courses", async (req, res) => {
+  app.get("/api/courses", optionalAuth, async (req, res) => {
     try {
       const courses = await storage.getAllCoursesWithDetails();
       
       // Filtrer pour ne montrer que les cours approuvés dans l'interface utilisateur
       // Si l'utilisateur est admin ou formateur, montrer tous les cours
-      const isAdminOrTrainer = req.isAuthenticated() && ['admin', 'trainer'].includes(req.user?.role);
+      const isAdminOrTrainer = req.isAuthenticated && req.isAuthenticated() && 
+        req.user && ['admin', 'trainer'].includes(req.user.role);
+      
       const filteredCourses = isAdminOrTrainer
         ? courses
         : courses.filter(course => course.isApproved === true);
@@ -263,23 +276,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/courses/:id", async (req, res) => {
+  app.get("/api/courses/:id", optionalAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const course = await storage.getCourseWithDetails(parseInt(id));
       
       if (!course) {
-        return res.status(404).json({ message: "Course not found" });
+        return res.status(404).json({ message: "Cours introuvable" });
       }
       
       // Vérifier si le cours est approuvé, sauf pour les formateurs et les admins
-      if (!course.isApproved && req.isAuthenticated() && !['admin', 'trainer'].includes(req.user.role)) {
+      const isAdminOrTrainer = req.isAuthenticated && req.isAuthenticated() && 
+        req.user && ['admin', 'trainer'].includes(req.user.role);
+      
+      if (!course.isApproved && !isAdminOrTrainer) {
         return res.status(403).json({ message: "Ce cours n'est pas encore disponible" });
       }
       
       res.json(course);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch course" });
+      console.error("Error fetching course details:", error);
+      res.status(500).json({ message: "Impossible de récupérer les détails du cours" });
     }
   });
 
