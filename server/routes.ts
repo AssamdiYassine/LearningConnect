@@ -408,6 +408,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch upcoming sessions" });
     }
   });
+  
+  // Route publique pour les sessions à venir (accessible sans authentification)
+  app.get("/api/public/sessions/upcoming", async (req, res) => {
+    try {
+      const sessions = await storage.getUpcomingSessions();
+      
+      // Pour les sessions publiques, on ne montre que les sessions des cours approuvés
+      const filteredSessions = sessions.filter(session => 
+        session.course && session.course.isApproved === true
+      );
+      
+      res.json(filteredSessions);
+    } catch (error) {
+      console.error("Error fetching public upcoming sessions:", error);
+      res.status(500).json({ message: "Impossible de récupérer les sessions à venir" });
+    }
+  });
 
   app.get("/api/sessions/:id", async (req, res) => {
     try {

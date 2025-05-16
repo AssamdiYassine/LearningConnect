@@ -30,9 +30,9 @@ export default function Catalog() {
     queryKey: ["/api/public/categories"],
   });
 
-  // Fetch upcoming sessions
+  // Fetch upcoming sessions using the public API route
   const { data: sessions, isLoading: isSessionsLoading } = useQuery<SessionWithDetails[]>({
-    queryKey: ["/api/sessions/upcoming"],
+    queryKey: ["/api/public/sessions/upcoming"],
   });
 
   // Filter and sort courses
