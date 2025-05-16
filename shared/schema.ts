@@ -17,6 +17,9 @@ export const subscriptionPlanTypeEnum = pgEnum("subscription_plan_type", ["month
 // Enum for subscription status
 export const subscriptionStatusEnum = pgEnum("subscription_status", ["active", "cancelled", "expired"]);
 
+// Enum for payment types
+export const paymentTypeEnum = pgEnum("payment_type", ["subscription", "session", "course", "other"]);
+
 // Enum for course levels
 export const courseLevelEnum = pgEnum("course_level", ["beginner", "intermediate", "advanced"]);
 
@@ -619,3 +622,50 @@ export type InsertEnterprise = z.infer<typeof insertEnterpriseSchema>;
 
 export type EnterpriseAssignedCourse = typeof enterpriseAssignedCourses.$inferSelect;
 export type InsertEnterpriseAssignedCourse = z.infer<typeof insertEnterpriseAssignedCoursesSchema>;
+
+// Table des paiements
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  description: text("description"),
+  type: paymentTypeEnum("type").notNull().default("subscription"),
+  status: text("status").notNull().default("completed"),
+  trainerId: integer("trainer_id").references(() => users.id),
+  trainerShare: decimal("trainer_share", { precision: 10, scale: 2 }),
+  platformFee: decimal("platform_fee", { precision: 10, scale: 2 }),
+  courseId: integer("course_id").references(() => courses.id),
+  sessionId: integer("session_id").references(() => sessions.id),
+  subscriptionId: integer("subscription_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Payment relations
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  user: one(users, {
+    fields: [payments.userId],
+    references: [users.id],
+  }),
+  trainer: one(users, {
+    fields: [payments.trainerId],
+    references: [users.id],
+  }),
+  course: one(courses, {
+    fields: [payments.courseId],
+    references: [courses.id],
+  }),
+  session: one(sessions, {
+    fields: [payments.sessionId],
+    references: [sessions.id],
+  }),
+}));
+
+// Payments types
+export type Payment = typeof payments.$inferSelect;
+export type InsertPayment = typeof payments.$inferInsert;
+export const insertPaymentSchema = createInsertSchema(payments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
