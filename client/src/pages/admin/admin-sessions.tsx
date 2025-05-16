@@ -62,15 +62,29 @@ type SessionWithDetails = {
   id: number;
   courseId: number;
   date: string;
-  startTime: string;
-  endTime: string;
-  maxStudents: number;
   zoomLink: string;
   recordingLink?: string;
-  courseTitle: string;
-  trainerName: string;
+  isCompleted?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
   enrollmentCount: number;
-  courseCategoryName: string;
+  startTime?: string;
+  endTime?: string;
+  maxStudents?: number;
+  course?: {
+    id: number;
+    title: string;
+    description: string;
+    category?: {
+      id: number;
+      name: string;
+    };
+    trainer?: {
+      id: number;
+      username: string;
+      displayName: string;
+    };
+  };
 };
 
 type Course = {
@@ -282,9 +296,9 @@ function AdminSessions() {
     setFormData({
       courseId: session.courseId,
       date: new Date(session.date).toISOString().split('T')[0],
-      startTime: session.startTime,
-      endTime: session.endTime,
-      maxStudents: session.maxStudents,
+      startTime: session.startTime || "09:00",
+      endTime: session.endTime || "11:00",
+      maxStudents: session.maxStudents || 20,
       zoomLink: session.zoomLink,
       recordingLink: session.recordingLink
     });
@@ -299,9 +313,9 @@ function AdminSessions() {
   const filteredSessions = sessions.filter(session => {
     // Filter by search query
     const matchesSearch = 
-      (session.courseTitle?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-      (session.trainerName?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-      (session.courseCategoryName?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (session.course?.title?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (session.course?.trainer?.displayName?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (session.course?.category?.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
       (session.zoomLink?.toLowerCase() || "").includes(searchQuery.toLowerCase());
     
     const now = new Date();
@@ -402,7 +416,7 @@ function AdminSessions() {
                     Formation
                   </label>
                   <Select 
-                    value={formData.courseId.toString()} 
+                    value={formData.courseId ? formData.courseId.toString() : ""} 
                     onValueChange={(value) => handleSelectChange('courseId', value)}
                   >
                     <SelectTrigger className="col-span-3">
@@ -567,8 +581,8 @@ function AdminSessions() {
                         return (
                           <TableRow key={session.id}>
                             <TableCell>
-                              <div className="font-medium">{session.courseTitle}</div>
-                              <div className="text-xs text-muted-foreground">{session.courseCategoryName}</div>
+                              <div className="font-medium">{session.course?.title || "Sans titre"}</div>
+                              <div className="text-xs text-muted-foreground">{session.course?.category?.name || "Non catégorisé"}</div>
                             </TableCell>
                             <TableCell>
                               {formatDate(session.date)}
@@ -592,7 +606,7 @@ function AdminSessions() {
                               </TooltipProvider>
                             </TableCell>
                             <TableCell>
-                              {session.trainerName}
+                              {session.course?.trainer?.displayName || "Non assigné"}
                             </TableCell>
                             <TableCell>
                               {getStatusBadge(session.date)}
@@ -818,7 +832,7 @@ function AdminSessions() {
                 Formation
               </label>
               <Select 
-                value={formData.courseId.toString()} 
+                value={formData.courseId ? formData.courseId.toString() : ""} 
                 onValueChange={(value) => handleSelectChange('courseId', value)}
               >
                 <SelectTrigger className="col-span-3">
