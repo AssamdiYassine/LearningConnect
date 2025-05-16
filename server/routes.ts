@@ -269,11 +269,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Filtrer en fonction du rôle
       let isAdminOrTrainer = req.user && ['admin', 'trainer'].includes(req.user.role);
       
-      const filteredCourses = isAdminOrTrainer
-        ? courses
-        : courses.filter(course => course.isApproved === true);
+      // Si c'est un admin ou formateur, montrer tous les cours
+      if (isAdminOrTrainer) {
+        return res.json(courses);
+      }
       
-      res.json(filteredCourses);
+      // Si c'est un employé d'entreprise, vérifier les cours autorisés
+      if (req.user && req.user.role === 'student' && req.user.enterpriseId) {
+        try {
+          // Récupérer les cours accessibles pour cet employé d'entreprise
+          const { db } = require('./db');
+          const { sql } = require('drizzle-orm');
+          
+          const authorizedCourses = await db.execute(
+            sql`
+            SELECT course_id 
+            FROM enterprise_course_access 
+            WHERE enterprise_id = ${req.user.enterpriseId}
+            UNION
+            SELECT course_id 
+            FROM enterprise_employee_course_access 
+            WHERE employee_id = ${req.user.id}
+            `
+          );
+          
+          const authorizedCourseIds = authorizedCourses.rows.map(row => 
+            Number(row.course_id)
+          );
+          
+          // Ne retourner que les cours approuvés ET accessibles à l'employé
+          const filteredCourses = courses.filter(course => 
+            course.isApproved === true && 
+            authorizedCourseIds.includes(course.id)
+          );
+          
+          return res.json(filteredCourses);
+        } catch (dbError) {
+          console.error("Error fetching authorized courses:", dbError);
+          // En cas d'erreur de DB, on revient au comportement par défaut - filtrer par approbation
+          return res.json(courses.filter(course => course.isApproved === true));
+        }
+      }
+      
+      // Pour les utilisateurs normaux, on montre uniquement les cours approuvés
+      const filteredCourses = courses.filter(course => course.isApproved === true);
+      return res.json(filteredCourses);
     } catch (error) {
       console.error("Error fetching courses:", error);
       res.status(500).json({ message: "Impossible de récupérer les cours" });
