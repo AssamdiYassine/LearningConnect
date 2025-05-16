@@ -16,7 +16,8 @@ import {
   BlogCommentWithUser,
   ApprovalRequest, InsertApprovalRequest,
   ApprovalRequestWithDetails,
-  SubscriptionPlan, InsertSubscriptionPlan
+  SubscriptionPlan, InsertSubscriptionPlan,
+  Payment, InsertPayment
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -32,6 +33,14 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  
+  // Payment operations
+  getAllPayments(): Promise<Payment[]>;
+  getPaymentsByUserId(userId: number): Promise<Payment[]>;
+  getPaymentsByTrainerId(trainerId: number): Promise<Payment[]>;
+  createPayment(payment: InsertPayment): Promise<Payment>;
+  getRevenueStats(timeframe: string): Promise<any>;
+  getTrainerRevenueStats(): Promise<any>;
   createUser(user: InsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
   updateUserProfile(id: number, data: { displayName?: string, email?: string, username?: string }): Promise<User>;
@@ -1244,6 +1253,168 @@ export class MemStorage implements IStorage {
     repliesToDelete.forEach(replyId => {
       this.blogComments.delete(replyId);
     });
+  }
+
+  // Nouvelle implémentation pour les paiements (payments)
+  private payments: Map<number, Payment> = new Map();
+  private paymentIdCounter: number = 1;
+
+  async getAllPayments(): Promise<Payment[]> {
+    return Array.from(this.payments.values());
+  }
+
+  async getPaymentsByUserId(userId: number): Promise<Payment[]> {
+    return Array.from(this.payments.values())
+      .filter(payment => payment.userId === userId);
+  }
+
+  async getPaymentsByTrainerId(trainerId: number): Promise<Payment[]> {
+    return Array.from(this.payments.values())
+      .filter(payment => payment.trainerId === trainerId);
+  }
+
+  async createPayment(payment: InsertPayment): Promise<Payment> {
+    const id = this.paymentIdCounter++;
+    const now = new Date();
+    
+    const newPayment: Payment = {
+      ...payment,
+      id,
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    this.payments.set(id, newPayment);
+    return newPayment;
+  }
+
+  async getRevenueStats(timeframe: string): Promise<any> {
+    // Récupérer tous les paiements
+    const allPayments = await this.getAllPayments();
+    
+    // Définir la période selon le timeframe
+    const now = new Date();
+    let startDate = new Date();
+    
+    switch(timeframe) {
+      case 'week':
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case 'month':
+        startDate.setMonth(now.getMonth() - 1);
+        break;
+      case 'year':
+        startDate.setFullYear(now.getFullYear() - 1);
+        break;
+      default:
+        startDate.setMonth(now.getMonth() - 1); // Par défaut: dernier mois
+    }
+    
+    // Filtrer les paiements dans la période spécifiée
+    const paymentsInPeriod = allPayments.filter(
+      payment => payment.createdAt >= startDate && payment.createdAt <= now
+    );
+    
+    // Calculer les revenus journaliers
+    const dailyRevenue = this.calculateDailyRevenue(paymentsInPeriod);
+    
+    // Calculer les revenus par type
+    const revenueByType = this.calculateRevenueByType(paymentsInPeriod);
+    
+    // Calculer les statistiques globales
+    const totalRevenue = paymentsInPeriod.reduce(
+      (sum, payment) => sum + Number(payment.amount), 0
+    );
+    
+    const totalCount = paymentsInPeriod.length;
+    
+    const platformFees = paymentsInPeriod.reduce(
+      (sum, payment) => sum + (Number(payment.platformFee) || 0), 0
+    );
+    
+    return {
+      dailyRevenue,
+      revenueByType,
+      stats: {
+        total_revenue: totalRevenue,
+        total_count: totalCount,
+        platform_fees: platformFees
+      }
+    };
+  }
+
+  async getTrainerRevenueStats(): Promise<any> {
+    const allPayments = await this.getAllPayments();
+    
+    // Filtrer les paiements avec un formateur
+    const paymentsWithTrainer = allPayments.filter(payment => payment.trainerId);
+    
+    // Grouper par formateur
+    const trainerMap = new Map();
+    
+    for (const payment of paymentsWithTrainer) {
+      const trainerId = payment.trainerId as number;
+      
+      if (!trainerMap.has(trainerId)) {
+        const trainer = await this.getUser(trainerId);
+        
+        trainerMap.set(trainerId, {
+          trainer_id: trainerId,
+          trainer_name: trainer?.displayName || 'Formateur inconnu',
+          total: 0,
+          trainer_share: 0,
+          count: 0
+        });
+      }
+      
+      const stats = trainerMap.get(trainerId);
+      
+      stats.total += Number(payment.amount) || 0;
+      stats.trainer_share += Number(payment.trainerShare) || 0;
+      stats.count += 1;
+    }
+    
+    return Array.from(trainerMap.values())
+      .sort((a, b) => b.total - a.total); // Trier par montant décroissant
+  }
+
+  private calculateDailyRevenue(payments: Payment[]): any[] {
+    // Regrouper les paiements par date
+    const dailyMap = new Map();
+    
+    for (const payment of payments) {
+      const date = payment.createdAt.toISOString().split('T')[0]; // Format YYYY-MM-DD
+      
+      if (!dailyMap.has(date)) {
+        dailyMap.set(date, { date, total: 0, count: 0 });
+      }
+      
+      const daily = dailyMap.get(date);
+      daily.total += Number(payment.amount) || 0;
+      daily.count += 1;
+    }
+    
+    return Array.from(dailyMap.values())
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }
+
+  private calculateRevenueByType(payments: Payment[]): any[] {
+    // Regrouper les paiements par type
+    const typeMap = new Map();
+    
+    for (const payment of payments) {
+      const type = payment.type;
+      
+      if (!typeMap.has(type)) {
+        typeMap.set(type, { type, total: 0, count: 0 });
+      }
+      
+      const typeStats = typeMap.get(type);
+      typeStats.total += Number(payment.amount) || 0;
+      typeStats.count += 1;
+    }
+    
+    return Array.from(typeMap.values());
   }
 }
 

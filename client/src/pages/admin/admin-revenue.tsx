@@ -55,10 +55,10 @@ import { useState } from "react";
 function AdminRevenue() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [timeRange, setTimeRange] = useState("30d"); // 7d, 30d, 90d, 365d
+  const [timeRange, setTimeRange] = useState("month"); // week, month, year
   const [displayType, setDisplayType] = useState("revenue"); // revenue, subscriptions, trainers
 
-  // Fetch data
+  // Fetch data - utilisateurs, cours, sessions
   const { data: users, isLoading: isUsersLoading } = useQuery({
     queryKey: ["/api/users"],
     enabled: !!user && user.role === "admin"
@@ -74,31 +74,51 @@ function AdminRevenue() {
     enabled: !!user && user.role === "admin"
   });
 
-  // Données fictives pour la démonstration
-  // Revenus mensuels
-  const monthlyRevenueData = [
-    { name: 'Jan', abonnements: 980, coursIndividuels: 220, total: 1200 },
-    { name: 'Fév', abonnements: 1450, coursIndividuels: 390, total: 1840 },
-    { name: 'Mar', abonnements: 1820, coursIndividuels: 580, total: 2400 },
-    { name: 'Avr', abonnements: 1500, coursIndividuels: 480, total: 1980 },
-    { name: 'Mai', abonnements: 1950, coursIndividuels: 500, total: 2450 },
-  ];
+  // Récupérer les données de revenus
+  const { data: revenueData, isLoading: isRevenueLoading } = useQuery({
+    queryKey: ["/api/admin/revenue", timeRange],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/revenue?timeframe=${timeRange}`);
+      if (!res.ok) {
+        throw new Error("Erreur lors de la récupération des revenus");
+      }
+      return res.json();
+    },
+    enabled: !!user && user.role === "admin"
+  });
 
-  // Revenus par formateur
-  const trainerRevenueData = [
-    { id: 1, nom: "Marie Lemaire", coursComptes: 8, revenue: 1250, pourcentage: 15.9 },
-    { id: 2, nom: "Thomas Durand", coursComptes: 12, revenue: 1850, pourcentage: 23.6 },
-    { id: 3, nom: "Julien Martin", coursComptes: 5, revenue: 950, pourcentage: 12.1 },
-    { id: 4, nom: "Sophie Petit", coursComptes: 7, revenue: 1100, pourcentage: 14.0 },
-    { id: 5, nom: "Lucas Bernard", coursComptes: 9, revenue: 1400, pourcentage: 17.8 },
-  ];
+  // Récupérer les données de revenus par formateur
+  const { data: trainerRevenueData, isLoading: isTrainerRevenueLoading } = useQuery({
+    queryKey: ["/api/admin/revenue/trainers"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/revenue/trainers");
+      if (!res.ok) {
+        throw new Error("Erreur lors de la récupération des revenus des formateurs");
+      }
+      return res.json();
+    },
+    enabled: !!user && user.role === "admin"
+  });
 
-  // Distribution des revenus par type d'abonnement
-  const subscriptionDistribution = [
-    { name: 'Mensuel', value: 40 },
-    { name: 'Trimestriel', value: 35 },
-    { name: 'Annuel', value: 25 },
-  ];
+  // Transformer les données de revenus pour l'affichage dans les graphiques
+  const monthlyRevenueData = revenueData?.dailyRevenue?.map((item: any) => {
+    // Convertir la date au format court (jour/mois)
+    const date = new Date(item.date);
+    const formattedDate = `${date.getDate()}/${date.getMonth() + 1}`;
+    
+    return {
+      name: formattedDate,
+      total: parseFloat(item.total) || 0
+    };
+  }) || [];
+
+  // Données pour le graphique en camembert montrant la répartition par type
+  const subscriptionDistribution = revenueData?.revenueByType?.map((item: any) => ({
+    name: item.type === 'subscription' ? 'Abonnements' : 
+          item.type === 'course' ? 'Cours' : 
+          item.type === 'session' ? 'Sessions' : 'Autres',
+    value: parseFloat(item.total) || 0
+  })) || [];
 
   // Transactions récentes
   const recentTransactions = [

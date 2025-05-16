@@ -8,6 +8,7 @@ import { registerResetPasswordRoutes } from "./reset-password-routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedBlogDemoData } from "./blog-demo-data";
 import seedNotifications from "./seed-notifications";
+import seedPayments from "./seed-payments";
 import { extendDatabaseStorageForApi } from "./db-storage-api";
 import { storage } from "./storage";
 
@@ -81,6 +82,14 @@ app.use((req, res, next) => {
     log("Notifications de démonstration initialisées avec succès");
   } catch (error) {
     log("Erreur lors de l'initialisation des notifications de démonstration:", error);
+  }
+  
+  // Initialiser les données de paiement
+  try {
+    await seedPayments();
+    log("Données de paiement initialisées avec succès");
+  } catch (error) {
+    log("Erreur lors de l'initialisation des données de paiement:", error);
   }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
