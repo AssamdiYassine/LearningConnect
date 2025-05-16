@@ -57,8 +57,8 @@ export default function SessionDetail({ id }: SessionDetailProps) {
     );
   }
 
-  // Generate mock Zoom link for demo purposes
-  const zoomLink = `https://zoom.us/j/${Math.floor(10000000000 + Math.random() * 90000000000)}`;
+  // Utiliser le vrai lien Zoom de la session ou un lien par défaut si non disponible
+  const zoomLink = session.zoomLink || `https://zoom.us/j/1234567890?pwd=necform_session_${session.id}`;
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -142,7 +142,7 @@ export default function SessionDetail({ id }: SessionDetailProps) {
                 {session.isEnrolled ? (
                   <div className="space-y-3">
                     <p className="text-gray-700">
-                      Cette session aura lieu sur Zoom. Le lien sera disponible 15 minutes avant le début.
+                      Cette session aura lieu sur Zoom. Le lien est disponible ci-dessous.
                     </p>
                     <Button 
                       className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600" 
@@ -164,10 +164,22 @@ export default function SessionDetail({ id }: SessionDetailProps) {
                       S'abonner pour accéder
                     </Button>
                   </div>
+                ) : user?.enterpriseId || user?.role === 'enterprise_employee' as any ? (
+                  <div className="space-y-3">
+                    <p className="text-gray-700">
+                      En tant qu'employé d'entreprise, vous avez accès à cette formation. Inscrivez-vous pour accéder au lien Zoom.
+                    </p>
+                    <Button 
+                      className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-emerald-600"
+                      onClick={() => setLocation(`/course/${session.course.id}`)}
+                    >
+                      S'inscrire à cette session
+                    </Button>
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     <p className="text-gray-700">
-                      Vous n'êtes pas encore inscrit à cette session. Inscrivez-vous pour accéder au lien Zoom.
+                      Vous êtes déjà abonné. Inscrivez-vous à cette session pour accéder au lien Zoom.
                     </p>
                     <Button 
                       className="w-full sm:w-auto"
@@ -222,19 +234,24 @@ export default function SessionDetail({ id }: SessionDetailProps) {
                 <Button 
                   variant="outline" 
                   className="w-full border-green-500 text-green-700 bg-green-50 hover:bg-green-100"
-                  disabled
+                  onClick={() => setShowZoomDialog(true)}
                 >
-                  <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Déjà inscrit
+                  <VideoIcon className="h-4 w-4 mr-2" />
+                  Accéder à la session Zoom
                 </Button>
-              ) : !user?.isSubscribed && !user?.enterpriseId && user?.role !== 'enterprise_employee' ? (
+              ) : !user?.isSubscribed && !user?.enterpriseId && user?.role !== 'enterprise_employee' as any ? (
                 <Button 
                   onClick={() => setLocation("/subscription")}
                   className="w-full bg-gradient-to-r from-indigo-600 to-purple-600"
                 >
                   S'abonner pour accéder
+                </Button>
+              ) : user?.enterpriseId || user?.role === 'enterprise_employee' as any ? (
+                <Button 
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white"
+                  onClick={() => setLocation(`/course/${session.course.id}`)}
+                >
+                  S'inscrire en tant qu'employé
                 </Button>
               ) : (
                 <Button 
