@@ -253,13 +253,14 @@ export function getCategoryBadgeColor(categoryName: string | undefined): string 
 
 /**
  * Get a relative date label for a given date (e.g., "Today", "Tomorrow", "In 3 days", etc.)
+ * @returns An object with text and color properties for displaying in badges
  */
-export function getRelativeDateLabel(date: Date | string | null | undefined): string {
-  if (!date) return "Date inconnue";
+export function getRelativeDateLabel(date: Date | string | null | undefined): { text: string; color: string } {
+  if (!date) return { text: "Date inconnue", color: "gray" };
   
   try {
     const dateObject = date instanceof Date ? date : new Date(date);
-    if (isNaN(dateObject.getTime())) return "Date invalide";
+    if (isNaN(dateObject.getTime())) return { text: "Date invalide", color: "gray" };
     
     const now = new Date();
     now.setHours(0, 0, 0, 0);
@@ -271,18 +272,19 @@ export function getRelativeDateLabel(date: Date | string | null | undefined): st
     const diffDays = diffTime / (1000 * 60 * 60 * 24);
     
     if (diffDays < 0) {
-      if (diffDays === -1) return "Hier";
-      if (diffDays > -7) return `Il y a ${Math.abs(diffDays)} jours`;
-      return formatDate(dateObject);
+      if (diffDays === -1) return { text: "Hier", color: "gray" };
+      if (diffDays > -7) return { text: `Il y a ${Math.abs(diffDays)} jours`, color: "gray" };
+      return { text: formatDate(dateObject), color: "gray" };
     }
     
-    if (diffDays === 0) return "Aujourd'hui";
-    if (diffDays === 1) return "Demain";
-    if (diffDays < 7) return `Dans ${Math.floor(diffDays)} jours`;
+    if (diffDays === 0) return { text: "Aujourd'hui", color: "green" };
+    if (diffDays === 1) return { text: "Demain", color: "blue" };
+    if (diffDays < 3) return { text: `Dans ${Math.floor(diffDays)} jours`, color: "blue" };
+    if (diffDays < 7) return { text: `Dans ${Math.floor(diffDays)} jours`, color: "purple" };
     
-    return formatDate(dateObject);
+    return { text: formatDate(dateObject), color: "gray" };
   } catch (error) {
     console.error('Error getting relative date label:', error);
-    return 'Date invalide';
+    return { text: 'Date invalide', color: "gray" };
   }
 }

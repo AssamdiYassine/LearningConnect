@@ -15,9 +15,17 @@ interface SessionItemProps {
 
 export default function SessionItem({ session, showActions = true }: SessionItemProps) {
   const { toast } = useToast();
-  const course = session.course;
+  // Vérifier si le cours existe et le récupérer en toute sécurité
+  const course = session.course || {
+    id: 0,
+    title: "Formation indisponible",
+    duration: 0,
+    level: "beginner" as const,
+    trainer: { displayName: "Formateur inconnu" }
+  };
   const isUpcoming = new Date(session.date) > new Date();
-  const relativeDateInfo = getRelativeDateLabel(session.date);
+  // Récupérer les informations relatives à la date et s'assurer qu'elles sont valides
+  const relativeDateInfo = getRelativeDateLabel(session.date) || { text: 'Date inconnue', color: 'gray' };
   
   // Determine if the session is happening today or within the next 30 minutes
   const sessionDate = new Date(session.date);
@@ -128,7 +136,7 @@ export default function SessionItem({ session, showActions = true }: SessionItem
                 </Button>
               )}
               
-              {isWithin30Min && (
+              {isWithin30Min && session.zoomLink && (
                 <a 
                   href={session.zoomLink} 
                   target="_blank" 
