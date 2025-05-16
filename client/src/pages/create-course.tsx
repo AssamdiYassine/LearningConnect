@@ -34,7 +34,6 @@ export default function CreateCourse() {
   // Get categories
   const { data: categories, isLoading: isCategoriesLoading } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
-    queryFn: getQueryFn(),
   });
 
   // Create form instance

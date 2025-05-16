@@ -250,11 +250,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const courses = await storage.getAllCoursesWithDetails();
       
       // Filtrer pour ne montrer que les cours approuvés dans l'interface utilisateur
-      const filteredCourses = courses.filter(course => course.isApproved === true);
+      // Si l'utilisateur est admin ou formateur, montrer tous les cours
+      const isAdminOrTrainer = req.isAuthenticated() && ['admin', 'trainer'].includes(req.user?.role);
+      const filteredCourses = isAdminOrTrainer
+        ? courses
+        : courses.filter(course => course.isApproved === true);
       
       res.json(filteredCourses);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch courses" });
+      console.error("Error fetching courses:", error);
+      res.status(500).json({ message: "Impossible de récupérer les cours" });
     }
   });
 
