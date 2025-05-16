@@ -200,9 +200,21 @@ export default function SessionDetail({ id }: SessionDetailProps) {
                     </p>
                     <Button 
                       className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-emerald-600"
-                      onClick={() => setLocation(`/course/${session.course.id}`)}
+                      onClick={() => {
+                        if (!user) {
+                          toast({
+                            title: "Erreur",
+                            description: "Vous devez être connecté pour vous inscrire",
+                            variant: "destructive",
+                          });
+                          setLocation("/auth");
+                          return;
+                        }
+                        enrollMutation.mutate(session.id);
+                      }}
+                      disabled={enrollMutation.isPending}
                     >
-                      S'inscrire à cette session
+                      {enrollMutation.isPending ? "Inscription en cours..." : "S'inscrire à cette session"}
                     </Button>
                   </div>
                 ) : (
@@ -211,10 +223,22 @@ export default function SessionDetail({ id }: SessionDetailProps) {
                       Vous êtes déjà abonné. Inscrivez-vous à cette session pour accéder au lien Zoom.
                     </p>
                     <Button 
-                      className="w-full sm:w-auto"
-                      onClick={() => setLocation(`/course/${session.course.id}`)}
+                      className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600"
+                      onClick={() => {
+                        if (!user) {
+                          toast({
+                            title: "Erreur",
+                            description: "Vous devez être connecté pour vous inscrire",
+                            variant: "destructive",
+                          });
+                          setLocation("/auth");
+                          return;
+                        }
+                        enrollMutation.mutate(session.id);
+                      }}
+                      disabled={enrollMutation.isPending}
                     >
-                      S'inscrire à cette session
+                      {enrollMutation.isPending ? "Inscription en cours..." : "S'inscrire à cette session"}
                     </Button>
                   </div>
                 )}
@@ -278,16 +302,40 @@ export default function SessionDetail({ id }: SessionDetailProps) {
               ) : user?.enterpriseId || user?.role === 'enterprise_employee' as any ? (
                 <Button 
                   className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white"
-                  onClick={() => setLocation(`/course/${session.course.id}`)}
+                  onClick={() => {
+                    if (!user) {
+                      toast({
+                        title: "Erreur",
+                        description: "Vous devez être connecté pour vous inscrire",
+                        variant: "destructive",
+                      });
+                      setLocation("/auth");
+                      return;
+                    }
+                    enrollMutation.mutate(session.id);
+                  }}
+                  disabled={enrollMutation.isPending}
                 >
-                  S'inscrire en tant qu'employé
+                  {enrollMutation.isPending ? "Inscription en cours..." : "S'inscrire en tant qu'employé"}
                 </Button>
               ) : (
                 <Button 
-                  className="w-full"
-                  onClick={() => setLocation(`/course/${session.course.id}`)}
+                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white"
+                  onClick={() => {
+                    if (!user) {
+                      toast({
+                        title: "Erreur",
+                        description: "Vous devez être connecté pour vous inscrire",
+                        variant: "destructive",
+                      });
+                      setLocation("/auth");
+                      return;
+                    }
+                    enrollMutation.mutate(session.id);
+                  }}
+                  disabled={enrollMutation.isPending}
                 >
-                  S'inscrire maintenant
+                  {enrollMutation.isPending ? "Inscription en cours..." : "S'inscrire maintenant"}
                 </Button>
               )}
             </CardFooter>
