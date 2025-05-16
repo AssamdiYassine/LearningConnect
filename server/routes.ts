@@ -275,7 +275,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Si c'est un employé d'entreprise ou un admin d'entreprise, vérifier les cours autorisés
-      if (req.user && (req.user.role === 'student' || req.user.role === 'enterprise_admin') && req.user.enterpriseId) {
+      if (req.user && req.user.enterpriseId && 
+          (req.user.role === 'student' || req.user.role === 'enterprise_admin' || req.user.role === 'enterprise_employee')) {
         try {
           // Récupérer les cours accessibles pour cet employé d'entreprise
           const { db } = require('./db');
