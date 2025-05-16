@@ -99,6 +99,8 @@ export const courses = pgTable("courses", {
   isApproved: boolean("is_approved").default(false),
   price: integer("price").default(0), // price in cents
   thumbnail: text("thumbnail"),
+  learningOutcomes: text("learning_outcomes").array(),
+  targetAudience: text("target_audience").array(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
