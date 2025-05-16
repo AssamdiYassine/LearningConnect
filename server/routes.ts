@@ -829,8 +829,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Already enrolled in this session" });
       }
       
-      // Check if user has an active subscription
-      if (!req.user.isSubscribed) {
+      // Check if user has an active subscription - skipping for enterprise employees
+      if (!req.user.isSubscribed && !req.user.enterpriseId && req.user.role !== 'enterprise_employee') {
         return res.status(403).json({ message: "You need an active subscription to enroll in sessions" });
       }
       
