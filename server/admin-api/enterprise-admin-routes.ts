@@ -1,6 +1,7 @@
 import { Request, Response, Router } from "express";
 import { db } from "../db";
 import { and, asc, count, desc, eq, sql } from "drizzle-orm";
+import bcrypt from "bcryptjs";
 import {
   users,
   courses,
@@ -45,7 +46,7 @@ router.get("/enterprises", isAdmin, async (req, res) => {
     const enterpriseIds = results.rows.map((e: any) => Number(e.id));
     
     // Pour éviter l'erreur de syntaxe SQL, nous utiliserons une autre approche
-    let coursesAssigned = [];
+    let coursesAssigned: { enterpriseId: number; courseId: number }[] = [];
     
     if (enterpriseIds.length > 0) {
       // Récupérer les cours assignés pour toutes les entreprises
@@ -150,11 +151,50 @@ router.post("/enterprises", isAdmin, async (req, res) => {
         .values(courseAssignments);
     }
     
-    res.status(201).json({ 
-      ...enterprise,
-      employeeCount: 0,
-      courseIds: courseIds || []
-    });
+    // Créer un administrateur d'entreprise
+    const adminUsername = `admin_${name.toLowerCase().replace(/\s+/g, "_")}_${enterprise.id}`;
+    const adminPassword = `Enterprise${enterprise.id}2024!`;
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
+    
+    try {
+      const [enterpriseAdmin] = await db
+        .insert(users)
+        .values({
+          username: adminUsername,
+          email: contactEmail, // Utiliser l'email de contact de l'entreprise
+          password: hashedPassword,
+          displayName: `Admin ${name}`,
+          role: "enterprise_admin", // Rôle spécifique pour l'administrateur d'entreprise
+          isSubscribed: true,
+          subscriptionEndDate: formattedDate, // Même date que l'abonnement de l'entreprise
+          enterpriseId: enterprise.id, // Associer l'utilisateur à l'entreprise
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+      
+      console.log("Administrateur d'entreprise créé avec succès:", adminUsername);
+      
+      res.status(201).json({ 
+        ...enterprise,
+        employeeCount: 1, // Maintenant il y a un employé (l'admin)
+        courseIds: courseIds || [],
+        enterpriseAdmin: {
+          username: adminUsername,
+          password: adminPassword, // Fournir le mot de passe en clair uniquement dans la réponse initiale
+          id: enterpriseAdmin.id
+        }
+      });
+    } catch (error) {
+      console.error("Erreur lors de la création de l'administrateur d'entreprise:", error);
+      // En cas d'erreur, on retourne quand même l'entreprise créée
+      res.status(201).json({ 
+        ...enterprise,
+        employeeCount: 0,
+        courseIds: courseIds || [],
+        error: "Échec de la création de l'administrateur d'entreprise"
+      });
+    }
   } catch (error) {
     console.error("Erreur lors de la création de l'entreprise:", error);
     res.status(500).json({ 

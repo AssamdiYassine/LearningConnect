@@ -4,9 +4,9 @@ import { z } from "zod";
 import { relations } from "drizzle-orm";
 
 // Enum for user roles
-export const roleEnum = pgEnum("role", ["student", "trainer", "admin", "enterprise"]);
+export const roleEnum = pgEnum("role", ["student", "trainer", "admin", "enterprise", "enterprise_admin"]);
 // Type for user roles
-export type UserRole = "student" | "trainer" | "admin" | "enterprise";
+export type UserRole = "student" | "trainer" | "admin" | "enterprise" | "enterprise_admin";
 
 // Enum for subscription types
 export const subscriptionTypeEnum = pgEnum("subscription_type", ["monthly", "annual"]);
