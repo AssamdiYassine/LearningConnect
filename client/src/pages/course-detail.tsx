@@ -232,74 +232,89 @@ export default function CourseDetail({ id }: CourseDetailProps) {
                 <div className="mt-8 bg-purple-50 p-6 rounded-lg border border-purple-100">
                   <h3 className="text-lg font-semibold mb-3 text-purple-800">À qui s'adresse cette formation</h3>
                   <ul className="list-none space-y-3">
-                    {course.level === "beginner" && (
-                      <>
-                        <li className="flex items-start">
+                    {course.targetAudience && course.targetAudience.length > 0 ? (
+                      course.targetAudience.map((audience, index) => (
+                        <li key={index} className="flex items-start">
                           <div className="bg-purple-500 rounded-full p-1 mt-1 mr-3">
                             <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                             </svg>
                           </div>
-                          <span>Débutants complets sans expérience préalable</span>
+                          <span>{audience}</span>
                         </li>
+                      ))
+                    ) : (
+                      <>
+                        {course.level === "beginner" && (
+                          <>
+                            <li className="flex items-start">
+                              <div className="bg-purple-500 rounded-full p-1 mt-1 mr-3">
+                                <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                              <span>Débutants complets sans expérience préalable</span>
+                            </li>
+                            <li className="flex items-start">
+                              <div className="bg-purple-500 rounded-full p-1 mt-1 mr-3">
+                                <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                              <span>Personnes cherchant à construire une base en {course.category.name}</span>
+                            </li>
+                          </>
+                        )}
+                        {course.level === "intermediate" && (
+                          <>
+                            <li className="flex items-start">
+                              <div className="bg-purple-500 rounded-full p-1 mt-1 mr-3">
+                                <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                              <span>Personnes ayant des connaissances de base sur le sujet</span>
+                            </li>
+                            <li className="flex items-start">
+                              <div className="bg-purple-500 rounded-full p-1 mt-1 mr-3">
+                                <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                              <span>Professionnels cherchant à améliorer leurs compétences</span>
+                            </li>
+                          </>
+                        )}
+                        {course.level === "advanced" && (
+                          <>
+                            <li className="flex items-start">
+                              <div className="bg-purple-500 rounded-full p-1 mt-1 mr-3">
+                                <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                              <span>Professionnels expérimentés cherchant à maîtriser des concepts avancés</span>
+                            </li>
+                            <li className="flex items-start">
+                              <div className="bg-purple-500 rounded-full p-1 mt-1 mr-3">
+                                <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                              <span>Personnes souhaitant se spécialiser dans certains aspects de {course.category.name}</span>
+                            </li>
+                          </>
+                        )}
                         <li className="flex items-start">
                           <div className="bg-purple-500 rounded-full p-1 mt-1 mr-3">
                             <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                             </svg>
                           </div>
-                          <span>Personnes cherchant à construire une base en {course.category.name}</span>
+                          <span>Professionnels qui préfèrent une formation interactive en direct</span>
                         </li>
                       </>
                     )}
-                    {course.level === "intermediate" && (
-                      <>
-                        <li className="flex items-start">
-                          <div className="bg-purple-500 rounded-full p-1 mt-1 mr-3">
-                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          </div>
-                          <span>Personnes ayant des connaissances de base sur le sujet</span>
-                        </li>
-                        <li className="flex items-start">
-                          <div className="bg-purple-500 rounded-full p-1 mt-1 mr-3">
-                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          </div>
-                          <span>Professionnels cherchant à améliorer leurs compétences</span>
-                        </li>
-                      </>
-                    )}
-                    {course.level === "advanced" && (
-                      <>
-                        <li className="flex items-start">
-                          <div className="bg-purple-500 rounded-full p-1 mt-1 mr-3">
-                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          </div>
-                          <span>Professionnels expérimentés cherchant à maîtriser des concepts avancés</span>
-                        </li>
-                        <li className="flex items-start">
-                          <div className="bg-purple-500 rounded-full p-1 mt-1 mr-3">
-                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          </div>
-                          <span>Personnes souhaitant se spécialiser dans certains aspects de {course.category.name}</span>
-                        </li>
-                      </>
-                    )}
-                    <li className="flex items-start">
-                      <div className="bg-purple-500 rounded-full p-1 mt-1 mr-3">
-                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      <span>Professionnels qui préfèrent une formation interactive en direct</span>
-                    </li>
                   </ul>
                 </div>
               </div>
