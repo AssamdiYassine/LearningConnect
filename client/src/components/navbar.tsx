@@ -76,7 +76,7 @@ export default function Navbar() {
         sticky ? "header-sticky py-3" : "py-4 bg-transparent"
       }`}
     >
-      <div className="container-wide">
+      <div className="page-container">
         <nav className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center">

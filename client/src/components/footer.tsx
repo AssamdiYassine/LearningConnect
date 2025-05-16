@@ -65,8 +65,8 @@ export default function Footer() {
   return (
     <footer className="mt-20 border-t border-gray-200 dark:border-gray-800">
       {/* Prefooter avec des informations et statistiques */}
-      <div className="bg-slate-50 dark:bg-gray-900/50 py-16">
-        <div className="container-wide">
+      <div className="bg-slate-50 dark:bg-gray-900/50 py-12">
+        <div className="page-container">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-3xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
@@ -111,8 +111,8 @@ export default function Footer() {
       </div>
 
       {/* Footer principal */}
-      <div className="bg-gradient-to-b from-primary to-primary-dark text-white pt-16 pb-8">
-        <div className="container-wide">
+      <div className="bg-gradient-to-b from-primary to-primary-dark text-white pt-14 pb-8">
+        <div className="page-container">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-16">
             {/* Company Info */}
             <div className="md:col-span-4 space-y-6">
