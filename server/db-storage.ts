@@ -555,6 +555,7 @@ export class DatabaseStorage implements IStorage {
       const result = await db.execute(`
         SELECT 
           s.id, s.course_id, s.date, s.zoom_link, s.created_at, s.updated_at, s.is_completed,
+          s.start_time, s.end_time, s.max_students, s.recording_link, s.title,
           c.id as course_id, c.title as course_title, c.description as course_description,
           cat.id as category_id, cat.name as category_name,
           u.id as trainer_id, u.username as trainer_username, u.display_name as trainer_display_name,
