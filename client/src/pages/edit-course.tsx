@@ -36,8 +36,16 @@ export default function EditCourse() {
     queryKey: ["/api/courses", courseId],
     enabled: !!courseId && !isNaN(courseId),
     queryFn: async () => {
-      const res = await apiRequest("GET", `/api/courses/${courseId}`);
-      return res.json();
+      try {
+        const res = await apiRequest("GET", `/api/courses/${courseId}`);
+        if (!res.ok) {
+          throw new Error(`Erreur ${res.status}: ${await res.text()}`);
+        }
+        return res.json();
+      } catch (error) {
+        console.error("Erreur lors de la récupération du cours:", error);
+        throw error;
+      }
     }
   });
 
