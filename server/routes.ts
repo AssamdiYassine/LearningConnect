@@ -345,14 +345,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { trainerId } = req.params;
       const courses = await storage.getCoursesByTrainer(parseInt(trainerId));
       
+      if (!courses || !Array.isArray(courses)) {
+        console.error("Courses is not an array:", courses);
+        return res.json([]);
+      }
+      
       // Filtrer les cours non approuvés, sauf pour les admin et formateur
-      const isAdminOrTrainer = req.isAuthenticated() && ['admin', 'trainer'].includes(req.user?.role);
+      const isAdminOrTrainer = req.isAuthenticated && typeof req.isAuthenticated === 'function' 
+        ? req.isAuthenticated() && req.user && ['admin', 'trainer'].includes(req.user.role)
+        : false;
+        
       const filteredCourses = isAdminOrTrainer 
         ? courses 
-        : courses.filter(course => course.isApproved === true);
+        : courses.filter(course => course && course.isApproved === true);
       
       res.json(filteredCourses);
     } catch (error) {
+      console.error("Error in /api/courses/trainer/:", error);
       res.status(500).json({ message: "Failed to fetch trainer courses" });
     }
   });
@@ -565,9 +574,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/sessions/trainer/:trainerId", async (req, res) => {
     try {
       const { trainerId } = req.params;
+      
+      console.log(`Récupération des sessions du formateur ${trainerId}`);
       const sessions = await storage.getSessionsByTrainer(parseInt(trainerId));
+      
+      if (!sessions || !Array.isArray(sessions)) {
+        console.error("Sessions is not an array:", sessions);
+        return res.json([]);
+      }
+      
+      console.log(`${sessions.length} sessions trouvées pour le formateur ${trainerId}`);
       res.json(sessions);
     } catch (error) {
+      console.error("Error in /api/sessions/trainer/:", error);
       res.status(500).json({ message: "Failed to fetch trainer sessions" });
     }
   });
