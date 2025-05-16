@@ -152,7 +152,7 @@ export default function SessionDetail({ id }: SessionDetailProps) {
                       Accéder à la session Zoom
                     </Button>
                   </div>
-                ) : !user?.isSubscribed ? (
+                ) : !user?.isSubscribed && !user?.enterpriseId && user?.role !== 'enterprise_employee' as any ? (
                   <div className="space-y-3">
                     <p className="text-gray-700">
                       Vous devez vous abonner pour accéder à cette session de formation.
@@ -198,22 +198,22 @@ export default function SessionDetail({ id }: SessionDetailProps) {
               </div>
               <div className="flex items-center justify-between border-b border-gray-200 pb-3">
                 <span className="text-gray-500">Durée</span>
-                <span className="font-medium">{formatDuration(session.course.duration)}</span>
+                <span className="font-medium">{formatDuration(session.course.duration || 0)}</span>
               </div>
               <div className="flex items-center justify-between border-b border-gray-200 pb-3">
                 <span className="text-gray-500">Places</span>
                 <span className="font-medium">
-                  {session.enrollmentCount} / {session.course.maxStudents} inscrits
+                  {session.enrollmentCount || 0} / {session.course.maxStudents || '∞'} places
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
                 <div 
-                  className={`h-2 rounded-full ${session.enrollmentCount >= session.course.maxStudents 
+                  className={`h-2 rounded-full ${(session.enrollmentCount || 0) >= (session.course.maxStudents || 999) 
                   ? 'bg-red-500' 
-                  : session.enrollmentCount > session.course.maxStudents / 2 
+                  : (session.enrollmentCount || 0) > (session.course.maxStudents || 999) / 2 
                     ? 'bg-orange-500' 
                     : 'bg-green-500'}`}
-                  style={{ width: `${(session.enrollmentCount / session.course.maxStudents) * 100}%` }}
+                  style={{ width: `${Math.min(((session.enrollmentCount || 0) / (session.course.maxStudents || 1)) * 100, 100)}%` }}
                 ></div>
               </div>
             </CardContent>
@@ -229,7 +229,7 @@ export default function SessionDetail({ id }: SessionDetailProps) {
                   </svg>
                   Déjà inscrit
                 </Button>
-              ) : !user?.isSubscribed ? (
+              ) : !user?.isSubscribed && !user?.enterpriseId && user?.role !== 'enterprise_employee' ? (
                 <Button 
                   onClick={() => setLocation("/subscription")}
                   className="w-full bg-gradient-to-r from-indigo-600 to-purple-600"
