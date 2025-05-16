@@ -718,7 +718,7 @@ function AdminSessions() {
                   {getStatusBadge(selectedSession.date)}
                 </div>
                 <DialogDescription>
-                  Session pour la formation : <span className="font-medium">{selectedSession.courseTitle}</span>
+                  Session pour la formation : <span className="font-medium">{selectedSession.course?.title || "Sans titre"}</span>
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
@@ -740,11 +740,11 @@ function AdminSessions() {
                     </div>
                     <div>
                       <div className="text-sm font-medium mb-1 text-muted-foreground">Formateur</div>
-                      <div>{selectedSession.trainerName}</div>
+                      <div>{selectedSession.course?.trainer?.displayName || "Non assigné"}</div>
                     </div>
                     <div>
                       <div className="text-sm font-medium mb-1 text-muted-foreground">Catégorie</div>
-                      <div>{selectedSession.courseCategoryName}</div>
+                      <div>{selectedSession.course?.category?.name || "Non catégorisé"}</div>
                     </div>
                     <div>
                       <div className="text-sm font-medium mb-1 text-muted-foreground">Inscriptions</div>
