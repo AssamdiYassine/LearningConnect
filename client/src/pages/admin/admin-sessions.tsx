@@ -339,11 +339,11 @@ function AdminSessions() {
     });
   };
 
-  const formatTime = (timeString: string) => {
-    return timeString;
+  const formatTime = (timeString: string | undefined) => {
+    return timeString || "Non défini";
   };
 
-  const formatDateTime = (dateString: string, timeString: string) => {
+  const formatDateTime = (dateString: string, timeString: string | undefined) => {
     return `${formatDate(dateString)} à ${formatTime(timeString)}`;
   };
 
@@ -823,7 +823,7 @@ function AdminSessions() {
           <DialogHeader>
             <DialogTitle>Modifier la session</DialogTitle>
             <DialogDescription>
-              Modifier les informations de la session pour {selectedSession?.courseTitle}
+              Modifier les informations de la session pour {selectedSession?.course?.title || "Sans titre"}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
