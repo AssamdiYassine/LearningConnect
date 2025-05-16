@@ -157,21 +157,34 @@ router.post("/enterprises", isAdmin, async (req, res) => {
     const hashedPassword = await bcrypt.hash(adminPassword, 10);
     
     try {
-      const [enterpriseAdmin] = await db
-        .insert(users)
-        .values({
-          username: adminUsername,
-          email: contactEmail, // Utiliser l'email de contact de l'entreprise
-          password: hashedPassword,
-          displayName: `Admin ${name}`,
-          role: "enterprise_admin", // Rôle spécifique pour l'administrateur d'entreprise
-          isSubscribed: true,
-          subscriptionEndDate: formattedDate, // Même date que l'abonnement de l'entreprise
-          enterpriseId: enterprise.id, // Associer l'utilisateur à l'entreprise
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
-        .returning();
+      // En utilisant directement les noms de colonnes de la base de données
+      const [enterpriseAdmin] = await db.execute(sql`
+        INSERT INTO users (
+          username, 
+          email, 
+          password, 
+          display_name, 
+          role, 
+          is_subscribed, 
+          subscription_end_date, 
+          enterprise_id, 
+          created_at, 
+          updated_at
+        ) 
+        VALUES (
+          ${adminUsername},
+          ${contactEmail},
+          ${hashedPassword},
+          ${'Admin ' + name},
+          ${'enterprise_admin'},
+          ${true},
+          ${formattedDate},
+          ${enterprise.id},
+          ${new Date()},
+          ${new Date()}
+        )
+        RETURNING *
+      `);
       
       console.log("Administrateur d'entreprise créé avec succès:", adminUsername);
       
