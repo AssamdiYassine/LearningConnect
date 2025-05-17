@@ -79,7 +79,7 @@ function AdminCategories() {
   // Mutation pour mettre à jour une catégorie
   const updateCategoryMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: { name: string; slug: string } }) => {
-      const res = await apiRequest("PUT", `/api/categories/${id}`, data);
+      const res = await apiRequest("PUT", `/api/admin/categories/${id}`, data);
       return res.json();
     },
     onSuccess: () => {
@@ -103,7 +103,7 @@ function AdminCategories() {
   // Mutation pour supprimer une catégorie
   const deleteCategoryMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await apiRequest("DELETE", `/api/categories/${id}`);
+      const res = await apiRequest("DELETE", `/api/admin/categories/${id}`);
       return res.status === 204 ? null : res.json();
     },
     onSuccess: () => {
