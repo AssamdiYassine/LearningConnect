@@ -153,6 +153,23 @@ export class DatabaseStorage implements IStorage {
     const [category] = await db.select().from(categories).where(eq(categories.slug, slug));
     return category;
   }
+  
+  async updateCategory(id: number, data: Partial<Category>): Promise<Category> {
+    const [updatedCategory] = await db
+      .update(categories)
+      .set(data)
+      .where(eq(categories.id, id))
+      .returning();
+    return updatedCategory;
+  }
+  
+  async deleteCategory(id: number): Promise<void> {
+    await db.delete(categories).where(eq(categories.id, id));
+  }
+  
+  async getCoursesByCategory(categoryId: number): Promise<Course[]> {
+    return await db.select().from(courses).where(eq(courses.categoryId, categoryId));
+  }
 
   // Course operations
   async createCourse(course: InsertCourse): Promise<Course> {

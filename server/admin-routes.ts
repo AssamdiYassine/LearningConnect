@@ -281,6 +281,75 @@ export function registerAdminRoutes(app: Express) {
       }
     }
   });
+  
+  // Mettre à jour une catégorie
+  app.put('/api/admin/categories/:id', hasAdminRole, async (req, res) => {
+    try {
+      const categoryId = parseInt(req.params.id);
+      
+      // Vérifier si la catégorie existe
+      const category = await storage.getCategory(categoryId);
+      if (!category) {
+        return res.status(404).json({ message: "Catégorie non trouvée" });
+      }
+      
+      // Validation des données
+      const updateSchema = z.object({
+        name: z.string().min(2),
+        slug: z.string().min(2)
+      });
+      
+      const updateData = updateSchema.parse(req.body);
+      
+      // Vérifier si le slug est déjà utilisé par une autre catégorie
+      if (updateData.slug !== category.slug) {
+        const existingCategory = await storage.getCategoryBySlug(updateData.slug);
+        if (existingCategory && existingCategory.id !== categoryId) {
+          return res.status(400).json({ message: "Une catégorie avec ce slug existe déjà" });
+        }
+      }
+      
+      // Mettre à jour la catégorie
+      const updatedCategory = await storage.updateCategory(categoryId, updateData);
+      
+      res.status(200).json(updatedCategory);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Données invalides", errors: error.format() });
+      } else {
+        res.status(500).json({ message: `Erreur lors de la mise à jour de la catégorie: ${error.message}` });
+      }
+    }
+  });
+  
+  // Supprimer une catégorie
+  app.delete('/api/admin/categories/:id', hasAdminRole, async (req, res) => {
+    try {
+      const categoryId = parseInt(req.params.id);
+      
+      // Vérifier si la catégorie existe
+      const category = await storage.getCategory(categoryId);
+      if (!category) {
+        return res.status(404).json({ message: "Catégorie non trouvée" });
+      }
+      
+      // Vérifier si des formations sont associées à cette catégorie
+      const coursesWithCategory = await storage.getCoursesByCategory(categoryId);
+      if (coursesWithCategory.length > 0) {
+        return res.status(400).json({ 
+          message: "Impossible de supprimer cette catégorie car des formations y sont associées",
+          courses: coursesWithCategory
+        });
+      }
+      
+      // Supprimer la catégorie
+      await storage.deleteCategory(categoryId);
+      
+      res.status(200).json({ message: "Catégorie supprimée avec succès" });
+    } catch (error: any) {
+      res.status(500).json({ message: `Erreur lors de la suppression de la catégorie: ${error.message}` });
+    }
+  });
 
   // ========== FORMATIONS ==========
   
