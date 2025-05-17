@@ -6,6 +6,7 @@ import { registerAdminApiSettingsRoutes } from "./admin-api-settings-routes";
 import { registerAdminApiExtensions } from "./admin-api-extensions";
 import { registerResetPasswordRoutes } from "./reset-password-routes";
 import { registerAdminRevenueRoutes } from "./admin-revenue-routes";
+import { registerZoomRoutes } from "./routes-zoom";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedBlogDemoData } from "./blog-demo-data";
 import seedNotifications from "./seed-notifications";
