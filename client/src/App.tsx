@@ -22,6 +22,7 @@ import Subscription from "@/pages/subscription";
 import Checkout from "@/pages/checkout";
 import CourseDetail from "@/pages/course-detail";
 import SessionDetail from "@/pages/session-detail";
+import ZoomSession from "@/pages/zoom-session";
 import LandingPage from "@/pages/landing-page";
 import AboutPage from "@/pages/about-page";
 import ProfilePage from "./pages/profile";
@@ -136,7 +137,16 @@ function Router() {
         {params => (
           <ProtectedRoute 
             component={() => <SessionDetail id={parseInt(params.id)} />} 
-            allowedRoles={["student", "trainer", "admin"]} 
+            allowedRoles={["student", "trainer", "admin", "enterprise", "enterprise_admin", "enterprise_employee"]} 
+          />
+        )}
+      </Route>
+      
+      <Route path="/zoom-session/:id">
+        {params => (
+          <ProtectedRoute 
+            component={() => <ZoomSession id={parseInt(params.id)} />} 
+            allowedRoles={["student", "trainer", "admin", "enterprise", "enterprise_admin", "enterprise_employee"]} 
           />
         )}
       </Route>

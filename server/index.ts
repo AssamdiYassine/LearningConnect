@@ -70,6 +70,9 @@ app.use((req, res, next) => {
   // Register admin revenue routes
   registerAdminRevenueRoutes(app);
   
+  // Register Zoom routes
+  registerZoomRoutes(app);
+  
   // Enregistrer les routes pour la réinitialisation des mots de passe
   registerResetPasswordRoutes(app);
 

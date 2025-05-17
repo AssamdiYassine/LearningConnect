@@ -175,7 +175,10 @@ export default function SessionDetail({ id }: SessionDetailProps) {
                     </p>
                     <Button 
                       className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600" 
-                      onClick={() => setShowZoomDialog(true)}
+                      onClick={() => {
+                        // Rediriger vers la page Zoom Session au lieu d'ouvrir la boîte de dialogue
+                        window.location.href = `/zoom-session/${session.id}`;
+                      }}
                     >
                       <VideoIcon className="h-4 w-4 mr-2" />
                       Accéder à la session Zoom
@@ -287,7 +290,10 @@ export default function SessionDetail({ id }: SessionDetailProps) {
                 <Button 
                   variant="outline" 
                   className="w-full border-green-500 text-green-700 bg-green-50 hover:bg-green-100"
-                  onClick={() => setShowZoomDialog(true)}
+                  onClick={() => {
+                    // Rediriger vers la page Zoom Session au lieu d'ouvrir la boîte de dialogue
+                    window.location.href = `/zoom-session/${session.id}`;
+                  }}
                 >
                   <VideoIcon className="h-4 w-4 mr-2" />
                   Accéder à la session Zoom
