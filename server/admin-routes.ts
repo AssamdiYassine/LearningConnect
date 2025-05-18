@@ -336,18 +336,32 @@ export function registerAdminRoutes(app: Express) {
       // Vérifier si des formations sont associées à cette catégorie
       const coursesWithCategory = await storage.getCoursesByCategory(categoryId);
       if (coursesWithCategory.length > 0) {
+        // Récupérer les noms des formations pour l'affichage
+        const courseNames = coursesWithCategory.map(c => c.title || `Cours #${c.id}`).join(", ");
+        
         return res.status(400).json({ 
-          message: "Impossible de supprimer cette catégorie car des formations y sont associées",
+          message: `Impossible de supprimer cette catégorie car elle est utilisée par ${coursesWithCategory.length} formation(s): ${courseNames}`,
           courses: coursesWithCategory
         });
       }
       
-      // Supprimer la catégorie
-      await storage.deleteCategory(categoryId);
-      
-      res.status(200).json({ message: "Catégorie supprimée avec succès" });
+      try {
+        // Supprimer la catégorie avec gestion d'erreur spécifique
+        await storage.deleteCategory(categoryId);
+        res.status(200).json({ message: "Catégorie supprimée avec succès" });
+      } catch (dbError: any) {
+        // Si erreur de contrainte d'intégrité ou autre erreur de base de données
+        console.error("Erreur de base de données lors de la suppression:", dbError);
+        return res.status(400).json({ 
+          message: "Impossible de supprimer cette catégorie car elle est référencée ailleurs dans la base de données."
+        });
+      }
     } catch (error: any) {
-      res.status(500).json({ message: `Erreur lors de la suppression de la catégorie: ${error.message}` });
+      console.error("Erreur complète lors de la suppression de catégorie:", error);
+      res.status(500).json({ 
+        message: `Erreur lors de la suppression de la catégorie: ${error.message}`,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
     }
   });
 
@@ -602,11 +616,15 @@ export function registerAdminRoutes(app: Express) {
         startTime: z.string().optional(),
         endTime: z.string().optional(),
         maxStudents: z.number().min(1).optional(),
-        zoomLink: z.string().url().optional(),
-        recordingLink: z.string().url().optional().nullable(),
+        zoomLink: z.string().optional(), // Rendre plus flexible pour accepter différents formats de liens
+        recordingLink: z.string().optional().nullable(),
       });
       
       const updateData = updateSchema.parse(req.body);
+      
+      // Assurer que les champs URL vides sont traités comme null, pas comme chaînes vides
+      if (updateData.zoomLink === '') updateData.zoomLink = null;
+      if (updateData.recordingLink === '') updateData.recordingLink = null;
       
       // Mettre à jour la session
       const updatedSession = await storage.updateSession(sessionId, updateData);
