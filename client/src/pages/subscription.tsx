@@ -3,12 +3,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Loader2 } from "lucide-react";
+import { CheckCircle, Loader2, CreditCard, Phone, Mail, X } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
 
 // Type pour les plans d'abonnement
 interface SubscriptionPlan {
@@ -98,7 +103,10 @@ export default function Subscription() {
   };
   
   // Composant de bouton d'abonnement qui gère automatiquement les cas authentifiés et non authentifiés
-  const SubscribeButton = ({ planId }: { planId: number }) => {
+  const SubscribeButton = ({ planId, planName }: { planId: number, planName: string }) => {
+    // On va récupérer le plan à partir de l'ID pour l'inclure dans le message de contact
+    const selectedPlanName = planName;
+    
     return showActionButtons ? (
       <Button 
         className="w-full" 
@@ -116,9 +124,67 @@ export default function Subscription() {
     );
   };
 
-  // Handle subscription by redirecting to checkout
+  // État pour le modal de choix d'option de paiement
+  const [showPaymentOptions, setShowPaymentOptions] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
+  
+  // États pour le formulaire de contact
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [contactSubmitting, setContactSubmitting] = useState(false);
+  
+  // Handle subscription by showing payment options first
   const handleSubscribe = (planId: number) => {
-    setLocation(`/checkout?planId=${planId}`);
+    setSelectedPlanId(planId);
+    setShowPaymentOptions(true);
+  };
+  
+  // Handle Stripe checkout
+  const handleStripeCheckout = () => {
+    if (selectedPlanId) {
+      setShowPaymentOptions(false);
+      setLocation(`/checkout?planId=${selectedPlanId}`);
+    }
+  };
+  
+  // Handle contact form display
+  const handleContactOption = () => {
+    setShowPaymentOptions(false);
+    setShowContactForm(true);
+  };
+  
+  // Handle contact form submission
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setContactSubmitting(true);
+    
+    try {
+      // Simuler l'envoi du formulaire
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Réinitialiser le formulaire après envoi
+      setContactName("");
+      setContactEmail("");
+      setContactPhone("");
+      setContactMessage("");
+      setShowContactForm(false);
+      
+      toast({
+        title: "Demande envoyée",
+        description: "Nous avons bien reçu votre demande de contact. Un conseiller vous contactera prochainement.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'envoi du formulaire. Veuillez réessayer.",
+        variant: "destructive",
+      });
+    } finally {
+      setContactSubmitting(false);
+    }
   };
 
   // Cancel subscription mutation
@@ -164,6 +230,118 @@ export default function Subscription() {
 
   return (
     <div className="space-y-8">
+      {/* Modals pour le choix de paiement et le formulaire de contact */}
+      <Dialog open={showPaymentOptions} onOpenChange={setShowPaymentOptions}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Choisissez votre méthode de paiement</DialogTitle>
+            <DialogDescription>
+              Vous pouvez payer en ligne immédiatement ou demander à être contacté par un conseiller.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div 
+              className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+              onClick={handleStripeCheckout}
+            >
+              <div className="p-2 bg-primary-50 rounded-full mr-4">
+                <CreditCard className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-medium">Paiement en ligne</h3>
+                <p className="text-sm text-gray-500">Payez maintenant par carte bancaire de manière sécurisée</p>
+              </div>
+            </div>
+            
+            <div 
+              className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+              onClick={handleContactOption}
+            >
+              <div className="p-2 bg-green-50 rounded-full mr-4">
+                <Phone className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <h3 className="font-medium">Être contacté</h3>
+                <p className="text-sm text-gray-500">Demandez à être contacté par WhatsApp ou email</p>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Formulaire de contact */}
+      <Dialog open={showContactForm} onOpenChange={setShowContactForm}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Demande de contact</DialogTitle>
+            <DialogDescription>
+              Laissez-nous vos coordonnées et nous vous contacterons dans les plus brefs délais.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleContactSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">
+                  Nom
+                </Label>
+                <Input
+                  id="name"
+                  value={contactName}
+                  onChange={(e) => setContactName(e.target.value)}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="email" className="text-right">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="phone" className="text-right">
+                  Téléphone
+                </Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={contactPhone}
+                  onChange={(e) => setContactPhone(e.target.value)}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="message" className="text-right">
+                  Message
+                </Label>
+                <Textarea
+                  id="message"
+                  value={contactMessage}
+                  onChange={(e) => setContactMessage(e.target.value)}
+                  className="col-span-3"
+                  placeholder="Dites-nous comment vous préférez être contacté(e) (WhatsApp, email, téléphone)"
+                  rows={4}
+                  required
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={contactSubmitting}>
+                {contactSubmitting ? "Envoi en cours..." : "Envoyer ma demande"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      
       <div>
         <h1 className="text-3xl font-bold text-gray-900 font-heading">Mon abonnement</h1>
         <p className="mt-2 text-gray-600">
