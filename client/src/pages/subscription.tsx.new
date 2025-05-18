@@ -290,12 +290,7 @@ export default function Subscription() {
                     </div>
                   </CardContent>
                   <CardFooter>
-                    <Button 
-                      className="w-full" 
-                      onClick={() => handleSubscribe(plan.id)}
-                    >
-                      S'abonner maintenant
-                    </Button>
+                    <SubscribeButton planId={plan.id} />
                   </CardFooter>
                 </Card>
               ))
@@ -336,12 +331,7 @@ export default function Subscription() {
                     </div>
                   </CardContent>
                   <CardFooter>
-                    <Button 
-                      className="w-full" 
-                      onClick={() => handleSubscribe(plan.id)}
-                    >
-                      S'abonner maintenant
-                    </Button>
+                    <SubscribeButton planId={plan.id} />
                   </CardFooter>
                 </Card>
               ))
@@ -382,12 +372,7 @@ export default function Subscription() {
                     </div>
                   </CardContent>
                   <CardFooter>
-                    <Button 
-                      className="w-full" 
-                      onClick={() => handleSubscribe(plan.id)}
-                    >
-                      S'abonner maintenant
-                    </Button>
+                    <SubscribeButton planId={plan.id} />
                   </CardFooter>
                 </Card>
               ))
@@ -411,27 +396,27 @@ export default function Subscription() {
           
           <Card>
             <CardContent className="pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Qu'est-ce qui est inclus dans mon abonnement ?</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Comment fonctionne la facturation ?</h3>
               <p className="text-gray-600">
-                Votre abonnement vous donne accès à toutes nos sessions de formation en direct, la possibilité d'interagir avec les formateurs et l'accès à des ressources exclusives.
+                Nous facturons automatiquement votre carte de crédit à la date de renouvellement. Vous recevrez un e-mail de confirmation pour chaque paiement.
               </p>
             </CardContent>
           </Card>
           
           <Card>
             <CardContent className="pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Comment accéder aux sessions en direct ?</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Y a-t-il une période d'essai ?</h3>
               <p className="text-gray-600">
-                Après vous être inscrit à un cours, vous pourrez accéder au lien Zoom pour la session. Nous vous enverrons également un e-mail de rappel avant le début de la session.
+                Nous n'offrons pas de période d'essai actuellement, mais nous proposons une garantie de remboursement de 7 jours si vous n'êtes pas satisfait.
               </p>
             </CardContent>
           </Card>
           
           <Card>
             <CardContent className="pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Y a-t-il une politique de remboursement ?</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Puis-je changer de forfait ?</h3>
               <p className="text-gray-600">
-                Nous offrons une garantie de remboursement de 30 jours pour les abonnements annuels. Les abonnements mensuels peuvent être annulés à tout moment.
+                Oui, vous pouvez passer à un forfait supérieur à tout moment. La différence de prix sera calculée au prorata pour la période restante.
               </p>
             </CardContent>
           </Card>
