@@ -113,11 +113,11 @@ function Router() {
       </Route>
       
       <Route path="/schedule">
-        <ProtectedRoute component={Schedule} allowedRoles={["student", "trainer", "admin"]} />
+        <Schedule />
       </Route>
       
       <Route path="/subscription">
-        <ProtectedRoute component={Subscription} allowedRoles={["student", "trainer", "admin"]} />
+        <Subscription />
       </Route>
       
       <Route path="/checkout">

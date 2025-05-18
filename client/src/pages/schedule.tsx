@@ -35,11 +35,20 @@ export default function Schedule() {
   const [selectedSession, setSelectedSession] = useState<SessionWithDetails | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   
-  // Récupérer toutes les sessions de l'utilisateur
-  const { data: sessions, isLoading: isSessionsLoading } = useQuery<SessionWithDetails[]>({
+  // Si l'utilisateur est connecté, récupérer ses sessions inscrites
+  const { data: userSessions, isLoading: isUserSessionsLoading } = useQuery<SessionWithDetails[]>({
     queryKey: ["/api/enrollments/user"],
     enabled: !!user
   });
+  
+  // Récupérer toutes les sessions publiques (utilisé quand l'utilisateur n'est pas connecté)
+  const { data: publicSessions, isLoading: isPublicSessionsLoading } = useQuery<SessionWithDetails[]>({
+    queryKey: ["/api/sessions/upcoming"],
+  });
+  
+  // Utiliser les sessions de l'utilisateur s'il est connecté, sinon utiliser les sessions publiques
+  const sessions = user ? userSessions : publicSessions;
+  const isSessionsLoading = user ? isUserSessionsLoading : isPublicSessionsLoading;
 
   const prevMonth = () => {
     if (view === "month") {
