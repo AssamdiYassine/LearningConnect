@@ -179,6 +179,13 @@ export interface IStorage {
   getSubscription(id: number): Promise<any | undefined>; // Récupère un abonnement spécifique
   updateSubscription(id: number, data: any): Promise<any>; // Met à jour un abonnement
   
+  // Subscription plans operations
+  getAllSubscriptionPlans(): Promise<SubscriptionPlan[]>; // Retourne tous les plans d'abonnement
+  getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined>; // Récupère un plan d'abonnement spécifique
+  getSubscriptionPlanByName(name: string): Promise<SubscriptionPlan | undefined>; // Récupère un plan d'abonnement par son nom
+  createSubscriptionPlan(data: InsertSubscriptionPlan): Promise<SubscriptionPlan>; // Crée un nouveau plan d'abonnement
+  updateSubscriptionPlan(id: number, data: Partial<InsertSubscriptionPlan & { isActive?: boolean }>): Promise<SubscriptionPlan>; // Met à jour un plan d'abonnement
+  
   // Extended user operations
   getUsersByRole(role: string): Promise<User[]>;
   updateUser(id: number, data: Partial<User>): Promise<User>;
