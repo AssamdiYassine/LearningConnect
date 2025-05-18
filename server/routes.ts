@@ -241,13 +241,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Route publique pour les catégories (accessible sans authentification)
-  app.get("/api/public/categories", async (req, res) => {
+  // Route publique pour les catégories (sans authentification)
+  app.get("/api/categories", async (req, res) => {
     try {
       const categories = await storage.getAllCategories();
       res.json(categories);
     } catch (error) {
-      console.error("Error fetching public categories:", error);
+      console.error("Error fetching categories:", error);
       res.status(500).json({ message: "Impossible de récupérer les catégories" });
     }
   });
@@ -331,8 +331,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Route publique pour les cours (accessible sans authentification)
-  app.get("/api/public/courses", async (req, res) => {
+  // Route publique pour les cours approuvés (sans authentification)
+  app.get("/api/courses/public", async (req, res) => {
     try {
       const courses = await storage.getAllCoursesWithDetails();
       
@@ -482,6 +482,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(filteredSessions);
     } catch (error) {
       console.error("Error fetching public upcoming sessions:", error);
+      res.status(500).json({ message: "Impossible de récupérer les sessions à venir" });
+    }
+  });
+  
+  // Route dupliquée pour compatibilité, sans le préfixe /public/
+  app.get("/api/sessions/upcoming", async (req, res) => {
+    try {
+      const sessions = await storage.getUpcomingSessions();
+      
+      // Filtrer pour ne montrer que les sessions des cours approuvés
+      const filteredSessions = sessions.filter(session => 
+        session.course && session.course.isApproved === true
+      );
+      
+      res.json(filteredSessions);
+    } catch (error) {
+      console.error("Error fetching upcoming sessions:", error);
       res.status(500).json({ message: "Impossible de récupérer les sessions à venir" });
     }
   });
