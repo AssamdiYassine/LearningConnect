@@ -499,34 +499,34 @@ const AdminDashboard: React.FC = () => {
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <p className="text-sm font-medium">React.js Avancé</p>
-                  <Badge>52 inscrits</Badge>
+                  <Badge>{stats.courseStats.popularCourses?.[0]?.enrollmentCount || 0} inscrits</Badge>
                 </div>
                 <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="bg-primary h-full rounded-full" style={{ width: '92%' }}></div>
+                  <div className="bg-primary h-full rounded-full" style={{ width: `${stats.courseStats.popularCourses?.[0]?.enrollmentPercentage || 0}%` }}></div>
                 </div>
               </div>
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <p className="text-sm font-medium">DevOps avec Docker</p>
-                  <Badge>47 inscrits</Badge>
+                  <Badge>{stats.courseStats.popularCourses?.[1]?.enrollmentCount || 0} inscrits</Badge>
                 </div>
                 <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="bg-primary h-full rounded-full" style={{ width: '84%' }}></div>
+                  <div className="bg-primary h-full rounded-full" style={{ width: `${stats.courseStats.popularCourses?.[1]?.enrollmentPercentage || 0}%` }}></div>
                 </div>
               </div>
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <p className="text-sm font-medium">Data Science Python</p>
-                  <Badge>41 inscrits</Badge>
+                  <Badge>{stats.courseStats.popularCourses?.[2]?.enrollmentCount || 0} inscrits</Badge>
                 </div>
                 <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="bg-primary h-full rounded-full" style={{ width: '76%' }}></div>
+                  <div className="bg-primary h-full rounded-full" style={{ width: `${stats.courseStats.popularCourses?.[2]?.enrollmentPercentage || 0}%` }}></div>
                 </div>
               </div>
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <p className="text-sm font-medium">Node.js & Express</p>
-                  <Badge>38 inscrits</Badge>
+                  <Badge>{stats.courseStats.popularCourses?.[3]?.enrollmentCount || 0} inscrits</Badge>
                 </div>
                 <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div className="bg-primary h-full rounded-full" style={{ width: '69%' }}></div>
@@ -559,7 +559,7 @@ const AdminDashboard: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-muted-foreground">12 mai 2025, 14:00</p>
                   <Badge variant="outline" className="text-green-500 border-green-200 bg-green-50">
-                    15 inscrits
+                    {stats.courseStats?.upcomingSessions?.[0]?.enrollmentCount || 0} inscrits
                   </Badge>
                 </div>
               </div>
@@ -569,7 +569,7 @@ const AdminDashboard: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-muted-foreground">14 mai 2025, 10:00</p>
                   <Badge variant="outline" className="text-yellow-500 border-yellow-200 bg-yellow-50">
-                    8 inscrits
+                    {stats.courseStats?.upcomingSessions?.[1]?.enrollmentCount || 0} inscrits
                   </Badge>
                 </div>
               </div>
@@ -579,7 +579,7 @@ const AdminDashboard: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-muted-foreground">17 mai 2025, 09:30</p>
                   <Badge variant="outline" className="text-red-500 border-red-200 bg-red-50">
-                    3 inscrits
+                    {stats.courseStats?.upcomingSessions?.[2]?.enrollmentCount || 0} inscrits
                   </Badge>
                 </div>
               </div>
@@ -589,7 +589,7 @@ const AdminDashboard: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-muted-foreground">18 mai 2025, 15:30</p>
                   <Badge variant="outline" className="text-blue-500 border-blue-200 bg-blue-50">
-                    12 inscrits
+                    {stats.sessionStats?.nextSession?.enrollmentCount || 0} inscrits
                   </Badge>
                 </div>
               </div>
