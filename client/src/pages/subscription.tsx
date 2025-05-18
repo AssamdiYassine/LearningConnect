@@ -35,6 +35,19 @@ export default function Subscription() {
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual" | "business">("monthly");
   const [, setLocation] = useLocation();
   
+  // États pour le modal de choix d'option de paiement
+  const [showPaymentOptions, setShowPaymentOptions] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
+  const [selectedPlanName, setSelectedPlanName] = useState<string>("");
+  
+  // États pour le formulaire de contact
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [contactSubmitting, setContactSubmitting] = useState(false);
+  
   // Si l'utilisateur est un employé d'entreprise, le rediriger vers le catalogue de formations
   useEffect(() => {
     if (user && (user.enterpriseId || user.role === 'enterprise_employee')) {
@@ -102,43 +115,10 @@ export default function Subscription() {
     });
   };
   
-  // Composant de bouton d'abonnement qui gère automatiquement les cas authentifiés et non authentifiés
-  const SubscribeButton = ({ planId, planName }: { planId: number, planName: string }) => {
-    // On va récupérer le plan à partir de l'ID pour l'inclure dans le message de contact
-    const selectedPlanName = planName;
-    
-    return showActionButtons ? (
-      <Button 
-        className="w-full" 
-        onClick={() => handleSubscribe(planId)}
-      >
-        S'abonner maintenant
-      </Button>
-    ) : (
-      <Button 
-        className="w-full" 
-        onClick={() => setLocation('/auth')}
-      >
-        Se connecter pour s'abonner
-      </Button>
-    );
-  };
-
-  // État pour le modal de choix d'option de paiement
-  const [showPaymentOptions, setShowPaymentOptions] = useState(false);
-  const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
-  
-  // États pour le formulaire de contact
-  const [showContactForm, setShowContactForm] = useState(false);
-  const [contactName, setContactName] = useState("");
-  const [contactEmail, setContactEmail] = useState("");
-  const [contactPhone, setContactPhone] = useState("");
-  const [contactMessage, setContactMessage] = useState("");
-  const [contactSubmitting, setContactSubmitting] = useState(false);
-  
   // Handle subscription by showing payment options first
-  const handleSubscribe = (planId: number) => {
+  const handleSubscribe = (planId: number, planName: string) => {
     setSelectedPlanId(planId);
+    setSelectedPlanName(planName);
     setShowPaymentOptions(true);
   };
   
@@ -154,6 +134,9 @@ export default function Subscription() {
   const handleContactOption = () => {
     setShowPaymentOptions(false);
     setShowContactForm(true);
+    
+    // Préremplir le message avec les détails du plan
+    setContactMessage(`Je souhaite obtenir plus d'informations concernant l'abonnement "${selectedPlanName}". Je préfère être contacté(e) par : `);
   };
   
   // Handle contact form submission
@@ -468,12 +451,21 @@ export default function Subscription() {
                     </div>
                   </CardContent>
                   <CardFooter>
-                    <Button 
-                      className="w-full" 
-                      onClick={() => handleSubscribe(plan.id)}
-                    >
-                      S'abonner maintenant
-                    </Button>
+                    {showActionButtons ? (
+                      <Button 
+                        className="w-full" 
+                        onClick={() => handleSubscribe(plan.id, plan.name)}
+                      >
+                        Choisir ce plan
+                      </Button>
+                    ) : (
+                      <Button 
+                        className="w-full" 
+                        onClick={() => setLocation('/auth')}
+                      >
+                        Se connecter pour s'abonner
+                      </Button>
+                    )}
                   </CardFooter>
                 </Card>
               ))
@@ -514,12 +506,21 @@ export default function Subscription() {
                     </div>
                   </CardContent>
                   <CardFooter>
-                    <Button 
-                      className="w-full" 
-                      onClick={() => handleSubscribe(plan.id)}
-                    >
-                      S'abonner maintenant
-                    </Button>
+                    {showActionButtons ? (
+                      <Button 
+                        className="w-full" 
+                        onClick={() => handleSubscribe(plan.id, plan.name)}
+                      >
+                        Choisir ce plan
+                      </Button>
+                    ) : (
+                      <Button 
+                        className="w-full" 
+                        onClick={() => setLocation('/auth')}
+                      >
+                        Se connecter pour s'abonner
+                      </Button>
+                    )}
                   </CardFooter>
                 </Card>
               ))
@@ -546,7 +547,7 @@ export default function Subscription() {
                     <div className="space-y-4">
                       <div className="flex items-baseline">
                         <span className="text-3xl font-bold text-gray-900">{plan.price}€</span>
-                        <span className="text-gray-500 ml-1">/ mois</span>
+                        <span className="text-gray-500 ml-1">/ entreprise</span>
                         <Badge className="ml-2 bg-blue-100 text-blue-800">Entreprise</Badge>
                       </div>
                       <ul className="space-y-3">
@@ -560,12 +561,21 @@ export default function Subscription() {
                     </div>
                   </CardContent>
                   <CardFooter>
-                    <Button 
-                      className="w-full" 
-                      onClick={() => handleSubscribe(plan.id)}
-                    >
-                      S'abonner maintenant
-                    </Button>
+                    {showActionButtons ? (
+                      <Button 
+                        className="w-full" 
+                        onClick={() => handleSubscribe(plan.id, plan.name)}
+                      >
+                        Demander un devis
+                      </Button>
+                    ) : (
+                      <Button 
+                        className="w-full" 
+                        onClick={() => setLocation('/auth')}
+                      >
+                        Se connecter pour demander un devis
+                      </Button>
+                    )}
                   </CardFooter>
                 </Card>
               ))
@@ -580,36 +590,33 @@ export default function Subscription() {
         <div className="grid gap-6 md:grid-cols-2">
           <Card>
             <CardContent className="pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Puis-je annuler mon abonnement ?</h3>
-              <p className="text-gray-600">
-                Oui, vous pouvez annuler votre abonnement à tout moment. Si vous annulez, vous aurez toujours accès jusqu'à la fin de votre période de facturation.
+              <h3 className="text-lg font-medium text-gray-900 mb-3">Comment fonctionne l'abonnement ?</h3>
+              <p className="text-gray-700">
+                Nos abonnements vous donnent un accès complet à toutes les formations en ligne. Vous pouvez assister à autant de sessions en direct que vous le souhaitez pendant la durée de votre abonnement.
               </p>
             </CardContent>
           </Card>
-          
           <Card>
             <CardContent className="pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Qu'est-ce qui est inclus dans mon abonnement ?</h3>
-              <p className="text-gray-600">
-                Votre abonnement vous donne accès à toutes nos sessions de formation en direct, la possibilité d'interagir avec les formateurs et l'accès à des ressources exclusives.
+              <h3 className="text-lg font-medium text-gray-900 mb-3">Puis-je annuler à tout moment ?</h3>
+              <p className="text-gray-700">
+                Oui, vous pouvez annuler votre abonnement à tout moment. Vous conserverez l'accès jusqu'à la fin de votre période de facturation actuelle.
               </p>
             </CardContent>
           </Card>
-          
           <Card>
             <CardContent className="pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Comment accéder aux sessions en direct ?</h3>
-              <p className="text-gray-600">
-                Après vous être inscrit à un cours, vous pourrez accéder au lien Zoom pour la session. Nous vous enverrons également un e-mail de rappel avant le début de la session.
+              <h3 className="text-lg font-medium text-gray-900 mb-3">Quels modes de paiement acceptez-vous ?</h3>
+              <p className="text-gray-700">
+                Nous acceptons les paiements par carte de crédit via notre système sécurisé. Pour les entreprises, nous proposons également des factures et des virements bancaires.
               </p>
             </CardContent>
           </Card>
-          
           <Card>
             <CardContent className="pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Y a-t-il une politique de remboursement ?</h3>
-              <p className="text-gray-600">
-                Nous offrons une garantie de remboursement de 30 jours pour les abonnements annuels. Les abonnements mensuels peuvent être annulés à tout moment.
+              <h3 className="text-lg font-medium text-gray-900 mb-3">Comment fonctionnent les abonnements entreprise ?</h3>
+              <p className="text-gray-700">
+                Les abonnements entreprise permettent à plusieurs employés d'accéder à nos formations. Contactez-nous pour une offre personnalisée en fonction du nombre d'utilisateurs.
               </p>
             </CardContent>
           </Card>
