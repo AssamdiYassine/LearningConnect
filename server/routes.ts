@@ -1095,8 +1095,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Subscription plans routes - Pour afficher les plans aux utilisateurs normaux
-  app.get("/api/subscription-plans", async (req, res) => {
+  // Subscription plans routes - Pour afficher les plans aux utilisateurs publics
+  app.get("/api/subscription-plans/public", async (req, res) => {
+    try {
+      const plans = await storage.getAllSubscriptionPlans();
+      // Ne renvoyer que les plans actifs
+      const activePlans = plans.filter(plan => plan.isActive);
+      
+      // Log pour debug
+      console.log("Plans publics récupérés:", activePlans);
+      
+      res.json(activePlans);
+    } catch (error) {
+      console.error("Failed to fetch subscription plans:", error);
+      res.status(500).json({ message: "Failed to fetch subscription plans" });
+    }
+  });
+  
+  // Version authentifiée pour les utilisateurs connectés
+  app.get("/api/subscription-plans", isAuthenticated, async (req, res) => {
     try {
       // Si c'est un utilisateur d'entreprise, renvoyer un tableau vide
       if (req.user && (req.user.role === 'enterprise' || req.user.role === 'enterprise_admin')) {
@@ -1107,9 +1124,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const plans = await storage.getAllSubscriptionPlans();
       // Ne renvoyer que les plans actifs aux utilisateurs réguliers
       const activePlans = plans.filter(plan => plan.isActive);
-      
-      // Log pour debug
-      console.log("Plans récupérés:", activePlans);
       
       res.json(activePlans);
     } catch (error) {

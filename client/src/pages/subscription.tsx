@@ -43,9 +43,9 @@ export default function Subscription() {
 
   // Récupérer les plans d'abonnement depuis l'API
   const { data: plans, isLoading: isLoadingPlans } = useQuery<SubscriptionPlan[]>({
-    queryKey: ['/api/subscription-plans'],
+    queryKey: ['/api/subscription-plans/public'],
     queryFn: async () => {
-      const res = await fetch('/api/subscription-plans');
+      const res = await fetch('/api/subscription-plans/public');
       if (!res.ok) throw new Error("Impossible de charger les plans d'abonnement");
       return res.json();
     }
@@ -130,6 +130,9 @@ export default function Subscription() {
 
   // Check if user has an active subscription
   const isSubscribed = user?.isSubscribed;
+  
+  // Variable pour déterminer si les boutons d'action doivent être affichés
+  const showActionButtons = !!user;
 
   // Afficher un loader pendant le chargement des plans
   if (isLoadingPlans) {
