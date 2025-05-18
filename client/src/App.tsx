@@ -109,7 +109,7 @@ function Router() {
       </Route>
       
       <Route path="/catalog">
-        <ProtectedRoute component={Catalog} allowedRoles={["student", "trainer", "admin"]} />
+        <Catalog />
       </Route>
       
       <Route path="/schedule">
