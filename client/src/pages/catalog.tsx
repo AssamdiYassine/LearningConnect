@@ -20,19 +20,19 @@ export default function Catalog() {
   const [levelFilter, setLevelFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState("date-asc");
 
-  // Fetch courses using the public API route
+  // Fetch courses
   const { data: courses, isLoading: isCoursesLoading } = useQuery<CourseWithDetails[]>({
-    queryKey: ["/api/public/courses"],
+    queryKey: ["/api/courses"],
   });
 
-  // Fetch categories using the public API route
+  // Fetch categories
   const { data: categories, isLoading: isCategoriesLoading } = useQuery<Category[]>({
-    queryKey: ["/api/public/categories"],
+    queryKey: ["/api/categories"],
   });
 
-  // Fetch upcoming sessions using the public API route
+  // Fetch upcoming sessions
   const { data: sessions, isLoading: isSessionsLoading } = useQuery<SessionWithDetails[]>({
-    queryKey: ["/api/public/sessions/upcoming"],
+    queryKey: ["/api/sessions/upcoming"],
   });
 
   // Filter and sort courses
