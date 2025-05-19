@@ -74,6 +74,7 @@ export const users = pgTable("users", {
   stripeSubscriptionId: text("stripe_subscription_id"),
   resetPasswordToken: text("reset_password_token"),
   resetTokenExpires: timestamp("reset_token_expires"),
+  phoneNumber: text("phone_number"),
   enterpriseId: integer("enterprise_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
