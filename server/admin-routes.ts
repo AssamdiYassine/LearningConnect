@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction, Express } from 'express';
 import { z } from 'zod';
 import { storage } from './storage';
+import { db } from './db';
 import { scrypt, randomBytes, timingSafeEqual } from 'crypto';
 import { promisify } from 'util';
 import {
@@ -627,7 +628,7 @@ export function registerAdminRoutes(app: Express) {
       if (updateData.recordingLink === '') updateData.recordingLink = null;
       
       // Convertir les données de mise à jour au format attendu par la base de données
-      const dbUpdateData: Partial<Session> = {
+      const dbUpdateData: any = {
         ...(updateData.courseId && { courseId: updateData.courseId }),
         ...(updateData.date && { date: new Date(updateData.date) }),
         ...(updateData.zoomLink !== undefined && { zoomLink: updateData.zoomLink }),
@@ -641,9 +642,56 @@ export function registerAdminRoutes(app: Express) {
       
       console.log("Données de mise à jour:", dbUpdateData);
       
-      // Mettre à jour la session
+      // Mettre à jour la session directement avec SQL
       try {
-        const updatedSession = await storage.updateSession(sessionId, dbUpdateData);
+        console.log("Données à mettre à jour:", dbUpdateData);
+        
+        // Construire la requête SQL de mise à jour
+        let updateSQL = "UPDATE sessions SET ";
+        const updateValues = [];
+        const updateParams = [];
+        
+        if (dbUpdateData.courseId) {
+          updateParams.push(`course_id = $${updateValues.length + 1}`);
+          updateValues.push(dbUpdateData.courseId);
+        }
+        
+        if (dbUpdateData.date) {
+          updateParams.push(`date = $${updateValues.length + 1}`);
+          updateValues.push(dbUpdateData.date);
+        }
+        
+        if (dbUpdateData.zoomLink !== undefined) {
+          updateParams.push(`zoom_link = $${updateValues.length + 1}`);
+          updateValues.push(dbUpdateData.zoomLink);
+        }
+        
+        if (dbUpdateData.recordingLink !== undefined) {
+          updateParams.push(`recording_link = $${updateValues.length + 1}`);
+          updateValues.push(dbUpdateData.recordingLink);
+        }
+        
+        if (dbUpdateData.maxParticipants) {
+          updateParams.push(`max_participants = $${updateValues.length + 1}`);
+          updateValues.push(dbUpdateData.maxParticipants);
+        }
+        
+        if (updateParams.length === 0) {
+          return res.status(400).json({ message: "Aucune donnée à mettre à jour" });
+        }
+        
+        updateSQL += updateParams.join(", ") + ` WHERE id = $${updateValues.length + 1}`;
+        updateValues.push(sessionId);
+        
+        console.log("SQL de mise à jour:", updateSQL);
+        console.log("Valeurs:", updateValues);
+        
+        // Exécuter la requête
+        await db.execute(updateSQL, updateValues);
+        
+        // Récupérer la session mise à jour
+        const updatedSession = await storage.getSession(sessionId);
+        
         res.status(200).json(updatedSession);
       } catch (dbError) {
         console.error("Erreur base de données:", dbError);
@@ -674,11 +722,22 @@ export function registerAdminRoutes(app: Express) {
         return res.status(404).json({ message: "Session non trouvée" });
       }
       
-      // Supprimer la session
-      await storage.deleteSession(sessionId);
+      // Vérification si des inscriptions existent pour cette session
+      const enrollments = await storage.getEnrollmentsBySession(sessionId);
+      if (enrollments && enrollments.length > 0) {
+        // Supprimer d'abord toutes les inscriptions associées
+        for (const enrollment of enrollments) {
+          await storage.deleteEnrollment(enrollment.id);
+        }
+        console.log(`${enrollments.length} inscriptions supprimées pour la session ${sessionId}`);
+      }
+      
+      // Supprimer la session en utilisant une requête SQL directe
+      await db.execute(`DELETE FROM sessions WHERE id = ${sessionId}`);
       
       res.status(200).json({ message: "Session supprimée avec succès" });
     } catch (error: any) {
+      console.error("Erreur lors de la suppression de la session:", error);
       res.status(500).json({ message: `Erreur lors de la suppression de la session: ${error.message}` });
     }
   });

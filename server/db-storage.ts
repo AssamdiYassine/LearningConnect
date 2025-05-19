@@ -164,7 +164,20 @@ export class DatabaseStorage implements IStorage {
   }
   
   async deleteCategory(id: number): Promise<void> {
-    await db.delete(categories).where(eq(categories.id, id));
+    try {
+      // Vérifier d'abord s'il y a des formations associées à cette catégorie
+      const coursesWithCategory = await this.getCoursesByCategory(id);
+      if (coursesWithCategory.length > 0) {
+        throw new Error(`La catégorie est utilisée par ${coursesWithCategory.length} formation(s)`);
+      }
+      
+      // Si aucune formation n'est associée, procéder à la suppression
+      await db.delete(categories).where(eq(categories.id, id));
+      console.log(`Catégorie ${id} supprimée avec succès`);
+    } catch (error) {
+      console.error(`Erreur lors de la suppression de la catégorie ${id}:`, error);
+      throw error;
+    }
   }
   
   async getCoursesByCategory(categoryId: number): Promise<Course[]> {
