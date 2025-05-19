@@ -114,7 +114,7 @@ export default function SessionItem({ session, showActions = true }: SessionItem
             
             <div className="flex items-center">
               <Clock className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-              <span>{formatDuration(calculateDurationInMinutes(session.date, session.endDate) || course.duration)}</span>
+              <span>{formatDuration(course.duration)}</span>
             </div>
           </div>
           

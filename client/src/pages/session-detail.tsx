@@ -143,7 +143,7 @@ export default function SessionDetail({ id }: SessionDetailProps) {
                   <div>
                     <p className="text-sm text-gray-500">Durée</p>
                     <p className="font-medium">
-                      {formatDuration(calculateDurationInMinutes(session.date, session.endDate))}
+                      {formatDuration(session.course.duration)}
                     </p>
                   </div>
                 </div>
