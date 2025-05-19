@@ -15,6 +15,7 @@ import { seedBlogDemoData } from "./blog-demo-data";
 import seedNotifications from "./seed-notifications";
 import seedPayments from "./seed-payments";
 import initDemoCourses from "./init-demo-courses";
+import initDemoEnterprises from "./init-demo-enterprises";
 import { extendDatabaseStorageForApi } from "./db-storage-api";
 import { storage } from "./storage_fixed";
 
@@ -116,6 +117,14 @@ app.use((req, res, next) => {
     log("Cours et sessions de démonstration initialisés avec succès");
   } catch (error) {
     log("Erreur lors de l'initialisation des cours de démonstration:", error);
+  }
+  
+  // Initialiser les entreprises de démonstration
+  try {
+    await initDemoEnterprises();
+    log("Entreprises de démonstration initialisées avec succès");
+  } catch (error) {
+    log("Erreur lors de l'initialisation des entreprises de démonstration:", error);
   }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
