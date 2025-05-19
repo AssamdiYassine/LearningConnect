@@ -804,10 +804,23 @@ export default function StudentDashboard() {
         
         {/* Calendrier */}
         <TabsContent value="calendar" className="space-y-6">
-          <TrainingCalendar 
-            sessions={upcomingSessions || []}
-            isLoading={isUpcomingSessionsLoading}
-          />
+          <Card className="border-none shadow-md">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div>
+                <CardTitle className="text-xl font-bold">Calendrier de formation</CardTitle>
+                <CardDescription>Vos sessions planifiées et disponibles</CardDescription>
+              </div>
+              <Badge className="bg-green-600">
+                {upcomingSessions?.length || 0} session(s) à venir
+              </Badge>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <TrainingCalendar 
+                sessions={upcomingSessions || []}
+                isLoading={isUpcomingSessionsLoading}
+              />
+            </CardContent>
+          </Card>
           
           {/* Category Distribution */}
           <Card>
