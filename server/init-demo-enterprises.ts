@@ -1,5 +1,6 @@
 import { db } from "./db";
 import { enterprises, users, enterpriseAssignedCourses } from "@shared/schema";
+import { eq, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 // Fonction pour créer une entreprise de démonstration
@@ -18,7 +19,7 @@ async function createDemoEnterprise(
     const existingEnterprise = await db
       .select()
       .from(enterprises)
-      .where(enterprises => enterprises.name.equals(name))
+      .where(eq(enterprises.name, name))
       .limit(1);
     
     if (existingEnterprise.length > 0) {
@@ -62,21 +63,36 @@ async function createDemoEnterprise(
     const adminPassword = `Enterprise${enterprise.id}2024!`;
     const hashedPassword = await bcrypt.hash(adminPassword, 10);
     
-    const [enterpriseAdmin] = await db
-      .insert(users)
-      .values({
-        username: adminUsername,
-        email: contactEmail,
-        password: hashedPassword,
-        displayName: 'Admin ' + name,
-        role: 'enterprise_admin',
-        isSubscribed: true,
-        subscriptionEndDate,
-        enterpriseId: enterprise.id,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      })
-      .returning();
+    // Utiliser sql brut car il y a des problèmes avec l'API Drizzle pour l'insertion d'utilisateurs
+    const result = await db.execute(sql`
+      INSERT INTO users (
+        username, 
+        email,
+        password,
+        display_name,
+        role,
+        is_subscribed,
+        subscription_end_date,
+        enterprise_id,
+        created_at,
+        updated_at
+      ) 
+      VALUES (
+        ${adminUsername},
+        ${contactEmail},
+        ${hashedPassword},
+        ${'Admin ' + name},
+        ${'enterprise_admin'},
+        ${true},
+        ${subscriptionEndDate},
+        ${enterprise.id},
+        ${new Date()},
+        ${new Date()}
+      )
+      RETURNING *
+    `);
+    
+    const enterpriseAdmin = result.rows[0];
     
     console.log(`Administrateur d'entreprise créé: ${adminUsername}, ID: ${enterpriseAdmin.id}`);
     console.log(`Identifiants: ${adminUsername} / ${adminPassword}`);
@@ -89,21 +105,36 @@ async function createDemoEnterprise(
       const employeePassword = `Employee${i}2024!`;
       const hashedEmployeePassword = await bcrypt.hash(employeePassword, 10);
       
-      const [employee] = await db
-        .insert(users)
-        .values({
-          username: employeeUsername,
-          email: `employee${i}@${name.toLowerCase().replace(/\s+/g, "")}.fr`,
-          password: hashedEmployeePassword,
-          displayName: `Employé ${i} ${name}`,
-          role: 'student',
-          isSubscribed: true,
-          subscriptionEndDate,
-          enterpriseId: enterprise.id,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
-        .returning();
+      // Utiliser SQL brut pour l'insertion des employés
+      const employeeResult = await db.execute(sql`
+        INSERT INTO users (
+          username, 
+          email,
+          password,
+          display_name,
+          role,
+          is_subscribed,
+          subscription_end_date,
+          enterprise_id,
+          created_at,
+          updated_at
+        ) 
+        VALUES (
+          ${employeeUsername},
+          ${`employee${i}@${name.toLowerCase().replace(/\s+/g, "")}.fr`},
+          ${hashedEmployeePassword},
+          ${`Employé ${i} ${name}`},
+          ${'student'},
+          ${true},
+          ${subscriptionEndDate},
+          ${enterprise.id},
+          ${new Date()},
+          ${new Date()}
+        )
+        RETURNING *
+      `);
+      
+      const employee = employeeResult.rows[0];
       
       console.log(`Employé créé: ${employeeUsername}, ID: ${employee.id}`);
     }
