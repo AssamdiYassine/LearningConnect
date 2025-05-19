@@ -80,10 +80,42 @@ export default function StudentDashboard() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [timeRange, setTimeRange] = useState("all");
-  const [weeklyProgress, setWeeklyProgress] = useState<any[]>([]);
-  const [learningStats, setLearningStats] = useState<any[]>([]);
-  const [courseCompletionData, setCourseCompletionData] = useState<any[]>([]);
-  const [skillDistribution, setSkillDistribution] = useState<any[]>([]);
+  
+  // Couleurs pour les graphiques
+  const COLORS = ["#5F8BFF", "#7A6CFF", "#1D2B6C", "#41aade", "#6fb5e1", "#3F85FB"];
+  
+  const [weeklyProgress, setWeeklyProgress] = useState<any[]>([
+    { name: "Lun", heures: 2, sessions: 1 },
+    { name: "Mar", heures: 3, sessions: 1 },
+    { name: "Mer", heures: 1, sessions: 0 },
+    { name: "Jeu", heures: 4, sessions: 2 },
+    { name: "Ven", heures: 2, sessions: 1 },
+    { name: "Sam", heures: 0, sessions: 0 },
+    { name: "Dim", heures: 1, sessions: 0 },
+  ]);
+  
+  const [learningStats, setLearningStats] = useState<any[]>([
+    { name: "Jan", sessions: 3, heures: 6, progression: 20 },
+    { name: "Fév", sessions: 4, heures: 8, progression: 30 },
+    { name: "Mar", sessions: 7, heures: 15, progression: 45 },
+    { name: "Avr", sessions: 5, heures: 12, progression: 55 },
+    { name: "Mai", sessions: 8, heures: 18, progression: 70 },
+    { name: "Juin", sessions: 9, heures: 22, progression: 80 },
+  ]);
+  
+  const [courseCompletionData, setCourseCompletionData] = useState<any[]>([
+    { name: "Développement Web Front-end", complete: 80 },
+    { name: "DevOps & CI/CD", complete: 65 },
+    { name: "Cybersécurité", complete: 30 },
+    { name: "React Avancé", complete: 45 },
+  ]);
+  
+  const [skillDistribution, setSkillDistribution] = useState<any[]>([
+    { name: "Web", value: 40 },
+    { name: "DevOps", value: 25 },
+    { name: "Mobile", value: 15 },
+    { name: "IA", value: 20 },
+  ]);
   const [trends, setTrends] = useState({
     enrolledCourses: { value: 0, isPositive: true },
     upcomingSessions: { value: 0, isPositive: true },
@@ -497,15 +529,280 @@ export default function StudentDashboard() {
         </Card>
       </div>
 
-      {/* Main Dashboard Content */}
-      <Tabs defaultValue="calendar" className="space-y-6">
-        <TabsList className="grid grid-cols-3 w-full max-w-lg mx-auto bg-gray-100">
-          <TabsTrigger value="calendar">Calendrier</TabsTrigger>
-          <TabsTrigger value="upcoming">Mes Sessions</TabsTrigger>
-          <TabsTrigger value="profile">Mon Profil</TabsTrigger>
-        </TabsList>
+      {/* Onglets Principaux */}
+      <Tabs defaultValue="overview" className="space-y-6" onValueChange={setActiveTab}>
+        <div className="flex justify-between items-center mb-4">
+          <TabsList className="bg-white border">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-[#1D2B6C] data-[state=active]:text-white">
+              <LayoutDashboard className="mr-2 h-4 w-4" />
+              Vue d'ensemble
+            </TabsTrigger>
+            <TabsTrigger value="progress" className="data-[state=active]:bg-[#1D2B6C] data-[state=active]:text-white">
+              <LineChart className="mr-2 h-4 w-4" />
+              Progression
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="data-[state=active]:bg-[#1D2B6C] data-[state=active]:text-white">
+              <Calendar className="mr-2 h-4 w-4" />
+              Calendrier
+            </TabsTrigger>
+          </TabsList>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Filter className="mr-2 h-4 w-4" />
+                Période: {timeRange === 'all' ? 'Tout' : 
+                         timeRange === 'month' ? 'Mois' : 
+                         timeRange === 'quarter' ? 'Trimestre' : 'Année'}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setTimeRange('month')}>
+                Dernier mois
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTimeRange('quarter')}>
+                Dernier trimestre
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTimeRange('year')}>
+                Dernière année
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTimeRange('all')}>
+                Tout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
-        {/* Calendar Tab */}
+        {/* Vue d'ensemble */}
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Graphique de statistiques d'apprentissage */}
+            <Card className="col-span-1 lg:col-span-2 border-none shadow-md">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <div>
+                  <CardTitle className="text-xl font-bold">Statistiques d'apprentissage</CardTitle>
+                  <CardDescription>Évolution de votre activité sur les derniers mois</CardDescription>
+                </div>
+                <TrendingUp className="h-5 w-5 text-blue-600" />
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={learningStats}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                      <XAxis 
+                        dataKey="name" 
+                        angle={0}
+                        tick={{fill: '#666', fontSize: 12}}
+                      />
+                      <YAxis 
+                        yAxisId="left"
+                        orientation="left"
+                        stroke="#5F8BFF"
+                        tick={{fill: '#666', fontSize: 12}}
+                      />
+                      <YAxis 
+                        yAxisId="right"
+                        orientation="right"
+                        stroke="#7A6CFF"
+                        tick={{fill: '#666', fontSize: 12}}
+                      />
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                          border: 'none'
+                        }}
+                        labelStyle={{fontWeight: 'bold', color: '#1D2B6C'}}
+                      />
+                      <Legend 
+                        verticalAlign="top" 
+                        height={36} 
+                        iconType="circle"
+                        iconSize={10}
+                      />
+                      <Bar 
+                        yAxisId="left"
+                        dataKey="sessions" 
+                        name="Sessions suivies"
+                        fill="#5F8BFF"
+                        radius={[4, 4, 0, 0]}
+                        barSize={20}
+                      />
+                      <Bar 
+                        yAxisId="right"
+                        dataKey="heures" 
+                        name="Heures d'études"
+                        fill="#7A6CFF"
+                        radius={[4, 4, 0, 0]}
+                        barSize={20}
+                      />
+                      <Line
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="progression"
+                        name="Taux progression"
+                        stroke="#1D2B6C"
+                        strokeWidth={3}
+                        dot={{ r: 5, strokeWidth: 2, fill: '#fff' }}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Distribution des compétences */}
+            <Card className="border-none shadow-md">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <div>
+                  <CardTitle className="text-xl font-bold">Compétences acquises</CardTitle>
+                  <CardDescription>Distribution par domaine</CardDescription>
+                </div>
+                <PieChart className="h-5 w-5 text-blue-600" />
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <Pie
+                        data={skillDistribution}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                        nameKey="name"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {skillDistribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value) => `${value}%`}
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                          border: 'none'
+                        }}
+                      />
+                      <Legend
+                        layout="vertical"
+                        verticalAlign="middle"
+                        align="right"
+                        iconType="circle"
+                      />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        {/* Progression */}
+        <TabsContent value="progress" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Complétion des formations */}
+            <Card className="border-none shadow-md">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <div>
+                  <CardTitle className="text-xl font-bold">Progression par formation</CardTitle>
+                  <CardDescription>Avancement dans vos formations</CardDescription>
+                </div>
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="space-y-6">
+                  {courseCompletionData.map((course, index) => (
+                    <div key={index} className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <div className="font-medium truncate max-w-[70%]">{course.name}</div>
+                        <div className="text-sm text-muted-foreground">{course.complete}%</div>
+                      </div>
+                      <div className="w-full bg-secondary h-2.5 rounded-full">
+                        <div 
+                          className="bg-[#5F8BFF] h-2.5 rounded-full" 
+                          style={{ width: `${course.complete}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {courseCompletionData.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <div className="bg-gray-100 rounded-full p-3 mb-3">
+                      <BookOpen className="h-6 w-6 text-gray-400" />
+                    </div>
+                    <p className="text-gray-500">Aucune formation en cours</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            {/* Activité hebdomadaire */}
+            <Card className="border-none shadow-md">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <div>
+                  <CardTitle className="text-xl font-bold">Activité hebdomadaire</CardTitle>
+                  <CardDescription>Votre activité des 7 derniers jours</CardDescription>
+                </div>
+                <TrendingUp className="h-5 w-5 text-blue-600" />
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={weeklyProgress}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                      <XAxis 
+                        dataKey="name" 
+                        tick={{fill: '#666', fontSize: 12}}
+                      />
+                      <YAxis 
+                        tick={{fill: '#666', fontSize: 12}}
+                      />
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                          border: 'none'
+                        }}
+                        labelStyle={{fontWeight: 'bold', color: '#1D2B6C'}}
+                      />
+                      <Legend />
+                      <Bar 
+                        dataKey="heures" 
+                        name="Heures d'études"
+                        fill="#7A6CFF"
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <Bar 
+                        dataKey="sessions" 
+                        name="Sessions suivies"
+                        fill="#5F8BFF"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        {/* Calendrier */}
         <TabsContent value="calendar" className="space-y-6">
           <TrainingCalendar 
             sessions={upcomingSessions || []}
