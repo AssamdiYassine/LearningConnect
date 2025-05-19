@@ -74,8 +74,9 @@ export default function CourseDetail({ id }: CourseDetailProps) {
   });
 
   const handleEnroll = (sessionId: number) => {
-    // Vérifier si le cours est gratuit
-    const isFree = course?.isFree || false;
+    // Vérifier si le cours est gratuit (price = 0)
+    const isFree = course?.price === 0;
+    console.log("Cours gratuit?", isFree, "Prix:", course?.price);
     
     // Les employés d'entreprise n'ont pas besoin d'abonnement car l'entreprise paie déjà
     // Aussi, les cours gratuits sont accessibles à tous

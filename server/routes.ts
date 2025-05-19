@@ -866,9 +866,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Course details:", JSON.stringify(courseDetails));
       
       // Si le cours est gratuit (price = 0), permettre l'inscription sans vérifier l'abonnement
-      // Convertir explicitement en nombre et vérifier si c'est égal à 0
-      const isFree = courseDetails && Number(courseDetails.price) === 0;
-      console.log("Is free course:", isFree, "Price:", courseDetails?.price, "Type:", typeof courseDetails?.price);
+      // Vérification plus robuste, convertir en nombre et comparer pour éviter les problèmes de type
+      // Affichage des détails de debug pour comprendre le problème
+      console.log("Price value:", courseDetails?.price);
+      console.log("Price type:", typeof courseDetails?.price);
+      console.log("Price === 0:", courseDetails?.price === 0);
+      console.log("Number(price) === 0:", Number(courseDetails?.price) === 0);
+      
+      // Double vérification pour s'assurer que c'est bien un cours gratuit
+      const isFree = courseDetails && (Number(courseDetails.price) === 0 || courseDetails.price === 0);
       
       // Check if user has an active subscription - skipping for enterprise employees and free courses
       if (!req.user.isSubscribed && !req.user.enterpriseId && req.user.role !== 'enterprise_employee' && !isFree) {
