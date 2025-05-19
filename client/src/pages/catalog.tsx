@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { CourseWithDetails, Category, SessionWithDetails } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Loader2, Search, Filter } from "lucide-react";
+import { Loader2, Search, Filter, Sparkle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import CourseCard from "@/components/course-card";
 import { useEffect, useState } from "react";
 
@@ -19,6 +20,7 @@ export default function Catalog() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [levelFilter, setLevelFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState("date-asc");
+  const [showOnlyFree, setShowOnlyFree] = useState(false);
 
   // Fetch courses using the public API route
   const { data: courses, isLoading: isCoursesLoading } = useQuery<CourseWithDetails[]>({
@@ -52,7 +54,10 @@ export default function Catalog() {
     const matchesLevel = levelFilter === "all" || 
       course.level === levelFilter;
     
-    return matchesSearch && matchesCategory && matchesLevel;
+    // Free courses filter
+    const matchesFreeFilter = !showOnlyFree || course.price === 0;
+    
+    return matchesSearch && matchesCategory && matchesLevel && matchesFreeFilter;
   }) || [];
 
   // Sort courses

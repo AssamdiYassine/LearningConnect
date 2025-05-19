@@ -57,11 +57,14 @@ export default function CourseCard({ course }: CourseCardProps) {
   });
 
   const handleEnroll = () => {
-    // Les employés d'entreprise n'ont pas besoin d'abonnement car l'entreprise paie déjà
-    if (!user?.isSubscribed && !user?.enterpriseId && user?.role !== 'enterprise_employee') {
+    // Vérifier si le cours est gratuit (price = 0)
+    const isFree = course.price === 0;
+    
+    // Les employés d'entreprise ou les cours gratuits n'ont pas besoin d'abonnement
+    if (!isFree && !user?.isSubscribed && !user?.enterpriseId && user?.role !== 'enterprise_employee') {
       toast({
         title: "Abonnement requis",
-        description: "Vous avez besoin d'un abonnement actif pour vous inscrire aux formations",
+        description: "Vous avez besoin d'un abonnement actif pour vous inscrire aux formations payantes",
         variant: "destructive",
       });
       return;
@@ -166,9 +169,18 @@ export default function CourseCard({ course }: CourseCardProps) {
         {/* Affichage du prix */}
         <div className="mt-2 flex items-center justify-between">
           <div className="flex items-center">
-            <span className="text-lg font-bold text-primary">
-              {course.price ? `${course.price} €` : 'Inclus avec l\'abonnement'}
-            </span>
+            {course.price === 0 ? (
+              <span className="text-lg font-bold text-green-600 flex items-center">
+                GRATUIT
+                <Badge variant="outline" className="ml-2 bg-green-100 text-green-800 border-green-300">
+                  Accès libre
+                </Badge>
+              </span>
+            ) : (
+              <span className="text-lg font-bold text-primary">
+                {course.price} €
+              </span>
+            )}
           </div>
         </div>
         
