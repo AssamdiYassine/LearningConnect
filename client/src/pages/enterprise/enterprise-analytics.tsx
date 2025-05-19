@@ -148,7 +148,19 @@ export function EnterpriseAnalytics() {
 
   // Fonction pour rafraîchir les données
   const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1);
     refetch();
+  };
+
+  // Fonction pour filtrer les données par période
+  const handleTimeframeChange = (value: string) => {
+    setSelectedTimeframe(value);
+    // Dans une application réelle, on ferait un appel à l'API avec le nouveau timeframe
+  };
+
+  // Fonction pour changer la vue du graphique
+  const handleChartViewChange = (value: string) => {
+    setChartView(value);
   };
 
   // Fonction pour le graphique camembert interactif
@@ -204,135 +216,259 @@ export function EnterpriseAnalytics() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Analytiques</h2>
           <p className="text-muted-foreground">Statistiques détaillées sur la formation de vos employés</p>
         </div>
-        <Button 
-          onClick={handleRefresh} 
-          variant="outline" 
-          size="sm" 
-          className="ml-auto"
-        >
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Actualiser
-        </Button>
+        <div className="flex items-center gap-3">
+          <Select value={selectedTimeframe} onValueChange={handleTimeframeChange}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="Période" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1m">Dernier mois</SelectItem>
+              <SelectItem value="3m">3 derniers mois</SelectItem>
+              <SelectItem value="6m">6 derniers mois</SelectItem>
+              <SelectItem value="1y">Cette année</SelectItem>
+              <SelectItem value="all">Tout</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button 
+            onClick={handleRefresh} 
+            variant="outline" 
+            size="sm"
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Actualiser
+          </Button>
+        </div>
       </div>
       
-      <Card>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Taux de complétion global
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Award className="h-5 w-5 text-[#1D2B6C]" />
-                    <span className="text-2xl font-bold">{analytics.completion.overall}%</span>
-                  </div>
-                  <Progress value={analytics.completion.overall} className="h-2" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <Card className="hover:shadow-md transition-shadow duration-200 overflow-hidden">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex justify-between items-center">
+              <span>Taux de complétion global</span>
+              {trends.completion.isPositive ? (
+                <ChevronUp className="h-4 w-4 text-green-600" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-red-600" />
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col space-y-2">
+              <div className="flex items-center justify-between">
+                <Award className="h-5 w-5 text-[#1D2B6C]" />
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold">{analytics.completion.overall}%</span>
+                  <span className={`text-xs font-medium ${trends.completion.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    {trends.completion.isPositive ? '+' : '-'}{trends.completion.value}%
+                  </span>
                 </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Taux de présence global
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Users className="h-5 w-5 text-[#5F8BFF]" />
-                    <span className="text-2xl font-bold">{analytics.attendance.overall}%</span>
-                  </div>
-                  <Progress value={analytics.attendance.overall} className="h-2" />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Heures totales de formation
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <Clock className="h-5 w-5 text-[#7A6CFF]" />
-                  <span className="text-2xl font-bold">{analytics.timeSpent.total}h</span>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+              <Progress value={analytics.completion.overall} className="h-2" />
+            </div>
+          </CardContent>
+          <div className="h-16 px-6 -mb-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={formatAttendanceData().slice(-7)}>
+                <Area 
+                  type="monotone" 
+                  dataKey="percentage" 
+                  stroke="#1D2B6C" 
+                  fill="url(#colorCompletion)" 
+                  strokeWidth={2}
+                />
+                <defs>
+                  <linearGradient id="colorCompletion" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#1D2B6C" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="#1D2B6C" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <Card className="hover:shadow-md transition-shadow duration-200">
-              <CardHeader>
+        </Card>
+        
+        <Card className="hover:shadow-md transition-shadow duration-200 overflow-hidden">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex justify-between items-center">
+              <span>Taux de présence global</span>
+              {trends.attendance.isPositive ? (
+                <ChevronUp className="h-4 w-4 text-green-600" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-red-600" />
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col space-y-2">
+              <div className="flex items-center justify-between">
+                <Users className="h-5 w-5 text-[#5F8BFF]" />
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold">{analytics.attendance.overall}%</span>
+                  <span className={`text-xs font-medium ${trends.attendance.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    {trends.attendance.isPositive ? '+' : '-'}{trends.attendance.value}%
+                  </span>
+                </div>
+              </div>
+              <Progress value={analytics.attendance.overall} className="h-2" />
+            </div>
+          </CardContent>
+          <div className="h-16 px-6 -mb-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={formatAttendanceData().slice(-7)}>
+                <Area 
+                  type="monotone" 
+                  dataKey="percentage" 
+                  stroke="#5F8BFF" 
+                  fill="url(#colorAttendance)" 
+                  strokeWidth={2}
+                />
+                <defs>
+                  <linearGradient id="colorAttendance" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#5F8BFF" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="#5F8BFF" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+        
+        <Card className="hover:shadow-md transition-shadow duration-200 overflow-hidden">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex justify-between items-center">
+              <span>Heures totales de formation</span>
+              {trends.timeSpent.isPositive ? (
+                <ChevronUp className="h-4 w-4 text-green-600" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-red-600" />
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <Clock className="h-5 w-5 text-[#7A6CFF]" />
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold">{analytics.timeSpent.total}h</span>
+                <span className={`text-xs font-medium ${trends.timeSpent.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                  {trends.timeSpent.isPositive ? '+' : '-'}{trends.timeSpent.value}h
+                </span>
+              </div>
+            </div>
+          </CardContent>
+          <div className="h-16 px-6 -mb-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={formatTimeSpentData().slice(0, 7).map((d, i) => ({ name: d.name, heures: d.value }))}>
+                <Area 
+                  type="monotone" 
+                  dataKey="heures" 
+                  stroke="#7A6CFF" 
+                  fill="url(#colorTimeSpent)" 
+                  strokeWidth={2}
+                />
+                <defs>
+                  <linearGradient id="colorTimeSpent" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#7A6CFF" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="#7A6CFF" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      </div>
+      
+      <Tabs defaultValue="progress" className="space-y-6">
+        <TabsList className="mb-2">
+          <TabsTrigger value="progress">Progression</TabsTrigger>
+          <TabsTrigger value="attendance">Assiduité</TabsTrigger>
+          <TabsTrigger value="time">Temps passé</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="progress" className="space-y-6">
+          <Card className="hover:shadow-md transition-shadow duration-200">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
                 <CardTitle className="text-base">Complétion par catégorie</CardTitle>
                 <CardDescription className="text-xs text-muted-foreground">
                   Pourcentage de complétion selon la catégorie de formation
                 </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={formatCategoryData()}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                      <XAxis 
-                        dataKey="name" 
-                        angle={-45} 
-                        textAnchor="end" 
-                        height={60}
-                        tick={{fill: '#666', fontSize: 12}}
-                      />
-                      <YAxis 
-                        domain={[0, 100]} 
-                        tickFormatter={(value) => `${value}%`}
-                        tick={{fill: '#666', fontSize: 12}}
-                      />
-                      <Tooltip 
-                        formatter={(value) => `${value}%`} 
-                        contentStyle={{
-                          backgroundColor: '#fff',
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-                          border: 'none'
-                        }}
-                        labelStyle={{fontWeight: 'bold', color: '#1D2B6C'}}
-                      />
-                      <Bar 
-                        dataKey="percentage" 
-                        fill="#5F8BFF"
-                        radius={[4, 4, 0, 0]}
-                        animationDuration={1500}
-                        animationEasing="ease-out"
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="hover:shadow-md transition-shadow duration-200">
-              <CardHeader>
+              </div>
+              <TrendingUp className="h-5 w-5 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={formatCategoryData()}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis 
+                      dataKey="name" 
+                      angle={-45} 
+                      textAnchor="end" 
+                      height={60}
+                      tick={{fill: '#666', fontSize: 12}}
+                    />
+                    <YAxis 
+                      domain={[0, 100]} 
+                      tickFormatter={(value) => `${value}%`}
+                      tick={{fill: '#666', fontSize: 12}}
+                    />
+                    <Tooltip 
+                      formatter={(value) => `${value}%`} 
+                      contentStyle={{
+                        backgroundColor: '#fff',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                        border: 'none'
+                      }}
+                      labelStyle={{fontWeight: 'bold', color: '#1D2B6C'}}
+                    />
+                    <Bar 
+                      dataKey="percentage" 
+                      fill="#5F8BFF"
+                      radius={[4, 4, 0, 0]}
+                      animationDuration={1500}
+                      animationEasing="ease-out"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="attendance" className="space-y-6">
+          <Card className="hover:shadow-md transition-shadow duration-200">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
                 <CardTitle className="text-base">Taux de présence par mois</CardTitle>
                 <CardDescription className="text-xs text-muted-foreground">
                   Évolution du taux de présence au fil des mois
                 </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
+              </div>
+              <div className="flex items-center gap-2">
+                <Select value={chartView} onValueChange={handleChartViewChange}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Type de graphique" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">Vue mensuelle</SelectItem>
+                    <SelectItem value="weekly">Vue hebdomadaire</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  {chartView === 'monthly' ? (
                     <LineChart
                       data={formatAttendanceData()}
                       margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
@@ -345,7 +481,7 @@ export function EnterpriseAnalytics() {
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                       <XAxis 
-                        dataKey="name" 
+                        dataKey="month" 
                         angle={-45} 
                         textAnchor="end" 
                         height={60}
@@ -383,12 +519,62 @@ export function EnterpriseAnalytics() {
                         iconSize={10}
                       />
                     </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          
+                  ) : (
+                    <AreaChart
+                      data={formatAttendanceData()}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
+                    >
+                      <defs>
+                        <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#1D2B6C" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#1D2B6C" stopOpacity={0.1}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                      <XAxis 
+                        dataKey="month" 
+                        angle={-45} 
+                        textAnchor="end" 
+                        height={60}
+                        tick={{fill: '#666', fontSize: 12}}
+                      />
+                      <YAxis 
+                        domain={[0, 100]} 
+                        tickFormatter={(value) => `${value}%`}
+                        tick={{fill: '#666', fontSize: 12}}
+                      />
+                      <Tooltip 
+                        formatter={(value) => `${value}%`} 
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                          border: 'none'
+                        }}
+                        labelStyle={{fontWeight: 'bold', color: '#1D2B6C'}}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="percentage"
+                        stroke="#1D2B6C"
+                        fill="url(#colorGradient)"
+                        strokeWidth={2}
+                      />
+                      <Legend 
+                        verticalAlign="top" 
+                        height={36} 
+                        iconType="circle"
+                        iconSize={10}
+                      />
+                    </AreaChart>
+                  )}
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="time" className="space-y-6">
           <Card className="hover:shadow-md transition-shadow duration-200">
             <CardHeader>
               <CardTitle className="text-base">Temps passé par employé (heures)</CardTitle>
@@ -445,8 +631,12 @@ export function EnterpriseAnalytics() {
               </div>
             </CardContent>
           </Card>
-          
-          <div className="mt-8 p-6 bg-slate-50 rounded-lg border border-slate-200">
+        </TabsContent>
+      </Tabs>
+      
+      <Card>
+        <CardContent className="pt-6">
+          <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
             <h3 className="text-lg font-medium mb-3">À propos de ces données</h3>
             <div className="space-y-3 text-sm text-slate-700">
               <p>
