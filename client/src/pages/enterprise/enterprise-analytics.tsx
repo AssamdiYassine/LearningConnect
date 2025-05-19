@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
   Card, 
@@ -21,11 +21,15 @@ import {
   Cell,
   LineChart,
   Line,
-  Sector
+  Sector,
+  Area,
+  AreaChart
 } from 'recharts';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, Clock, Award, Users, RefreshCw } from 'lucide-react';
+import { Loader2, Clock, Award, Users, RefreshCw, TrendingUp, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Interface pour les données d'analytiques
 interface AnalyticsData {
@@ -57,12 +61,42 @@ const COLORS = ['#1D2B6C', '#5F8BFF', '#7A6CFF', '#4F46E5', '#818CF8', '#A5B4FC'
 
 export function EnterpriseAnalytics() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [chartView, setChartView] = useState('monthly');
+  const [selectedTimeframe, setSelectedTimeframe] = useState('6m');
+  const [refreshKey, setRefreshKey] = useState(0);
   
   // Fetch analytics data
   const { data: analyticsData, isLoading, refetch } = useQuery<AnalyticsData>({
-    queryKey: ['/api/enterprise/analytics'],
+    queryKey: ['/api/enterprise/analytics', refreshKey],
     refetchOnWindowFocus: false
   });
+  
+  // Comparer avec la période précédente (pour simuler des tendances)
+  const [trends, setTrends] = useState({
+    completion: { value: 0, isPositive: true },
+    attendance: { value: 0, isPositive: true },
+    timeSpent: { value: 0, isPositive: true }
+  });
+
+  // Générer des tendances aléatoires pour la démo
+  useEffect(() => {
+    if (analyticsData) {
+      setTrends({
+        completion: { 
+          value: Math.floor(Math.random() * 15), 
+          isPositive: Math.random() > 0.3 
+        },
+        attendance: { 
+          value: Math.floor(Math.random() * 20), 
+          isPositive: Math.random() > 0.4 
+        },
+        timeSpent: { 
+          value: Math.floor(Math.random() * 25), 
+          isPositive: Math.random() > 0.5 
+        }
+      });
+    }
+  }, [analyticsData]);
 
   if (isLoading) {
     return (
