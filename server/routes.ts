@@ -862,19 +862,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("User role:", req.user.role);
       
       // Récupérer les détails du cours pour vérifier si c'est un cours gratuit
-      const courseDetails = await storage.getCourse(session.courseId);
-      console.log("Course details:", JSON.stringify(courseDetails));
+      // Utiliser une requête SQL directe pour contourner les problèmes de typage
+      const courseDetailsQuery = await pool.query(`
+        SELECT id, title, price FROM courses WHERE id = $1
+      `, [session.courseId]);
       
-      // Si le cours est gratuit (price = 0), permettre l'inscription sans vérifier l'abonnement
-      // Vérification plus robuste, convertir en nombre et comparer pour éviter les problèmes de type
-      // Affichage des détails de debug pour comprendre le problème
-      console.log("Price value:", courseDetails?.price);
-      console.log("Price type:", typeof courseDetails?.price);
-      console.log("Price === 0:", courseDetails?.price === 0);
-      console.log("Number(price) === 0:", Number(courseDetails?.price) === 0);
+      const courseDetails = courseDetailsQuery.rows[0];
+      console.log("Course details from SQL:", JSON.stringify(courseDetails));
       
-      // Double vérification pour s'assurer que c'est bien un cours gratuit
-      const isFree = courseDetails && (Number(courseDetails.price) === 0 || courseDetails.price === 0);
+      // Vérifier si le prix est à 0 (cours gratuit)
+      const coursePrice = courseDetails ? parseInt(courseDetails.price, 10) : null;
+      console.log("Course price parsed:", coursePrice);
+      
+      // Si le prix est à 0, c'est un cours gratuit
+      const isFree = coursePrice === 0;
       
       // Check if user has an active subscription - skipping for enterprise employees and free courses
       if (!req.user.isSubscribed && !req.user.enterpriseId && req.user.role !== 'enterprise_employee' && !isFree) {

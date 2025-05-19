@@ -74,13 +74,24 @@ export default function CourseDetail({ id }: CourseDetailProps) {
   });
 
   const handleEnroll = (sessionId: number) => {
-    // Vérifier si le cours est gratuit (price = 0)
-    const isFree = course?.price === 0;
-    console.log("Cours gratuit?", isFree, "Prix:", course?.price);
+    // Si l'utilisateur n'est pas connecté, rediriger vers la page d'authentification
+    if (!user) {
+      toast({
+        title: "Connexion requise",
+        description: "Veuillez vous connecter pour vous inscrire à cette formation",
+        variant: "destructive",
+      });
+      setLocation('/auth');
+      return;
+    }
     
-    // Les employés d'entreprise n'ont pas besoin d'abonnement car l'entreprise paie déjà
-    // Aussi, les cours gratuits sont accessibles à tous
-    if (!user?.isSubscribed && !user?.enterpriseId && user?.role !== 'enterprise_employee' && !isFree) {
+    // Pour les cours gratuits, permettre l'inscription sans vérifier l'abonnement
+    console.log("Prix du cours:", course?.price);
+    const isFree = course?.price === 0;
+    
+    // Uniquement vérifier l'abonnement pour les cours payants
+    // Les employés d'entreprise et les cours gratuits n'ont pas besoin d'abonnement
+    if (!isFree && !user.isSubscribed && !user.enterpriseId && user.role !== 'enterprise_employee') {
       toast({
         title: "Abonnement requis",
         description: "Vous avez besoin d'un abonnement actif pour vous inscrire aux formations payantes",
@@ -88,6 +99,8 @@ export default function CourseDetail({ id }: CourseDetailProps) {
       });
       return;
     }
+    
+    // Enregistrer directement l'utilisateur s'il est connecté et que les vérifications sont passées
     enrollMutation.mutate(sessionId);
   };
 
