@@ -175,8 +175,8 @@ async function initDemoCourses() {
         await pool.query(`
           INSERT INTO sessions (
             course_id, date, zoom_link, is_completed, 
-            title, start_time, end_time, max_students
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            title, start_time, end_time, max_students, price
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         `, [
           courseId,
           session.date,
@@ -185,7 +185,8 @@ async function initDemoCourses() {
           session.title,
           startTime,
           endTime,
-          30 // max_students
+          30, // max_students
+          course.isFree ? 0 : Math.round(course.price * 100) // Prix à 0 pour les sessions des cours gratuits
         ]);
         
         console.log(`Session créée pour le cours ${courseId}: "${session.title}"`);

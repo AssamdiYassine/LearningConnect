@@ -343,7 +343,7 @@ export default function Checkout() {
                       Processing...
                     </>
                   ) : (
-                    `Pay ${subscriptionDetails.price}€`
+                    `Pay ${paymentDetails.price}€`
                   )}
                 </Button>
               </form>
