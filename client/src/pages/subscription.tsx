@@ -33,7 +33,8 @@ interface SubscriptionProps {
   courseId?: string;
 }
 
-export default function Subscription({ courseId }: SubscriptionProps = {}) {
+export default function Subscription(props: SubscriptionProps) {
+  const courseId = props.courseId;
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual" | "business">("monthly");
