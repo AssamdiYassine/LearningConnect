@@ -651,7 +651,7 @@ export function registerAdminRoutes(app: Express) {
       try {
         console.log("Données à mettre à jour:", dbUpdateData);
         
-        // Structure de session simplifiée pour éviter les erreurs
+        // Mise à jour directe sans paramètres
         const setValues = [];
         
         if (dbUpdateData.courseId) {
@@ -659,16 +659,33 @@ export function registerAdminRoutes(app: Express) {
         }
         
         if (dbUpdateData.date) {
-          setValues.push(`date = '${dbUpdateData.date.toISOString()}'`);
+          // Assurer que la date est au format ISO sans erreur
+          let dateValue;
+          try {
+            dateValue = dbUpdateData.date instanceof Date 
+              ? dbUpdateData.date.toISOString() 
+              : new Date(dbUpdateData.date).toISOString();
+          } catch (e) {
+            dateValue = new Date().toISOString(); // Valeur par défaut en cas d'erreur
+            console.error("Erreur avec la date:", e);
+          }
+          // Échapper les apostrophes et guillemets
+          dateValue = dateValue.replace(/'/g, "''");
+          setValues.push(`date = '${dateValue}'`);
         }
         
         if (dbUpdateData.zoomLink !== undefined) {
-          setValues.push(`zoom_link = '${dbUpdateData.zoomLink || ""}'`);
+          const safeZoomLink = (dbUpdateData.zoomLink || "").replace(/'/g, "''");
+          setValues.push(`zoom_link = '${safeZoomLink}'`);
         }
         
         if (dbUpdateData.recordingLink !== undefined) {
-          const recordingValue = dbUpdateData.recordingLink ? `'${dbUpdateData.recordingLink}'` : 'NULL';
-          setValues.push(`recording_link = ${recordingValue}`);
+          if (dbUpdateData.recordingLink) {
+            const safeRecordingLink = dbUpdateData.recordingLink.replace(/'/g, "''");
+            setValues.push(`recording_link = '${safeRecordingLink}'`);
+          } else {
+            setValues.push(`recording_link = NULL`);
+          }
         }
         
         if (dbUpdateData.maxParticipants) {
@@ -679,13 +696,13 @@ export function registerAdminRoutes(app: Express) {
           return res.status(400).json({ message: "Aucune donnée à mettre à jour" });
         }
         
-        // Utiliser une requête SQL sécurisée mais simple
+        // Construction d'une requête SQL sans paramètres
         const updateSQL = `UPDATE sessions SET ${setValues.join(", ")} WHERE id = ${sessionId}`;
         
         console.log("SQL de mise à jour:", updateSQL);
         
-        // Exécuter la requête directement
-        await db.execute(updateSQL);
+        // Exécuter la requête simple sans paramètres
+        await db.query(updateSQL);
         
         // Récupérer la session mise à jour
         const updatedSession = await storage.getSession(sessionId);
