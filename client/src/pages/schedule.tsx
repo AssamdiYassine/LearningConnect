@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { SessionWithDetails } from "@shared/schema";
+import { User, Video } from "lucide-react";
 import { 
   Card, 
   CardContent, 
@@ -278,8 +279,23 @@ export default function Schedule() {
                         </div>
                         <div className="mt-4 space-y-1">
                           {day.sessions.map((session) => (
-                            <div key={session.id} className="text-xs bg-blue-100 text-blue-700 p-1 rounded truncate">
-                              {format(new Date(session.date), 'HH:mm')} - {session.course.title}
+                            <div 
+                              key={session.id} 
+                              className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-90 ${
+                                session.course.price === 0 
+                                  ? "bg-green-100 text-green-700 border border-green-200" 
+                                  : "bg-blue-100 text-blue-700 border border-blue-200"
+                              }`}
+                              onClick={() => {
+                                setSelectedSession(session);
+                                setShowSessionDetails(true);
+                              }}
+                            >
+                              <div className="flex justify-between">
+                                <span className="font-medium">{format(new Date(session.date), 'HH:mm')}</span>
+                                {session.course.price === 0 && <span className="text-green-700 text-[10px] font-bold">GRATUIT</span>}
+                              </div>
+                              <div className="truncate">{session.course.title}</div>
                             </div>
                           ))}
                         </div>
@@ -307,16 +323,32 @@ export default function Schedule() {
                             day.sessions.map((session) => (
                               <div 
                                 key={session.id} 
-                                className="p-2 bg-white border rounded shadow-sm cursor-pointer hover:shadow"
+                                className={`p-2 border rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow ${
+                                  session.course.price === 0 
+                                    ? "bg-green-50 border-green-200" 
+                                    : "bg-white border-blue-200"
+                                }`}
                                 onClick={() => {
                                   setSelectedSession(session);
                                   setShowSessionDetails(true);
                                 }}
                               >
-                                <div className="text-xs font-semibold text-blue-700">
-                                  {format(new Date(session.date), 'HH:mm')}
+                                <div className="flex justify-between items-center">
+                                  <div className="text-xs font-semibold text-blue-700">
+                                    {format(new Date(session.date), 'HH:mm')}
+                                  </div>
+                                  {session.course.price === 0 && (
+                                    <Badge className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100">
+                                      Gratuit
+                                    </Badge>
+                                  )}
                                 </div>
-                                <div className="font-medium text-sm truncate">{session.course.title}</div>
+                                <div className="font-medium text-sm truncate mt-1">{session.course.title}</div>
+                                {session.course.trainer && (
+                                  <div className="text-xs text-gray-500 mt-1 flex items-center">
+                                    <span className="truncate">{session.course.trainer.displayName}</span>
+                                  </div>
+                                )}
                               </div>
                             ))
                           )}

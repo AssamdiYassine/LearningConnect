@@ -122,7 +122,7 @@ export default function Catalog() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <Input
-              placeholder="Search courses..."
+              placeholder="Rechercher des formations..."
               className="pl-10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -132,17 +132,17 @@ export default function Catalog() {
           {/* Filters */}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
               <Select 
                 value={categoryFilter} 
                 onValueChange={setCategoryFilter}
                 disabled={isCategoriesLoading}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="All Categories" />
+                  <SelectValue placeholder="Toutes les catégories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="all">Toutes les catégories</SelectItem>
                   {categories?.map((category) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}
@@ -153,33 +153,33 @@ export default function Catalog() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Level</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Niveau</label>
               <Select value={levelFilter} onValueChange={setLevelFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="All Levels" />
+                  <SelectValue placeholder="Tous les niveaux" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Levels</SelectItem>
-                  <SelectItem value="beginner">Beginner</SelectItem>
-                  <SelectItem value="intermediate">Intermediate</SelectItem>
-                  <SelectItem value="advanced">Advanced</SelectItem>
+                  <SelectItem value="all">Tous les niveaux</SelectItem>
+                  <SelectItem value="beginner">Débutant</SelectItem>
+                  <SelectItem value="intermediate">Intermédiaire</SelectItem>
+                  <SelectItem value="advanced">Avancé</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Trier par</label>
               <Select value={sortOrder} onValueChange={setSortOrder}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Sort by" />
+                  <SelectValue placeholder="Trier par" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="date-asc">Date (Soonest First)</SelectItem>
-                  <SelectItem value="date-desc">Date (Latest First)</SelectItem>
-                  <SelectItem value="title-asc">Title (A-Z)</SelectItem>
-                  <SelectItem value="title-desc">Title (Z-A)</SelectItem>
-                  <SelectItem value="level-asc">Level (Beginner First)</SelectItem>
-                  <SelectItem value="level-desc">Level (Advanced First)</SelectItem>
+                  <SelectItem value="date-asc">Date (croissant)</SelectItem>
+                  <SelectItem value="date-desc">Date (décroissant)</SelectItem>
+                  <SelectItem value="title-asc">Titre (A-Z)</SelectItem>
+                  <SelectItem value="title-desc">Titre (Z-A)</SelectItem>
+                  <SelectItem value="level-asc">Niveau (débutant d'abord)</SelectItem>
+                  <SelectItem value="level-desc">Niveau (avancé d'abord)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -191,9 +191,28 @@ export default function Catalog() {
                 disabled={!hasActiveFilters} 
                 onClick={resetFilters}
               >
-                <Filter className="h-4 w-4 mr-2" /> Clear Filters
+                <Filter className="h-4 w-4 mr-2" /> Effacer les filtres
               </Button>
             </div>
+          </div>
+          
+          {/* Filtre cours gratuits */}
+          <div className="mt-4 flex items-center p-3 rounded-lg bg-green-50 border border-green-200">
+            <Button 
+              variant={showOnlyFree ? "default" : "outline"} 
+              className={`flex items-center gap-2 ${showOnlyFree ? "bg-green-600 hover:bg-green-700" : "hover:bg-green-100 text-green-700 border-green-300"}`}
+              onClick={() => setShowOnlyFree(!showOnlyFree)}
+            >
+              <Sparkle className={`h-4 w-4 ${showOnlyFree ? "text-white" : "text-green-600"}`} />
+              <span className={showOnlyFree ? "text-white" : "text-green-700"}>
+                {showOnlyFree ? "Affichage des formations gratuites uniquement" : "Afficher les formations gratuites uniquement"}
+              </span>
+            </Button>
+            {showOnlyFree && (
+              <span className="ml-3 text-sm text-green-700">
+                {filteredCourses.length} formation{filteredCourses.length > 1 ? 's' : ''} gratuite{filteredCourses.length > 1 ? 's' : ''} disponible{filteredCourses.length > 1 ? 's' : ''}
+              </span>
+            )}
           </div>
         </div>
       </div>
