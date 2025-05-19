@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction, Express } from 'express';
 import { z } from 'zod';
 import { storage } from './storage';
-import { db } from './db';
+import { db, pool } from './db';
 import { scrypt, randomBytes, timingSafeEqual } from 'crypto';
 import { promisify } from 'util';
 import {
@@ -685,7 +685,7 @@ export function registerAdminRoutes(app: Express) {
       try {
         console.log("Données à mettre à jour:", dbUpdateData);
         
-        // Mise à jour directe sans paramètres
+        // Mise à jour directe sans utiliser de paramètres avec $
         const setValues = [];
         
         if (dbUpdateData.courseId) {
@@ -730,13 +730,43 @@ export function registerAdminRoutes(app: Express) {
           return res.status(400).json({ message: "Aucune donnée à mettre à jour" });
         }
         
-        // Construction d'une requête SQL sans paramètres
+        // Préparer une requête SQL directe sans paramètres
         const updateSQL = `UPDATE sessions SET ${setValues.join(", ")} WHERE id = ${sessionId}`;
         
         console.log("SQL de mise à jour:", updateSQL);
         
-        // Exécuter la requête simple sans paramètres
-        await db.query(updateSQL);
+        try {
+          // Utiliser une connexion directe à la base de données
+          // Pour éviter les erreurs de paramètres avec $ dans les requêtes SQL
+          const client = await pool.connect();
+          try {
+            console.log("Exécution de requête directe:", updateSQL);
+            const result = await client.query(updateSQL);
+            console.log("Résultat de la mise à jour:", result.rowCount, "ligne(s) affectée(s)");
+          } finally {
+            client.release();
+          }
+        } catch (err) {
+          console.error("Erreur SQL spécifique:", err);
+          
+          // Tentative alternative par attribut individuel
+          try {
+            const client = await pool.connect();
+            try {
+              // Mise à jour individuelle de chaque attribut
+              for (const setValue of setValues) {
+                const singleUpdateSQL = `UPDATE sessions SET ${setValue} WHERE id = ${sessionId}`;
+                console.log("Tentative individuelle:", singleUpdateSQL);
+                await client.query(singleUpdateSQL);
+              }
+            } finally {
+              client.release();
+            }
+          } catch (secondErr) {
+            console.error("Échec de la tentative alternative:", secondErr);
+            throw secondErr;
+          }
+        }
         
         // Récupérer la session mise à jour
         const updatedSession = await storage.getSession(sessionId);
