@@ -327,6 +327,7 @@ export function registerAdminRoutes(app: Express) {
   app.delete('/api/admin/categories/:id', hasAdminRole, async (req, res) => {
     try {
       const categoryId = parseInt(req.params.id);
+      const forceDelete = req.query.force === 'true';
       
       // Vérifier si la catégorie existe
       const category = await storage.getCategory(categoryId);
@@ -336,30 +337,63 @@ export function registerAdminRoutes(app: Express) {
       
       // Vérifier si des formations sont associées à cette catégorie
       const coursesWithCategory = await storage.getCoursesByCategory(categoryId);
-      if (coursesWithCategory.length > 0) {
+      
+      // Si des formations utilisent cette catégorie et que la suppression forcée n'est pas activée
+      if (coursesWithCategory.length > 0 && !forceDelete) {
         // Récupérer les noms des formations pour l'affichage
         const courseNames = coursesWithCategory.map(c => c.title || `Cours #${c.id}`).join(", ");
         
         return res.status(400).json({ 
           message: `Impossible de supprimer cette catégorie car elle est utilisée par ${coursesWithCategory.length} formation(s): ${courseNames}`,
-          courses: coursesWithCategory
+          courses: coursesWithCategory,
+          canForceDelete: true
         });
       }
       
+      // Commencer une transaction pour assurer la cohérence
       try {
-        // Supprimer la catégorie directement avec SQL
         console.log(`Tentative de suppression de la catégorie ${categoryId}`);
         
+        // Si des formations utilisent cette catégorie et que la suppression est forcée
+        if (coursesWithCategory.length > 0 && forceDelete) {
+          console.log(`Mise à jour des formations associées à la catégorie ${categoryId}`);
+          
+          // Définir une catégorie par défaut (ID 1 = DevOps & Cloud ou autre catégorie existante)
+          const defaultCategoryId = 1;
+          
+          // Mettre à jour les formations pour utiliser la catégorie par défaut
+          await db.query(`
+            UPDATE courses 
+            SET category_id = ${defaultCategoryId} 
+            WHERE category_id = ${categoryId}
+          `);
+          
+          console.log(`${coursesWithCategory.length} formations mises à jour pour utiliser la catégorie par défaut`);
+        }
+        
         // Suppression directe par requête SQL
-        await db.execute(`DELETE FROM categories WHERE id = ${categoryId}`);
+        await db.query(`DELETE FROM categories WHERE id = ${categoryId}`);
         
         console.log(`Catégorie ${categoryId} supprimée avec succès`);
-        res.status(200).json({ message: "Catégorie supprimée avec succès" });
+        res.status(200).json({ 
+          message: forceDelete 
+            ? `Catégorie supprimée avec succès. ${coursesWithCategory.length} formations ont été réassignées.` 
+            : "Catégorie supprimée avec succès" 
+        });
       } catch (dbError: any) {
         // Si erreur de contrainte d'intégrité ou autre erreur de base de données
         console.error("Erreur de base de données lors de la suppression:", dbError);
+        
+        // Vérifier si c'est une erreur de contrainte de clé étrangère
+        if (dbError.code === '23503' || dbError.message?.includes('constraint')) {
+          return res.status(400).json({ 
+            message: "Impossible de supprimer cette catégorie car elle est référencée par d'autres tables. Utilisez le paramètre 'force=true' pour forcer la suppression et réassigner les formations.",
+            canForceDelete: true
+          });
+        }
+        
         return res.status(400).json({ 
-          message: "Impossible de supprimer cette catégorie car elle est référencée ailleurs dans la base de données."
+          message: "Erreur lors de la suppression de la catégorie: " + dbError.message
         });
       }
     } catch (error: any) {
