@@ -301,8 +301,25 @@ html {
 }
 
 /* Fullwidth overrides */
+body, html {
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+/* Solution pour vraiment éliminer tout espace blanc sur les côtés */
 .full-width-section {
-  @apply w-screen m-0 p-0 max-w-none;
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  padding: 0;
+  max-width: none;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 /* Container classes */
