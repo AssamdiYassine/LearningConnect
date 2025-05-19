@@ -129,10 +129,10 @@ router.get("/employees", isEnterprise, async (req, res) => {
 router.post("/employees", isEnterprise, async (req, res) => {
   try {
     const enterpriseId = req.user.id;
-    const { email, displayName } = req.body;
+    const { email, displayName, phoneNumber } = req.body;
     
-    if (!email || !displayName) {
-      return res.status(400).json({ message: "Email et nom d'affichage requis" });
+    if (!email || !displayName || !phoneNumber) {
+      return res.status(400).json({ message: "Email, nom d'affichage et numéro de téléphone requis" });
     }
     
     // Générer un nom d'utilisateur basé sur le nom d'affichage
@@ -157,8 +157,11 @@ router.post("/employees", isEnterprise, async (req, res) => {
       counter++;
     }
     
-    // Générer un mot de passe temporaire
-    const tempPassword = Math.random().toString(36).slice(-8);
+    // Utiliser le numéro de téléphone comme mot de passe par défaut
+    const defaultPassword = phoneNumber.replace(/\s+/g, ''); // Supprimer les espaces
+    
+    // Hashage du mot de passe
+    const hashedPassword = await bcrypt.hash(defaultPassword, 10);
     
     // Créer l'utilisateur
     const [newUser] = await db
@@ -167,9 +170,10 @@ router.post("/employees", isEnterprise, async (req, res) => {
         username,
         email,
         displayName,
-        password: tempPassword, // Idéalement, ce mot de passe serait hashé
+        password: hashedPassword,
         role: "student",
         enterpriseId,
+        phoneNumber: defaultPassword, // Stocker le numéro de téléphone sans espaces
       })
       .returning();
     

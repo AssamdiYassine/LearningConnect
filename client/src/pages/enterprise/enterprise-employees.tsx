@@ -77,7 +77,8 @@ interface EmployeeCourseAccess {
 // Schéma de validation pour l'ajout d'un employé
 const addEmployeeSchema = z.object({
   displayName: z.string().min(1, "Le nom est obligatoire"),
-  email: z.string().email("Email invalide")
+  email: z.string().email("Email invalide"),
+  phoneNumber: z.string().min(1, "Le numéro de téléphone est obligatoire")
 });
 
 export function EnterpriseEmployees() {
@@ -105,6 +106,7 @@ export function EnterpriseEmployees() {
     defaultValues: {
       displayName: '',
       email: '',
+      phoneNumber: '',
     },
   });
   
@@ -352,6 +354,23 @@ export function EnterpriseEmployees() {
                     <FormControl>
                       <Input placeholder="email@exemple.fr" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="phoneNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Numéro de téléphone</FormLabel>
+                    <FormControl>
+                      <Input placeholder="06 12 34 56 78" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Ce numéro servira également de mot de passe par défaut pour l'employé.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
