@@ -327,7 +327,10 @@ export function registerAdminRoutes(app: Express) {
   app.delete('/api/admin/categories/:id', hasAdminRole, async (req, res) => {
     try {
       const categoryId = parseInt(req.params.id);
+      // Vérifier et logguer le paramètre force pour le debugging
+      console.log("Force delete query param:", req.query.force);
       const forceDelete = req.query.force === 'true';
+      console.log("Force delete value:", forceDelete);
       
       // Vérifier si la catégorie existe
       const category = await storage.getCategory(categoryId);
@@ -337,12 +340,14 @@ export function registerAdminRoutes(app: Express) {
       
       // Vérifier si des formations sont associées à cette catégorie
       const coursesWithCategory = await storage.getCoursesByCategory(categoryId);
+      console.log(`Catégorie ${categoryId} a ${coursesWithCategory.length} formations associées`);
       
       // Si des formations utilisent cette catégorie et que la suppression forcée n'est pas activée
       if (coursesWithCategory.length > 0 && !forceDelete) {
         // Récupérer les noms des formations pour l'affichage
         const courseNames = coursesWithCategory.map(c => c.title || `Cours #${c.id}`).join(", ");
         
+        console.log("Refus de suppression sans force=true car formations associées:", courseNames);
         return res.status(400).json({ 
           message: `Impossible de supprimer cette catégorie car elle est utilisée par ${coursesWithCategory.length} formation(s): ${courseNames}`,
           courses: coursesWithCategory,
@@ -350,31 +355,36 @@ export function registerAdminRoutes(app: Express) {
         });
       }
       
-      // Commencer une transaction pour assurer la cohérence
+      // Suppression avec ou sans réassignation des formations
       try {
-        console.log(`Tentative de suppression de la catégorie ${categoryId}`);
+        console.log(`Tentative de suppression de la catégorie ${categoryId} avec forceDelete=${forceDelete}`);
         
         // Si des formations utilisent cette catégorie et que la suppression est forcée
         if (coursesWithCategory.length > 0 && forceDelete) {
-          console.log(`Mise à jour des formations associées à la catégorie ${categoryId}`);
+          console.log(`Réassignation des ${coursesWithCategory.length} formations de la catégorie ${categoryId}`);
           
           // Définir une catégorie par défaut (ID 1 = DevOps & Cloud ou autre catégorie existante)
           const defaultCategoryId = 1;
           
-          // Mettre à jour les formations pour utiliser la catégorie par défaut
-          await db.query(`
-            UPDATE courses 
-            SET category_id = ${defaultCategoryId} 
-            WHERE category_id = ${categoryId}
-          `);
+          // Approche alternative pour réassigner les formations - Requête préparée
+          const updateResult = await db.execute(
+            `UPDATE courses SET category_id = $1 WHERE category_id = $2`,
+            [defaultCategoryId, categoryId]
+          );
           
+          console.log(`Résultat de la mise à jour:`, updateResult);
           console.log(`${coursesWithCategory.length} formations mises à jour pour utiliser la catégorie par défaut`);
         }
         
-        // Suppression directe par requête SQL
-        await db.query(`DELETE FROM categories WHERE id = ${categoryId}`);
+        // Suppression avec requête préparée pour éviter les injections SQL
+        const deleteResult = await db.execute(
+          `DELETE FROM categories WHERE id = $1`,
+          [categoryId]
+        );
         
+        console.log(`Résultat de la suppression:`, deleteResult);
         console.log(`Catégorie ${categoryId} supprimée avec succès`);
+        
         res.status(200).json({ 
           message: forceDelete 
             ? `Catégorie supprimée avec succès. ${coursesWithCategory.length} formations ont été réassignées.` 
