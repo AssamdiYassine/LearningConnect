@@ -390,6 +390,304 @@ export default function Subscription(props: SubscriptionProps) {
               Gérez votre plan d'abonnement et vos paiements
             </p>
           </div>
+          
+          {/* Section d'abonnement actif ou inscription */}
+          {isSubscribed ? (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle>Abonnement actif</CardTitle>
+                <CardDescription>Détails de votre abonnement actuel</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="text-sm text-gray-500">Plan</div>
+                      <div className="text-lg font-medium">
+                        {user?.subscriptionType === "monthly" ? "Mensuel" : 
+                         user?.subscriptionType === "annual" ? "Annuel" : "Business"}
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-green-700 bg-green-50 hover:bg-green-100 border-green-100">
+                      Actif
+                    </Badge>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="text-sm text-gray-500">Expire le</div>
+                      <div className="text-lg font-medium">
+                        {formatEndDate(user?.subscriptionEndDate)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <div className="bg-orange-50 p-4 rounded-lg w-full">
+                  <div className="flex items-start">
+                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                      <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="text-orange-800 font-medium mb-1">Renouvellement automatique</h4>
+                      <p className="text-orange-700 text-sm">
+                        Votre abonnement {user?.subscriptionType === "monthly" ? "mensuel" : "annuel"} sera automatiquement renouvelé à sa date d'expiration.
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-2 bg-white text-orange-700 hover:bg-orange-100"
+                        onClick={handleCancel}
+                      >
+                        Annuler l'abonnement
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardFooter>
+            </Card>
+          ) : (
+            <Card className="bg-blue-50 border-blue-100">
+              <CardHeader>
+                <CardTitle>Trouvez le plan qui vous convient</CardTitle>
+                <CardDescription>Accédez à toutes nos formations professionnelles avec un abonnement</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600">
+                  Necform vous propose plusieurs options d'abonnement adaptées à vos besoins, que vous soyez un professionnel individuel ou une entreprise.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+          
+          {/* Plans d'abonnement */}
+          {!isSubscribed && (
+            <Tabs 
+              defaultValue={selectedPlan} 
+              className="mt-8" 
+              value={selectedPlan}
+              onValueChange={(value) => setSelectedPlan(value as "monthly" | "annual" | "business")}
+            >
+              <TabsList className="grid grid-cols-3 mb-8">
+                <TabsTrigger value="monthly" disabled={monthlyPlans.length === 0}>Mensuel</TabsTrigger>
+                <TabsTrigger value="annual" disabled={annualPlans.length === 0}>Annuel</TabsTrigger>
+                <TabsTrigger value="business" disabled={businessPlans.length === 0}>Business</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="monthly" className="space-y-6">
+                {monthlyPlans.length === 0 ? (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <p className="text-center text-gray-500">
+                        Aucun plan mensuel n'est disponible actuellement.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {monthlyPlans.map(plan => (
+                      <Card key={plan.id} className="flex flex-col h-full">
+                        <CardHeader>
+                          <CardTitle className="text-xl sm:text-2xl">{plan.name}</CardTitle>
+                          <CardDescription className="text-sm sm:text-base">{plan.description}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex-grow">
+                          <div className="space-y-4">
+                            <div className="flex items-baseline">
+                              <span className="text-2xl sm:text-3xl font-bold text-gray-900">{plan.price}€</span>
+                              <span className="text-xs sm:text-sm text-gray-500 ml-1">/ mois</span>
+                            </div>
+                            <ul className="space-y-3">
+                              {plan.features.map((feature, index) => (
+                                <li key={index} className="flex items-start text-gray-700">
+                                  <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                                  <span className="text-sm sm:text-base">{feature}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </CardContent>
+                        <CardFooter>
+                          {showActionButtons ? (
+                            <Button 
+                              className="w-full" 
+                              onClick={() => handleSubscribe(plan.id, plan.name)}
+                            >
+                              S'abonner maintenant
+                            </Button>
+                          ) : (
+                            <Button 
+                              className="w-full" 
+                              onClick={() => setLocation('/auth')}
+                            >
+                              Se connecter pour s'abonner
+                            </Button>
+                          )}
+                        </CardFooter>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="annual" className="space-y-6">
+                {annualPlans.length === 0 ? (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <p className="text-center text-gray-500">
+                        Aucun plan annuel n'est disponible actuellement.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {annualPlans.map(plan => (
+                      <Card key={plan.id} className="flex flex-col h-full">
+                        <CardHeader>
+                          <CardTitle className="text-xl sm:text-2xl">{plan.name}</CardTitle>
+                          <CardDescription className="text-sm sm:text-base">{plan.description}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex-grow">
+                          <div className="space-y-4">
+                            <div className="flex items-baseline flex-wrap">
+                              <span className="text-2xl sm:text-3xl font-bold text-gray-900">{plan.price}€</span>
+                              <span className="text-xs sm:text-sm text-gray-500 ml-1 mr-2">/ an</span>
+                              <Badge className="bg-green-100 text-green-800 text-xs">Économisez 20%</Badge>
+                            </div>
+                            <ul className="space-y-3">
+                              {plan.features.map((feature, index) => (
+                                <li key={index} className="flex items-start text-gray-700">
+                                  <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                                  <span className="text-sm sm:text-base">{feature}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </CardContent>
+                        <CardFooter>
+                          {showActionButtons ? (
+                            <Button 
+                              className="w-full" 
+                              onClick={() => handleSubscribe(plan.id, plan.name)}
+                            >
+                              S'abonner maintenant
+                            </Button>
+                          ) : (
+                            <Button 
+                              className="w-full" 
+                              onClick={() => setLocation('/auth')}
+                            >
+                              Se connecter pour s'abonner
+                            </Button>
+                          )}
+                        </CardFooter>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="business" className="space-y-6">
+                {businessPlans.length === 0 ? (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <p className="text-center text-gray-500">
+                        Aucun plan business n'est disponible actuellement.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {businessPlans.map(plan => (
+                      <Card key={plan.id} className="flex flex-col h-full">
+                        <CardHeader>
+                          <CardTitle className="text-xl sm:text-2xl">{plan.name}</CardTitle>
+                          <CardDescription className="text-sm sm:text-base">{plan.description}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex-grow">
+                          <div className="space-y-4">
+                            <div className="flex items-baseline">
+                              <span className="text-2xl sm:text-3xl font-bold text-gray-900">{plan.price}€</span>
+                              <span className="text-xs sm:text-sm text-gray-500 ml-1">/ mois</span>
+                            </div>
+                            <ul className="space-y-3">
+                              {plan.features.map((feature, index) => (
+                                <li key={index} className="flex items-start text-gray-700">
+                                  <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                                  <span className="text-sm sm:text-base">{feature}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </CardContent>
+                        <CardFooter>
+                          {showActionButtons ? (
+                            <Button 
+                              className="w-full" 
+                              onClick={() => handleSubscribe(plan.id, plan.name)}
+                            >
+                              Demander un devis
+                            </Button>
+                          ) : (
+                            <Button 
+                              className="w-full" 
+                              onClick={() => setLocation('/auth')}
+                            >
+                              Se connecter pour un devis
+                            </Button>
+                          )}
+                        </CardFooter>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          )}
+          
+          {/* Informations supplémentaires */}
+          {!isSubscribed && (
+            <div className="bg-gray-50 rounded-xl p-6 space-y-6 mt-8">
+              <h2 className="text-xl font-bold">Pourquoi choisir un abonnement Necform ?</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-white p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">Avantages du plan</h4>
+                  <ul className="space-y-2">
+                    <li className="flex items-center text-gray-700">
+                      <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                      <span>Accès à toutes les formations</span>
+                    </li>
+                    <li className="flex items-center text-gray-700">
+                      <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                      <span>Support prioritaire</span>
+                    </li>
+                    <li className="flex items-center text-gray-700">
+                      <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                      <span>Certificats de formation</span>
+                    </li>
+                  </ul>
+                </div>
+                
+                <div className="bg-white p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">Questions fréquentes</h4>
+                  <ul className="space-y-2">
+                    <li className="text-gray-700">
+                      <div className="font-medium">Puis-je annuler à tout moment ?</div>
+                      <div className="text-sm text-gray-600">Oui, vous pouvez annuler votre abonnement à tout moment sans frais.</div>
+                    </li>
+                    <li className="text-gray-700">
+                      <div className="font-medium">Y a-t-il un engagement minimum ?</div>
+                      <div className="text-sm text-gray-600">Non, vous êtes libre de résilier quand vous le souhaitez.</div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
       
@@ -425,20 +723,19 @@ export default function Subscription(props: SubscriptionProps) {
               </div>
               <div>
                 <h3 className="font-medium">Être contacté</h3>
-                <p className="text-sm text-gray-500">Demandez à être contacté par WhatsApp ou email</p>
+                <p className="text-sm text-gray-500">Un conseiller vous recontactera pour finaliser votre abonnement</p>
               </div>
             </div>
           </div>
         </DialogContent>
       </Dialog>
-      
-      {/* Formulaire de contact */}
+
       <Dialog open={showContactForm} onOpenChange={setShowContactForm}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Demande de contact</DialogTitle>
             <DialogDescription>
-              Laissez-nous vos coordonnées et nous vous contacterons dans les plus brefs délais.
+              Laissez-nous vos coordonnées et nous vous recontacterons dans les plus brefs délais.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleContactSubmit}>
@@ -497,312 +794,28 @@ export default function Subscription(props: SubscriptionProps) {
               </div>
             </div>
             <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowContactForm(false)}
+                className="mr-2"
+              >
+                Annuler
+              </Button>
               <Button type="submit" disabled={contactSubmitting}>
-                {contactSubmitting ? "Envoi en cours..." : "Envoyer ma demande"}
+                {contactSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Envoi en cours...
+                  </>
+                ) : (
+                  "Envoyer la demande"
+                )}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
-      
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 font-heading">Mon abonnement</h1>
-        <p className="mt-2 text-gray-600">
-          Gérez votre plan d'abonnement et vos paiements
-        </p>
-      </div>
-
-      {/* Current Subscription Status */}
-      {isSubscribed && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>Abonnement actuel</CardTitle>
-            <CardDescription>Détails de votre abonnement actif</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-xl font-medium text-gray-900 capitalize">
-                    {user?.subscriptionType === "monthly" ? "Mensuel" : 
-                     user?.subscriptionType === "annual" ? "Annuel" : "Business"}
-                  </h3>
-                  <p className="text-gray-500">Valide jusqu'au: {formatEndDate(user?.subscriptionEndDate)}</p>
-                </div>
-                <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-                  Actif
-                </Badge>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-gray-900 mb-2">Avantages du plan</h4>
-                  <ul className="space-y-2">
-                    <li className="flex items-center text-gray-700">
-                      <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Accès à toutes les formations</span>
-                    </li>
-                    <li className="flex items-center text-gray-700">
-                      <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Support prioritaire</span>
-                    </li>
-                    <li className="flex items-center text-gray-700">
-                      <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Contenu exclusif</span>
-                    </li>
-                  </ul>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-gray-900 mb-2">Informations de facturation</h4>
-                  <p className="text-gray-700">
-                    Votre abonnement {user?.subscriptionType === "monthly" ? "mensuel" : 
-                    user?.subscriptionType === "annual" ? "annuel" : "business"} sera 
-                    automatiquement renouvelé le {formatEndDate(user?.subscriptionEndDate)}.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter className="border-t border-gray-200 pt-6">
-            <Button 
-              variant="outline" 
-              className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-              onClick={handleCancel}
-              disabled={cancelSubscriptionMutation.isPending}
-            >
-              {cancelSubscriptionMutation.isPending ? "Annulation en cours..." : "Annuler l'abonnement"}
-            </Button>
-          </CardFooter>
-        </Card>
-      )}
-
-      {/* Subscription Plans */}
-      {!isSubscribed && (
-        <Tabs 
-          defaultValue={selectedPlan} 
-          onValueChange={(value) => setSelectedPlan(value as "monthly" | "annual" | "business")}
-          className="space-y-6"
-        >
-          <TabsList className="grid w-full grid-cols-3 mb-8">
-            <TabsTrigger value="monthly" disabled={monthlyPlans.length === 0}>Mensuel</TabsTrigger>
-            <TabsTrigger value="annual" disabled={annualPlans.length === 0}>Annuel (Économisez 20%)</TabsTrigger>
-            <TabsTrigger value="business" disabled={businessPlans.length === 0}>Business</TabsTrigger>
-          </TabsList>
-          
-          {plans && plans.length === 0 && (
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-gray-500">
-                  Aucun plan d'abonnement n'est disponible actuellement. Veuillez réessayer ultérieurement.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-          
-          <TabsContent value="monthly" className="space-y-6">
-            {monthlyPlans.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-center text-gray-500">
-                    Aucun plan mensuel n'est disponible actuellement.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {monthlyPlans.map(plan => (
-                  <Card key={plan.id} className="flex flex-col h-full">
-                    <CardHeader>
-                      <CardTitle className="text-xl sm:text-2xl">{plan.name}</CardTitle>
-                      <CardDescription className="text-sm sm:text-base">{plan.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-grow">
-                      <div className="space-y-4">
-                        <div className="flex items-baseline">
-                          <span className="text-2xl sm:text-3xl font-bold text-gray-900">{plan.price}€</span>
-                          <span className="text-xs sm:text-sm text-gray-500 ml-1">/ mois</span>
-                        </div>
-                        <ul className="space-y-3">
-                          {plan.features.map((feature, index) => (
-                            <li key={index} className="flex items-start text-gray-700">
-                              <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                              <span className="text-sm sm:text-base">{feature}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </CardContent>
-                  <CardFooter>
-                    {showActionButtons ? (
-                      <Button 
-                        className="w-full" 
-                        onClick={() => handleSubscribe(plan.id, plan.name)}
-                      >
-                        Choisir ce plan
-                      </Button>
-                    ) : (
-                      <Button 
-                        className="w-full" 
-                        onClick={() => setLocation('/auth')}
-                      >
-                        Se connecter pour s'abonner
-                      </Button>
-                    )}
-                  </CardFooter>
-                </Card>
-              ))
-            )}
-          </TabsContent>
-          
-          <TabsContent value="annual" className="space-y-6">
-            {annualPlans.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-center text-gray-500">
-                    Aucun plan annuel n'est disponible actuellement.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              annualPlans.map(plan => (
-                <Card key={plan.id}>
-                  <CardHeader>
-                    <CardTitle>{plan.name}</CardTitle>
-                    <CardDescription>{plan.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-baseline">
-                        <span className="text-3xl font-bold text-gray-900">{plan.price}€</span>
-                        <span className="text-gray-500 ml-1">/ an</span>
-                        <Badge className="ml-2 bg-green-100 text-green-800">Économisez 20%</Badge>
-                      </div>
-                      <ul className="space-y-3">
-                        {plan.features.map((feature, index) => (
-                          <li key={index} className="flex items-center text-gray-700">
-                            <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                            <span>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    {showActionButtons ? (
-                      <Button 
-                        className="w-full" 
-                        onClick={() => handleSubscribe(plan.id, plan.name)}
-                      >
-                        Choisir ce plan
-                      </Button>
-                    ) : (
-                      <Button 
-                        className="w-full" 
-                        onClick={() => setLocation('/auth')}
-                      >
-                        Se connecter pour s'abonner
-                      </Button>
-                    )}
-                  </CardFooter>
-                </Card>
-              ))
-            )}
-          </TabsContent>
-
-          <TabsContent value="business" className="space-y-6">
-            {businessPlans.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-center text-gray-500">
-                    Aucun plan business n'est disponible actuellement.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              businessPlans.map(plan => (
-                <Card key={plan.id}>
-                  <CardHeader>
-                    <CardTitle>{plan.name}</CardTitle>
-                    <CardDescription>{plan.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-baseline">
-                        <span className="text-3xl font-bold text-gray-900">{plan.price}€</span>
-                        <span className="text-gray-500 ml-1">/ entreprise</span>
-                        <Badge className="ml-2 bg-blue-100 text-blue-800">Entreprise</Badge>
-                      </div>
-                      <ul className="space-y-3">
-                        {plan.features.map((feature, index) => (
-                          <li key={index} className="flex items-center text-gray-700">
-                            <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                            <span>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    {showActionButtons ? (
-                      <Button 
-                        className="w-full" 
-                        onClick={() => handleSubscribe(plan.id, plan.name)}
-                      >
-                        Demander un devis
-                      </Button>
-                    ) : (
-                      <Button 
-                        className="w-full" 
-                        onClick={() => setLocation('/auth')}
-                      >
-                        Se connecter pour demander un devis
-                      </Button>
-                    )}
-                  </CardFooter>
-                </Card>
-              ))
-            )}
-          </TabsContent>
-        </Tabs>
-      )}
-
-      {/* FAQ Section */}
-      <div className="mt-12">
-        <h2 className="text-2xl font-bold text-gray-900 font-heading mb-6">Questions fréquentes</h2>
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-3">Comment fonctionne l'abonnement ?</h3>
-              <p className="text-gray-700">
-                Nos abonnements vous donnent un accès complet à toutes les formations en ligne. Vous pouvez assister à autant de sessions en direct que vous le souhaitez pendant la durée de votre abonnement.
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-3">Puis-je annuler à tout moment ?</h3>
-              <p className="text-gray-700">
-                Oui, vous pouvez annuler votre abonnement à tout moment. Vous conserverez l'accès jusqu'à la fin de votre période de facturation actuelle.
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-3">Quels modes de paiement acceptez-vous ?</h3>
-              <p className="text-gray-700">
-                Nous acceptons les paiements par carte de crédit via notre système sécurisé. Pour les entreprises, nous proposons également des factures et des virements bancaires.
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-3">Comment fonctionnent les abonnements entreprise ?</h3>
-              <p className="text-gray-700">
-                Les abonnements entreprise permettent à plusieurs employés d'accéder à nos formations. Contactez-nous pour une offre personnalisée en fonction du nombre d'utilisateurs.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
     </div>
   );
 }
