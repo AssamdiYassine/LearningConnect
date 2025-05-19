@@ -856,13 +856,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Already enrolled in this session" });
       }
       
-      console.log("User not enrolled yet. Checking subscription...");
+      console.log("User not enrolled yet. Checking subscription and course price...");
       console.log("User isSubscribed:", req.user.isSubscribed);
       console.log("User enterpriseId:", req.user.enterpriseId);
       console.log("User role:", req.user.role);
       
-      // Check if user has an active subscription - skipping for enterprise employees
-      if (!req.user.isSubscribed && !req.user.enterpriseId && req.user.role !== 'enterprise_employee') {
+      // Récupérer les détails du cours pour vérifier si c'est un cours gratuit
+      const courseDetails = await storage.getCourse(session.courseId);
+      console.log("Course details:", JSON.stringify(courseDetails));
+      
+      // Si le cours est gratuit (price = 0), permettre l'inscription sans vérifier l'abonnement
+      const isFree = courseDetails && courseDetails.price === 0;
+      console.log("Is free course:", isFree);
+      
+      // Check if user has an active subscription - skipping for enterprise employees and free courses
+      if (!req.user.isSubscribed && !req.user.enterpriseId && req.user.role !== 'enterprise_employee' && !isFree) {
         console.log("User needs subscription to enroll");
         return res.status(403).json({ message: "You need an active subscription to enroll in sessions" });
       }
