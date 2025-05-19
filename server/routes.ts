@@ -553,9 +553,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Erreur lors de la récupération des étudiants" });
     }
   });
-      res.status(500).json({ message: "Failed to fetch trainer students" });
-    }
-  });
 
   app.post("/api/enrollments", isAuthenticated, async (req, res) => {
     try {
