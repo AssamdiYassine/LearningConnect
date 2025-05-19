@@ -196,20 +196,20 @@ export default function Catalog() {
             </div>
           </div>
           
-          {/* Filtre cours gratuits */}
-          <div className="mt-4 flex items-center p-3 rounded-lg bg-green-50 border border-green-200">
+          {/* Filtre cours gratuits - optimisé pour mobile */}
+          <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center p-3 rounded-lg bg-green-50 border border-green-200">
             <Button 
               variant={showOnlyFree ? "default" : "outline"} 
-              className={`flex items-center gap-2 ${showOnlyFree ? "bg-green-600 hover:bg-green-700" : "hover:bg-green-100 text-green-700 border-green-300"}`}
+              className={`flex items-center gap-2 ${showOnlyFree ? "bg-green-600 hover:bg-green-700" : "hover:bg-green-100 text-green-700 border-green-300"} w-full sm:w-auto`}
               onClick={() => setShowOnlyFree(!showOnlyFree)}
             >
               <Sparkle className={`h-4 w-4 ${showOnlyFree ? "text-white" : "text-green-600"}`} />
               <span className={showOnlyFree ? "text-white" : "text-green-700"}>
-                {showOnlyFree ? "Affichage des formations gratuites uniquement" : "Afficher les formations gratuites uniquement"}
+                {showOnlyFree ? "Formations gratuites uniquement" : "Afficher les formations gratuites"}
               </span>
             </Button>
             {showOnlyFree && (
-              <span className="ml-3 text-sm text-green-700">
+              <span className="mt-2 sm:mt-0 sm:ml-3 text-sm text-green-700">
                 {filteredCourses.length} formation{filteredCourses.length > 1 ? 's' : ''} gratuite{filteredCourses.length > 1 ? 's' : ''} disponible{filteredCourses.length > 1 ? 's' : ''}
               </span>
             )}
