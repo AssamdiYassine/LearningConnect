@@ -28,6 +28,7 @@ import {
   Home,
   LineChart, 
   Key,
+  DollarSign,
   MessageSquare, 
   Mail,
   Layers,
@@ -301,6 +302,12 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({ chil
             {/* Section Approbations supprimée à la demande du client */}
             
             <SidebarSection title="Paiements" />
+            <SidebarItem 
+              icon={<DollarSign size={18} />} 
+              text="Transactions" 
+              path="/admin/payments" 
+              isActive={location === "/admin/payments"}
+            />
             <SidebarItem 
               icon={<CreditCard size={18} />} 
               text="Abonnements" 
