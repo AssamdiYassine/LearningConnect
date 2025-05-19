@@ -300,6 +300,11 @@ html {
   @apply mb-16 md:mb-24;
 }
 
+/* Fullwidth overrides */
+.full-width-section {
+  @apply w-screen m-0 p-0 max-w-none;
+}
+
 /* Container classes */
 .container-narrow {
   @apply w-full max-w-[1080px] mx-auto px-4 sm:px-5 md:px-8 lg:px-10;

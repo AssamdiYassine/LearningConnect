@@ -13,7 +13,7 @@ export default function HeroSection() {
   const [location, setLocation] = useLocation();
   
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-[#1D2B6C] via-[#5F8BFF] to-[#7A6CFF] text-white w-full">
+    <section className="relative overflow-hidden bg-gradient-to-br from-[#1D2B6C] via-[#5F8BFF] to-[#7A6CFF] text-white full-width-section">
       {/* Background elements */}
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iLjUiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMjkuNSIvPjxwYXRoIGQ9Ik0yOS41IDE1Ljk5OEgzMC41VjQ0aC0xeiIvPjxwYXRoIGQ9Ik0xNiAyOS41VjMwLjVINDR2LTF6Ii8+PC9nPjwvc3ZnPg==')] opacity-[0.05]"></div>
       
@@ -24,8 +24,8 @@ export default function HeroSection() {
         <div className="absolute -bottom-40 -right-40 w-80 h-80 rounded-full bg-[#7A6CFF]/10 blur-3xl animate-pulse"></div>
       </div>
       
-      <div className="relative w-full max-w-[1920px] mx-auto px-10 py-20 sm:py-28 md:py-32">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <div className="relative w-screen mx-0 px-0 py-20 sm:py-28 md:py-32">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center px-4 md:px-6 max-w-[1920px] mx-auto">
           {/* Text content */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
