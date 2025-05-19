@@ -501,7 +501,26 @@ export default function CourseDetail({ id }: CourseDetailProps) {
           {/* Course Actions */}
           <div className="mt-8 pt-6 border-t border-gray-200">
             <div className="flex flex-wrap gap-4 justify-end">
-              {!user?.isSubscribed ? (
+              {/* Traitement des cours gratuits - Afficher un bouton d'inscription directe */}
+              {course.price === 0 ? (
+                sortedSessions.length > 0 && !sortedSessions[0].isEnrolled && (
+                  <Button 
+                    onClick={() => handleEnroll(sortedSessions[0].id)}
+                    disabled={
+                      enrollMutation.isPending || 
+                      sortedSessions[0].enrollmentCount >= course.maxStudents
+                    }
+                    className="bg-green-600 hover:bg-green-700 shadow-lg"
+                  >
+                    {enrollMutation.isPending 
+                      ? "Inscription..." 
+                      : sortedSessions[0].enrollmentCount >= course.maxStudents 
+                        ? "Session complète" 
+                        : "S'inscrire gratuitement"
+                    }
+                  </Button>
+                )
+              ) : !user?.isSubscribed && !user?.enterpriseId && user?.role !== 'enterprise_employee' ? (
                 <div className="flex flex-wrap gap-4">
                   <Button 
                     onClick={() => {
@@ -511,7 +530,7 @@ export default function CourseDetail({ id }: CourseDetailProps) {
                     variant="default"
                     className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
                   >
-                    Acheter cette formation ({course.price || 49}€)
+                    Acheter cette formation ({course.price}€)
                   </Button>
                   <Button 
                     onClick={() => setLocation("/subscription")}
