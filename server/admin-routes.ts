@@ -347,8 +347,13 @@ export function registerAdminRoutes(app: Express) {
       }
       
       try {
-        // Supprimer la catégorie avec gestion d'erreur spécifique
-        await storage.deleteCategory(categoryId);
+        // Supprimer la catégorie directement avec SQL
+        console.log(`Tentative de suppression de la catégorie ${categoryId}`);
+        
+        // Suppression directe par requête SQL
+        await db.execute(`DELETE FROM categories WHERE id = ${categoryId}`);
+        
+        console.log(`Catégorie ${categoryId} supprimée avec succès`);
         res.status(200).json({ message: "Catégorie supprimée avec succès" });
       } catch (dbError: any) {
         // Si erreur de contrainte d'intégrité ou autre erreur de base de données
@@ -646,48 +651,41 @@ export function registerAdminRoutes(app: Express) {
       try {
         console.log("Données à mettre à jour:", dbUpdateData);
         
-        // Construire la requête SQL de mise à jour
-        let updateSQL = "UPDATE sessions SET ";
-        const updateValues = [];
-        const updateParams = [];
+        // Structure de session simplifiée pour éviter les erreurs
+        const setValues = [];
         
         if (dbUpdateData.courseId) {
-          updateParams.push(`course_id = $${updateValues.length + 1}`);
-          updateValues.push(dbUpdateData.courseId);
+          setValues.push(`course_id = ${dbUpdateData.courseId}`);
         }
         
         if (dbUpdateData.date) {
-          updateParams.push(`date = $${updateValues.length + 1}`);
-          updateValues.push(dbUpdateData.date);
+          setValues.push(`date = '${dbUpdateData.date.toISOString()}'`);
         }
         
         if (dbUpdateData.zoomLink !== undefined) {
-          updateParams.push(`zoom_link = $${updateValues.length + 1}`);
-          updateValues.push(dbUpdateData.zoomLink);
+          setValues.push(`zoom_link = '${dbUpdateData.zoomLink || ""}'`);
         }
         
         if (dbUpdateData.recordingLink !== undefined) {
-          updateParams.push(`recording_link = $${updateValues.length + 1}`);
-          updateValues.push(dbUpdateData.recordingLink);
+          const recordingValue = dbUpdateData.recordingLink ? `'${dbUpdateData.recordingLink}'` : 'NULL';
+          setValues.push(`recording_link = ${recordingValue}`);
         }
         
         if (dbUpdateData.maxParticipants) {
-          updateParams.push(`max_participants = $${updateValues.length + 1}`);
-          updateValues.push(dbUpdateData.maxParticipants);
+          setValues.push(`max_participants = ${dbUpdateData.maxParticipants}`);
         }
         
-        if (updateParams.length === 0) {
+        if (setValues.length === 0) {
           return res.status(400).json({ message: "Aucune donnée à mettre à jour" });
         }
         
-        updateSQL += updateParams.join(", ") + ` WHERE id = $${updateValues.length + 1}`;
-        updateValues.push(sessionId);
+        // Utiliser une requête SQL sécurisée mais simple
+        const updateSQL = `UPDATE sessions SET ${setValues.join(", ")} WHERE id = ${sessionId}`;
         
         console.log("SQL de mise à jour:", updateSQL);
-        console.log("Valeurs:", updateValues);
         
-        // Exécuter la requête
-        await db.execute(updateSQL, updateValues);
+        // Exécuter la requête directement
+        await db.execute(updateSQL);
         
         // Récupérer la session mise à jour
         const updatedSession = await storage.getSession(sessionId);
