@@ -174,17 +174,12 @@ export default function SessionDetail({ id }: SessionDetailProps) {
                     <p className="text-gray-700">
                       Cette session aura lieu sur Zoom. Le lien est disponible ci-dessous.
                     </p>
-                    <Button 
-                      className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600" 
-                      onClick={() => {
-                        // Rediriger vers la page Zoom Session au lieu d'ouvrir la boîte de dialogue
-                        // Rediriger vers le lien Zoom réel
-                        window.open(zoomLink, '_blank');
-                      }}
+                    <ZoomButton 
+                      zoomLink={zoomLink}
+                      className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600"
                     >
-                      <VideoIcon className="h-4 w-4 mr-2" />
                       Accéder à la session Zoom
-                    </Button>
+                    </ZoomButton>
                   </div>
                 ) : !user?.isSubscribed && !user?.enterpriseId && user?.role !== 'enterprise_employee' as any ? (
                   <div className="space-y-3">

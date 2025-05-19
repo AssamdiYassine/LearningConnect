@@ -2,11 +2,12 @@ import { SessionWithDetails } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, formatTime, getRelativeDateLabel } from "@/lib/utils";
-import { Laptop, Video, Users, Clock, Signal } from "lucide-react";
+import { Laptop, Users, Clock, Signal } from "lucide-react";
 import { Link } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import ZoomButton from "@/components/zoom-button";
 
 interface SessionItemProps {
   session: SessionWithDetails;
@@ -137,15 +138,12 @@ export default function SessionItem({ session, showActions = true }: SessionItem
               )}
               
               {isWithin30Min && session.zoomLink && (
-                <a 
-                  href={session.zoomLink} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
+                <ZoomButton 
+                  zoomLink={session.zoomLink}
+                  className="text-white"
                 >
-                  <Button variant="default" className="text-white">
-                    <Video className="mr-1.5 h-4 w-4" /> Join session
-                  </Button>
-                </a>
+                  Join session
+                </ZoomButton>
               )}
             </div>
           )}
