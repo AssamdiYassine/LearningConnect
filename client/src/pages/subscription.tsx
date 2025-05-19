@@ -236,18 +236,6 @@ export default function Subscription(props: SubscriptionProps) {
   // Check if user has an active subscription
   const isSubscribed = user?.isSubscribed;
   
-  // Variable pour déterminer si les boutons d'action doivent être affichés
-  const showActionButtons = !!user;
-
-  // Afficher un loader pendant le chargement des plans ou des détails du cours
-  if (isLoadingPlans || isLoadingCourse) {
-    return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-  
   // Mutation pour l'achat d'une formation individuelle
   const purchaseCourseMutation = useMutation({
     mutationFn: async (courseId: number) => {
@@ -271,6 +259,18 @@ export default function Subscription(props: SubscriptionProps) {
       });
     },
   });
+
+  // Variable pour déterminer si les boutons d'action doivent être affichés
+  const showActionButtons = !!user;
+
+  // Afficher un loader pendant le chargement des plans ou des détails du cours
+  if (isLoadingPlans || isLoadingCourse) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   // Fonction pour gérer l'achat d'une formation
   const handlePurchaseCourse = () => {
