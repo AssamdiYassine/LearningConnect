@@ -523,7 +523,8 @@ export class DatabaseStorage implements IStorage {
       const result = await db.execute(`
         SELECT 
           s.id, s.course_id, s.date, s.zoom_link, s.created_at, s.updated_at, s.is_completed,
-          c.id as course_id, c.title as course_title, c.description as course_description,
+          c.id as course_id, c.title as course_title, c.description as course_description, 
+          c.duration as course_duration, c.level as course_level, c.max_students as course_max_students,
           cat.id as category_id, cat.name as category_name,
           u.id as trainer_id, u.username as trainer_username, u.display_name as trainer_display_name,
           COUNT(e.id) as enrollment_count
@@ -561,6 +562,9 @@ export class DatabaseStorage implements IStorage {
           id: row.course_id,
           title: row.course_title,
           description: row.course_description,
+          duration: row.course_duration,
+          level: row.course_level,
+          maxStudents: row.course_max_students,
           category: {
             id: row.category_id,
             name: row.category_name
