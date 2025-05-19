@@ -12,7 +12,9 @@ import {
   KeyRound,
   CreditCard,
   CalendarRange,
-  BookOpen
+  BookOpen,
+  DollarSign,
+  ShoppingCart
 } from 'lucide-react';
 import { CourseAccessDialog } from '@/components/course-access-dialog';
 import { Button } from '@/components/ui/button';
@@ -61,6 +63,21 @@ type User = {
   createdAt: string;
 };
 
+type Payment = {
+  id: number;
+  userId: number;
+  courseId: number | null;
+  amount: number;
+  currency: string;
+  status: string;
+  paymentMethod: string;
+  paymentDate: string;
+  type: 'subscription' | 'course';
+  courseName?: string;
+  userName?: string;
+  userEmail?: string;
+};
+
 type UserFormData = {
   username: string;
   email: string;
@@ -79,7 +96,10 @@ export default function AdminUsers() {
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const [isAssignSubscriptionDialogOpen, setIsAssignSubscriptionDialogOpen] = useState(false);
   const [isManageCourseAccessDialogOpen, setIsManageCourseAccessDialogOpen] = useState(false);
+  const [isPaymentsDialogOpen, setIsPaymentsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [activeTab, setActiveTab] = useState('users');
   const [formData, setFormData] = useState<UserFormData>({
     username: '',
     email: '',
@@ -96,6 +116,12 @@ export default function AdminUsers() {
   // Fetch users
   const { data: users = [], isLoading } = useQuery<User[]>({
     queryKey: ['/api/admin/users'],
+  });
+  
+  // Fetch payments
+  const { data: payments = [], isLoading: isPaymentsLoading } = useQuery<Payment[]>({
+    queryKey: ['/api/admin/payments'],
+    enabled: activeTab === 'payments', // Chargement paresseux
   });
 
   // Create user mutation

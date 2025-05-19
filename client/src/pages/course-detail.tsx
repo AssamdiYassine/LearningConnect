@@ -383,13 +383,25 @@ export default function CourseDetail({ id }: CourseDetailProps) {
                               Déjà inscrit
                             </Button>
                           ) : !user?.isSubscribed ? (
-                            <Button 
-                              onClick={() => setLocation("/subscription")}
-                              variant="default"
-                              className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                            >
-                              S'abonner pour accéder
-                            </Button>
+                            <div className="flex flex-wrap gap-2">
+                              <Button 
+                                onClick={() => {
+                                  const coursePrice = course.price || 49;
+                                  setLocation(`/checkout?type=course&courseId=${course.id}&price=${coursePrice}&courseName=${encodeURIComponent(course.title)}`);
+                                }}
+                                variant="default"
+                                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                              >
+                                Acheter ({course.price || 49}€)
+                              </Button>
+                              <Button 
+                                onClick={() => setLocation("/subscription")}
+                                variant="default"
+                                className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                              >
+                                S'abonner
+                              </Button>
+                            </div>
                           ) : (
                             <Button 
                               onClick={() => handleEnroll(session.id)}
@@ -466,13 +478,25 @@ export default function CourseDetail({ id }: CourseDetailProps) {
           <div className="mt-8 pt-6 border-t border-gray-200">
             <div className="flex flex-wrap gap-4 justify-end">
               {!user?.isSubscribed ? (
-                <Button 
-                  onClick={() => setLocation("/subscription")}
-                  variant="default"
-                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg"
-                >
-                  S'abonner pour accéder
-                </Button>
+                <div className="flex flex-wrap gap-4">
+                  <Button 
+                    onClick={() => {
+                      const coursePrice = course.price || 49;
+                      setLocation(`/checkout?type=course&courseId=${course.id}&price=${coursePrice}&courseName=${encodeURIComponent(course.title)}`);
+                    }}
+                    variant="default"
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
+                  >
+                    Acheter cette formation ({course.price || 49}€)
+                  </Button>
+                  <Button 
+                    onClick={() => setLocation("/subscription")}
+                    variant="default"
+                    className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg"
+                  >
+                    S'abonner pour accès illimité
+                  </Button>
+                </div>
               ) : (
                 sortedSessions.length > 0 && !sortedSessions[0].isEnrolled && (
                   <Button 
