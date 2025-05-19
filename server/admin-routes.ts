@@ -366,23 +366,19 @@ export function registerAdminRoutes(app: Express) {
           // Définir une catégorie par défaut (ID 1 = DevOps & Cloud ou autre catégorie existante)
           const defaultCategoryId = 1;
           
-          // Approche alternative pour réassigner les formations - Requête préparée
-          const updateResult = await db.execute(
-            `UPDATE courses SET category_id = $1 WHERE category_id = $2`,
-            [defaultCategoryId, categoryId]
-          );
+          // Approche avec requête SQL directe pour éviter l'erreur de méthode execute
+          const updateSql = `UPDATE courses SET category_id = $1 WHERE category_id = $2`;
+          const updateResult = await pool.query(updateSql, [defaultCategoryId, categoryId]);
           
-          console.log(`Résultat de la mise à jour:`, updateResult);
+          console.log(`Résultat de la mise à jour:`, updateResult.rowCount);
           console.log(`${coursesWithCategory.length} formations mises à jour pour utiliser la catégorie par défaut`);
         }
         
-        // Suppression avec requête préparée pour éviter les injections SQL
-        const deleteResult = await db.execute(
-          `DELETE FROM categories WHERE id = $1`,
-          [categoryId]
-        );
+        // Suppression avec requête SQL directe
+        const deleteSql = `DELETE FROM categories WHERE id = $1`;
+        const deleteResult = await pool.query(deleteSql, [categoryId]);
         
-        console.log(`Résultat de la suppression:`, deleteResult);
+        console.log(`Résultat de la suppression:`, deleteResult.rowCount, "lignes supprimées");
         console.log(`Catégorie ${categoryId} supprimée avec succès`);
         
         res.status(200).json({ 
