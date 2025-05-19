@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { SessionWithDetails } from "@shared/schema";
-import { User, Video } from "lucide-react";
 import { 
   Card, 
   CardContent, 
@@ -16,7 +15,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Search, Calendar, ChevronLeft, ChevronRight, ExternalLink, Video } from "lucide-react";
+import { Loader2, Search, Calendar, ChevronLeft, ChevronRight, ExternalLink, Video, User, Users } from "lucide-react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth, eachDayOfInterval, addMonths, subMonths, isToday, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -31,7 +30,7 @@ export default function Schedule() {
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
-  const [view, setView] = useState<"month" | "week" | "day">("month");
+  const [view, setView] = useState<string>("month");
   const [showSessionDetails, setShowSessionDetails] = useState(false);
   const [selectedSession, setSelectedSession] = useState<SessionWithDetails | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -126,6 +125,105 @@ export default function Schedule() {
   const now = new Date();
   const upcomingSessions = sortedSessions.filter(session => new Date(session.date) > now);
   const pastSessions = sortedSessions.filter(session => new Date(session.date) <= now);
+
+// Composant SessionCard
+function SessionCard({ 
+  session, 
+  onClick, 
+  isPast 
+}: { 
+  session: SessionWithDetails;
+  onClick: () => void;
+  isPast: boolean;
+}) {
+  const isFree = session.course.price === 0;
+
+  return (
+    <Card 
+      className={cn(
+        "overflow-hidden transition-all hover:shadow-md cursor-pointer",
+        isPast ? "opacity-75" : "",
+        isFree ? "border-green-200" : "border-blue-200"
+      )}
+      onClick={onClick}
+    >
+      <CardContent className="p-0">
+        <div className={cn(
+          "flex border-l-4",
+          isFree ? "border-green-500" : "border-blue-500"
+        )}>
+          {/* Partie gauche - Date et heure */}
+          <div className={cn(
+            "p-4 flex flex-col justify-center items-center w-28",
+            isFree ? "bg-green-50" : "bg-blue-50"
+          )}>
+            <p className="text-sm font-medium">
+              {format(new Date(session.date), 'EEEE', { locale: fr }).substring(0, 3)}
+            </p>
+            <p className="text-xl font-bold mt-1">
+              {format(new Date(session.date), 'd MMM', { locale: fr })}
+            </p>
+            <p className="text-lg font-medium mt-1">
+              {format(new Date(session.date), 'HH:mm')}
+            </p>
+          </div>
+          
+          {/* Partie droite - Informations sur la session */}
+          <div className="flex-1 p-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="font-semibold text-lg mb-1">{session.course.title}</h3>
+                <div className="flex items-center mb-2 text-sm text-gray-600">
+                  <User className="w-4 h-4 mr-1" />
+                  <span>{session.course.trainer?.displayName || "Formateur à confirmer"}</span>
+                </div>
+              </div>
+              
+              <div className="flex flex-col items-end">
+                {isFree ? (
+                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                    Accès libre
+                  </Badge>
+                ) : isPast ? (
+                  <Badge variant="outline" className="text-gray-600">
+                    Terminée
+                  </Badge>
+                ) : (
+                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
+                    Inscrit
+                  </Badge>
+                )}
+                
+                {session.zoomLink && !isPast && (
+                  <Button 
+                    variant="link" 
+                    size="sm" 
+                    className="mt-2 px-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(session.zoomLink, '_blank');
+                    }}
+                  >
+                    <Video className="w-4 h-4 mr-1" />
+                    Rejoindre
+                  </Button>
+                )}
+              </div>
+            </div>
+            
+            {session.course.category && (
+              <div className="mt-2">
+                <Badge variant="outline" className="text-xs">
+                  {session.course.category.name}
+                </Badge>
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
   // Si chargement en cours
   if (isSessionsLoading) {
@@ -271,7 +369,7 @@ export default function Schedule() {
                         )}
                         onClick={() => {
                           setSelectedDate(day.date);
-                          if (view !== "day") setView("day");
+                          setView("day");
                         }}
                       >
                         <div className="absolute top-1 right-1 text-sm">
