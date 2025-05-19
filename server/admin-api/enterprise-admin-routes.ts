@@ -17,14 +17,20 @@ const router = Router();
 
 // Middleware pour vérifier si l'utilisateur est un administrateur
 const isAdmin = (req: Request, res: Response, next: Function) => {
+  // Vérification de l'authentification
   if (!req.isAuthenticated()) {
+    console.log("Utilisateur non authentifié tentant d'accéder aux routes admin");
     return res.status(401).json({ message: "Non authentifié" });
   }
   
+  // Vérification du rôle
   if (req.user && req.user.role !== "admin") {
+    console.log(`Utilisateur avec rôle ${req.user.role} tentant d'accéder aux routes admin`);
     return res.status(403).json({ message: "Accès refusé: rôle administrateur requis" });
   }
   
+  // Utilisateur authentifié et administrateur
+  console.log(`Administrateur ${req.user.username} accède à une route protégée`);
   next();
 };
 

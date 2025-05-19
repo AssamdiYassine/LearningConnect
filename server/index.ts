@@ -8,6 +8,7 @@ import { registerResetPasswordRoutes } from "./reset-password-routes";
 import { registerAdminRevenueRoutes } from "./admin-revenue-routes";
 import { registerAdminPaymentRoutes } from "./admin-payment-routes";
 import { registerZoomRoutes } from "./routes-zoom";
+import { registerEnterpriseAdminRoutes } from "./admin-api/enterprise-admin-routes";
 import { registerSubscriptionPlansRoutes } from "./routes/subscription-plans-routes";
 import { registerPublicSubscriptionRoutes } from "./routes/subscription-public";
 import { setupVite, serveStatic, log } from "./vite";
