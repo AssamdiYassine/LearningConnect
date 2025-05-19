@@ -42,7 +42,7 @@ export default function SubscriptionPlansSection() {
       <div className="absolute -top-64 left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full bg-[#5F8BFF]/5 blur-3xl"></div>
       <div className="absolute top-1/2 -right-40 w-[600px] h-[600px] rounded-full bg-[#7A6CFF]/5 blur-3xl"></div>
       
-      <div className="container relative mx-auto px-4 max-w-[1920px]">
+      <div className="container relative mx-auto px-10 max-w-[1920px]">
         <div className="text-center max-w-xl mx-auto mb-16">
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
