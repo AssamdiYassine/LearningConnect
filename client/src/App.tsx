@@ -27,6 +27,7 @@ import LandingPage from "@/pages/landing-page";
 import AboutPage from "@/pages/about-page";
 import ProfilePage from "./pages/profile";
 import TrainerProfilePage from "./pages/trainer-profile";
+import PurchasePage from "@/pages/purchase-page";
 import CreateCourse from "@/pages/create-course";
 import CreateSession from "@/pages/create-session";
 import EditCourse from "@/pages/edit-course";
@@ -127,7 +128,7 @@ function Router() {
       <Route path="/purchase/:courseId">
         {params => (
           <ProtectedRoute 
-            component={() => <Subscription courseId={params.courseId} />} 
+            component={() => <PurchasePage courseId={params.courseId} />} 
             allowedRoles={["student", "trainer", "admin"]} 
           />
         )}
