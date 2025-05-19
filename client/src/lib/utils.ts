@@ -85,8 +85,8 @@ export function daysBetween(startDate: Date | string | null | undefined, endDate
   
   try {
     const oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
-    const start = startDate instanceof Date ? new Date(startDate) : new Date(startDate);
-    const end = endDate instanceof Date ? new Date(endDate) : new Date(endDate);
+    const start = startDate instanceof Date ? startDate : new Date(startDate);
+    const end = endDate instanceof Date ? endDate : new Date(endDate);
     
     if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
     
@@ -99,6 +99,27 @@ export function daysBetween(startDate: Date | string | null | undefined, endDate
     return diffDays;
   } catch (error) {
     console.error('Error calculating days between dates:', error);
+    return 0;
+  }
+}
+
+/**
+ * Calculate the duration between start and end time in minutes
+ */
+export function calculateDurationInMinutes(startDate: Date | string | null | undefined, endDate: Date | string | null | undefined): number {
+  if (!startDate || !endDate) return 0;
+  
+  try {
+    const start = startDate instanceof Date ? startDate : new Date(startDate);
+    const end = endDate instanceof Date ? endDate : new Date(endDate);
+    
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+    
+    // Calculate the difference in milliseconds and convert to minutes
+    const diffMs = end.getTime() - start.getTime();
+    return Math.max(0, Math.round(diffMs / (60 * 1000)));
+  } catch (error) {
+    console.error('Error calculating duration:', error);
     return 0;
   }
 }
