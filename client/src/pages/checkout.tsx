@@ -16,9 +16,11 @@ export default function Checkout() {
   const [, setLocation] = useLocation();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [subscriptionDetails, setSubscriptionDetails] = useState<{
-    type: 'monthly' | 'annual';
+  const [paymentDetails, setPaymentDetails] = useState<{
+    type: 'monthly' | 'annual' | 'course';
     price: number;
+    courseId?: number;
+    courseName?: string;
   } | null>(null);
 
   // Form state
@@ -29,16 +31,29 @@ export default function Checkout() {
     cvc: ''
   });
 
-  // Extract subscription type from URL parameters
+  // Extract payment type and details from URL parameters
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const type = params.get('type') as 'monthly' | 'annual';
+    const type = params.get('type') as 'monthly' | 'annual' | 'course';
     
-    if (type && (type === 'monthly' || type === 'annual')) {
+    if (type === 'monthly' || type === 'annual') {
+      // Subscription plan
       const price = type === 'monthly' ? 29 : 279;
-      setSubscriptionDetails({ type, price });
+      setPaymentDetails({ type, price });
+    } else if (type === 'course') {
+      // Individual course purchase
+      const courseId = parseInt(params.get('courseId') || '0', 10);
+      const price = parseFloat(params.get('price') || '0');
+      const courseName = params.get('courseName') || '';
+      
+      if (courseId && price) {
+        setPaymentDetails({ type, price, courseId, courseName });
+      } else {
+        // Redirect back if missing course details
+        setLocation('/catalog');
+      }
     } else {
-      // Redirect back to subscription page if no valid type
+      // Invalid type - redirect to subscription page
       setLocation('/subscription');
     }
   }, [setLocation]);
@@ -108,10 +123,10 @@ export default function Checkout() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!isFormValid() || !subscriptionDetails || !user) {
+    if (!isFormValid() || !paymentDetails || !user) {
       toast({
-        title: "Invalid details",
-        description: "Please fill in all the required fields correctly.",
+        title: "Détails invalides",
+        description: "Veuillez remplir correctement tous les champs requis.",
         variant: "destructive"
       });
       return;
@@ -121,16 +136,25 @@ export default function Checkout() {
     
     try {
       // Demo mode - no actual payment processing
-      // Instead, we'll simulate a successful payment and update the subscription
+      // Instead, we'll simulate a successful payment
       await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate processing delay
       
-      // Update subscription via API
-      const response = await apiRequest("POST", "/api/subscription", { 
-        type: subscriptionDetails.type
-      });
+      let response;
+      
+      if (paymentDetails.type === 'course') {
+        // Process course purchase
+        response = await apiRequest("POST", "/api/purchase-course", { 
+          courseId: paymentDetails.courseId 
+        });
+      } else {
+        // Process subscription
+        response = await apiRequest("POST", "/api/subscription", { 
+          type: paymentDetails.type
+        });
+      }
       
       if (!response.ok) {
-        throw new Error('Failed to update subscription');
+        throw new Error('Échec du paiement');
       }
       
       // Show success state
@@ -139,13 +163,17 @@ export default function Checkout() {
       
       // Redirect after a delay
       setTimeout(() => {
-        setLocation('/subscription');
+        if (paymentDetails.type === 'course') {
+          setLocation(`/course/${paymentDetails.courseId}`);
+        } else {
+          setLocation('/subscription');
+        }
       }, 3000);
       
     } catch (error) {
       toast({
-        title: "Payment failed",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        title: "Échec du paiement",
+        description: error instanceof Error ? error.message : "Une erreur inattendue s'est produite",
         variant: "destructive"
       });
     } finally {
@@ -153,9 +181,13 @@ export default function Checkout() {
     }
   };
 
-  // Back to subscription page
+  // Back to previous page
   const handleBack = () => {
-    setLocation('/subscription');
+    if (paymentDetails?.type === 'course') {
+      setLocation(`/course/${paymentDetails.courseId}`);
+    } else {
+      setLocation('/subscription');
+    }
   };
 
   if (success) {
@@ -164,17 +196,23 @@ export default function Checkout() {
         <Card className="border-green-100">
           <CardHeader className="text-center">
             <CheckCircle2 className="mx-auto h-16 w-16 text-green-500 mb-2" />
-            <CardTitle>Payment Successful!</CardTitle>
+            <CardTitle>Paiement réussi !</CardTitle>
             <CardDescription>
-              Your {subscriptionDetails?.type} subscription has been activated
+              {paymentDetails?.type === 'course' 
+                ? `Votre achat de la formation ${paymentDetails.courseName} a été validé`
+                : `Votre abonnement ${paymentDetails?.type === 'monthly' ? 'mensuel' : 'annuel'} a été activé`
+              }
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
             <p className="text-gray-600 mb-4">
-              Thank you for subscribing to our service. You now have access to all premium features.
+              {paymentDetails?.type === 'course' 
+                ? 'Merci pour votre achat. Vous avez maintenant accès à cette formation.'
+                : 'Merci pour votre abonnement. Vous avez maintenant accès à toutes les fonctionnalités premium.'
+              }
             </p>
             <p className="text-sm text-gray-500">
-              Redirecting you to your subscription page...
+              Redirection en cours...
             </p>
           </CardContent>
         </Card>
@@ -182,7 +220,7 @@ export default function Checkout() {
     );
   }
 
-  if (!subscriptionDetails) {
+  if (!paymentDetails) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -317,17 +355,28 @@ export default function Checkout() {
         <div className="md:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Order Summary</CardTitle>
+              <CardTitle>Récapitulatif de la commande</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between">
-                <span className="text-gray-600 capitalize">{subscriptionDetails.type} Plan</span>
-                <span className="font-medium">{subscriptionDetails.price}€</span>
+                {paymentDetails.type === 'course' ? (
+                  <>
+                    <span className="text-gray-600">{paymentDetails.courseName}</span>
+                    <span className="font-medium">{paymentDetails.price}€</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-gray-600 capitalize">
+                      Abonnement {paymentDetails.type === 'monthly' ? 'mensuel' : 'annuel'}
+                    </span>
+                    <span className="font-medium">{paymentDetails.price}€</span>
+                  </>
+                )}
               </div>
               
-              {subscriptionDetails.type === 'annual' && (
+              {paymentDetails.type === 'annual' && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-green-600">Annual discount</span>
+                  <span className="text-green-600">Remise annuelle</span>
                   <span className="text-green-600">-69€</span>
                 </div>
               )}
@@ -336,18 +385,20 @@ export default function Checkout() {
               
               <div className="flex justify-between font-semibold">
                 <span>Total</span>
-                <span>{subscriptionDetails.price}€</span>
+                <span>{paymentDetails.price}€</span>
               </div>
               
-              <div className="text-xs text-gray-500">
-                {subscriptionDetails.type === 'monthly' 
-                  ? "You will be charged monthly until you cancel" 
-                  : "You will be charged annually until you cancel"}
-              </div>
+              {paymentDetails.type !== 'course' && (
+                <div className="text-xs text-gray-500">
+                  {paymentDetails.type === 'monthly' 
+                    ? "Vous serez facturé mensuellement jusqu'à l'annulation" 
+                    : "Vous serez facturé annuellement jusqu'à l'annulation"}
+                </div>
+              )}
             </CardContent>
             <CardFooter className="bg-gray-50 text-sm text-gray-500 rounded-b-lg">
               <p>
-                For demo purposes, no actual payment will be processed.
+                Pour des fins de démonstration, aucun paiement réel ne sera traité.
               </p>
             </CardFooter>
           </Card>
