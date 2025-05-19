@@ -124,19 +124,18 @@ async function initDemoCourses() {
       const courseResult = await pool.query(`
         INSERT INTO courses (
           title, description, category_id, trainer_id, price, 
-          level, duration, max_students, is_published
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          level, duration, max_students
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id
       `, [
         course.title,
         course.description,
         course.categoryId,
         course.trainerId,
-        course.price,
+        Math.round(course.price * 100), // Convertir en centimes (entier)
         course.level,
         course.duration,
-        30, // max_students par défaut
-        true // is_published
+        30 // max_students par défaut
       ]);
       
       const courseId = courseResult.rows[0].id;
