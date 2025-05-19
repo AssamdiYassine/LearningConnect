@@ -622,15 +622,39 @@ export function registerAdminRoutes(app: Express) {
       
       const updateData = updateSchema.parse(req.body);
       
-      // Assurer que les champs URL vides sont traités comme null, pas comme chaînes vides
+      // Assurer que les champs URL vides sont traités comme null
       if (updateData.zoomLink === '') updateData.zoomLink = null;
       if (updateData.recordingLink === '') updateData.recordingLink = null;
       
-      // Mettre à jour la session
-      const updatedSession = await storage.updateSession(sessionId, updateData);
+      // Convertir les données de mise à jour au format attendu par la base de données
+      const dbUpdateData: Partial<Session> = {
+        ...(updateData.courseId && { courseId: updateData.courseId }),
+        ...(updateData.date && { date: new Date(updateData.date) }),
+        ...(updateData.zoomLink !== undefined && { zoomLink: updateData.zoomLink }),
+        ...(updateData.recordingLink !== undefined && { recordingLink: updateData.recordingLink }),
+        
+        // Convertir maxStudents en maxParticipants
+        ...(updateData.maxStudents && { maxParticipants: updateData.maxStudents })
+        
+        // Si on a besoin d'ajouter d'autres champs plus tard, on les ajoutera ici
+      };
       
-      res.status(200).json(updatedSession);
+      console.log("Données de mise à jour:", dbUpdateData);
+      
+      // Mettre à jour la session
+      try {
+        const updatedSession = await storage.updateSession(sessionId, dbUpdateData);
+        res.status(200).json(updatedSession);
+      } catch (dbError) {
+        console.error("Erreur base de données:", dbError);
+        res.status(500).json({ 
+          message: "Erreur lors de la mise à jour de la session en base de données",
+          details: dbError instanceof Error ? dbError.message : "Erreur inconnue"
+        });
+      }
     } catch (error: any) {
+      console.error("Erreur complète:", error);
+      
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Données invalides", errors: error.format() });
       } else {
