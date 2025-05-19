@@ -11,7 +11,18 @@ import {
   Trophy, 
   BarChart3,
   Users,
-  GraduationCap
+  GraduationCap,
+  TrendingUp,
+  LineChart,
+  PieChart,
+  CheckCircle2,
+  Eye,
+  ArrowUpRight,
+  Bell,
+  ChevronUp,
+  ChevronDown,
+  Filter,
+  LayoutDashboard
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -22,6 +33,14 @@ import {
   CardTitle,
   CardFooter 
 } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import { 
   CourseWithDetails, 
   SessionWithDetails,
@@ -38,9 +57,39 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  LineChart as RechartsLineChart,
+  Line,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend
+} from "recharts";
+import { useState, useEffect } from "react";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("overview");
+  const [timeRange, setTimeRange] = useState("all");
+  const [weeklyProgress, setWeeklyProgress] = useState<any[]>([]);
+  const [learningStats, setLearningStats] = useState<any[]>([]);
+  const [courseCompletionData, setCourseCompletionData] = useState<any[]>([]);
+  const [skillDistribution, setSkillDistribution] = useState<any[]>([]);
+  const [trends, setTrends] = useState({
+    enrolledCourses: { value: 0, isPositive: true },
+    upcomingSessions: { value: 0, isPositive: true },
+    hoursStudied: { value: 0, isPositive: true },
+    progress: { value: 0, isPositive: true }
+  });
 
   // Fetch upcoming sessions for the student
   const { data: enrolledSessions, isLoading: isSessionsLoading } = useQuery<SessionWithDetails[]>({
@@ -73,7 +122,7 @@ export default function StudentDashboard() {
   });
 
   // Calculate progress metrics
-  const completedSessions = 0; // This would come from an API in a real app
+  const completedSessions = 3; // Pour la démonstration, nous simulons quelques sessions complétées
   const totalEnrolledSessions = enrolledSessions?.length || 0;
   const progressPercentage = totalEnrolledSessions > 0 ? (completedSessions / totalEnrolledSessions) * 100 : 0;
   
@@ -95,171 +144,356 @@ export default function StudentDashboard() {
     return acc;
   }, {} as Record<string, number>) || {};
 
+  // Générer des données de démonstration pour les graphiques
+  useEffect(() => {
+    // Simuler les données de progression hebdomadaire
+    const weeklyData = [
+      { name: 'Lun', heures: 1.5, sessions: 1 },
+      { name: 'Mar', heures: 2, sessions: 2 },
+      { name: 'Mer', heures: 0, sessions: 0 },
+      { name: 'Jeu', heures: 3, sessions: 2 },
+      { name: 'Ven', heures: 1, sessions: 1 },
+      { name: 'Sam', heures: 0.5, sessions: 1 },
+      { name: 'Dim', heures: 0, sessions: 0 },
+    ];
+    setWeeklyProgress(weeklyData);
+
+    // Statistiques d'apprentissage sur une période plus longue
+    const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+    const now = new Date();
+    const stats = Array.from({ length: 6 }, (_, i) => {
+      const month = new Date(now);
+      month.setMonth(now.getMonth() - 5 + i);
+      return {
+        name: monthNames[month.getMonth()],
+        sessions: Math.floor(Math.random() * 8) + 1,
+        heures: Math.floor(Math.random() * 20) + 5,
+        progression: Math.floor(Math.random() * 30) + 10,
+      };
+    });
+    setLearningStats(stats);
+
+    // Complétion des formations
+    if (courses && courses.length > 0) {
+      const completionData = courses.slice(0, 5).map(course => ({
+        name: course.title || "Formation sans titre",
+        complete: Math.floor(Math.random() * 100),
+        remaining: 100 - Math.floor(Math.random() * 100)
+      }));
+      setCourseCompletionData(completionData);
+    }
+
+    // Distribution des compétences
+    const skills = [
+      { name: 'JavaScript', value: 35 },
+      { name: 'Python', value: 20 },
+      { name: 'DevOps', value: 15 },
+      { name: 'Data Science', value: 10 },
+      { name: 'Cybersécurité', value: 20 },
+    ];
+    setSkillDistribution(skills);
+
+    // Tendances
+    setTrends({
+      enrolledCourses: { 
+        value: Math.floor(Math.random() * 5) + 1, 
+        isPositive: Math.random() > 0.3 
+      },
+      upcomingSessions: { 
+        value: Math.floor(Math.random() * 3) + 1, 
+        isPositive: Math.random() > 0.4 
+      },
+      hoursStudied: { 
+        value: Math.floor(Math.random() * 10) + 2, 
+        isPositive: Math.random() > 0.2 
+      },
+      progress: { 
+        value: Math.floor(Math.random() * 15) + 5, 
+        isPositive: Math.random() > 0.3 
+      }
+    });
+  }, [courses]);
+
   return (
     <div className="space-y-8">
-      {/* Hero Banner */}
-      <div className="bg-gradient-to-br from-[#1D2B6C]/5 to-[#7A6CFF]/10 rounded-[20px] shadow-sm overflow-hidden border border-[#5F8BFF]/20">
-        <div className="md:flex">
-          <div className="md:flex-shrink-0">
-            <div className="h-56 w-full md:w-64 relative overflow-hidden">
-              <img 
-                className="h-full w-full object-cover" 
-                src="https://images.unsplash.com/photo-1581472723648-909f4851d4ae?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" 
-                alt="IT Training" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#1D2B6C]/80 to-transparent"></div>
+      {/* Hero Banner - Modernisé */}
+      <div className="bg-gradient-to-r from-[#1D2B6C] to-[#7A6CFF] rounded-[20px] shadow-lg overflow-hidden border-none">
+        <div className="md:flex items-center justify-between">
+          <div className="p-8 md:p-10 text-white">
+            <div className="flex items-center space-x-3 mb-4">
+              <Avatar className="h-11 w-11 border-2 border-white">
+                <AvatarFallback className="bg-white/20 text-white">
+                  {user?.displayName?.charAt(0) || user?.username?.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h2 className="font-bold text-xl">Bienvenue, {user?.displayName || 'Étudiant'}</h2>
+                <div className="flex items-center text-white/80 text-sm">
+                  <Badge className="bg-white/20 hover:bg-white/30 text-white mr-2">
+                    <span className="animate-pulse mr-1 text-green-400">•</span> Connecté
+                  </Badge>
+                  <span>{new Date().toLocaleDateString('fr-FR')}</span>
+                </div>
+              </div>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-bold mb-3 mt-5">
+              Votre parcours d'apprentissage
+            </h1>
+            <p className="text-white/90 max-w-xl mb-6">
+              Suivez votre progression, améliorez vos compétences et accédez à vos formations en direct via Zoom. Tout est à portée de main !
+            </p>
+
+            <div className="flex flex-wrap gap-3 mt-6">
+              <Link href="/catalog">
+                <Button className="bg-white text-[#1D2B6C] hover:bg-white/90 font-medium">
+                  <Book className="mr-2 h-4 w-4" /> Explorer les formations
+                </Button>
+              </Link>
+              <Link href="/schedule">
+                <Button variant="outline" className="bg-transparent border-white text-white hover:bg-white/10">
+                  <Calendar className="mr-2 h-4 w-4" /> Mon calendrier
+                </Button>
+              </Link>
             </div>
           </div>
-          <div className="p-8">
-            <div className="flex items-center space-x-2">
-              <Badge className="bg-[#5F8BFF] hover:bg-[#5F8BFF]/90">
-                <span className="animate-pulse mr-1">•</span> Connecté
-              </Badge>
-              <span className="text-sm font-medium text-[#5F8BFF]">
-                Bienvenue, {user?.displayName || 'Étudiant'}
-              </span>
-            </div>
-            <h1 className="block mt-3 text-3xl font-bold text-[#1D2B6C] font-heading">
-              Tableau de bord formation
-            </h1>
-            <p className="mt-3 text-gray-600 max-w-2xl">
-              Suivez votre progression, parcourez les prochaines sessions et accédez à vos formations en direct via Zoom.
-            </p>
-            <div className="mt-6 space-x-3">
-              <Link href="/catalog">
-                <Button className="bg-[#5F8BFF] hover:bg-[#5F8BFF]/90">
-                  Parcourir le catalogue <svg className="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                </Button>
-              </Link>
-              <Link href="/profile">
-                <Button variant="outline" className="border-[#5F8BFF] text-[#5F8BFF]">
-                  Mon profil
-                </Button>
-              </Link>
+          <div className="p-8 lg:p-10 flex-shrink-0 hidden lg:block">
+            <div className="bg-white/10 p-5 rounded-[20px] backdrop-blur-sm max-w-xs">
+              <h3 className="text-white font-medium mb-3 flex items-center">
+                <Trophy className="h-4 w-4 mr-2" /> Votre progression globale
+              </h3>
+              <div className="mb-4">
+                <div className="w-full bg-white/20 rounded-full h-3 mb-2">
+                  <div 
+                    className="bg-white h-3 rounded-full" 
+                    style={{ width: `${progressPercentage}%` }}
+                  ></div>
+                </div>
+                <div className="flex items-center justify-between text-sm text-white/90">
+                  <span>{completedSessions} sessions terminées</span>
+                  <span>{progressPercentage.toFixed(0)}%</span>
+                </div>
+              </div>
+              <div className="bg-white/10 p-3 rounded-xl mt-4">
+                <div className="flex justify-between items-center mb-1 text-white">
+                  <span className="text-xs font-medium">Prochaine session</span>
+                  <Badge className="bg-green-500/20 text-green-100 hover:bg-green-500/30">
+                    <Clock className="h-3 w-3 mr-1" /> Bientôt
+                  </Badge>
+                </div>
+                {enrolledSessions && enrolledSessions.length > 0 ? (
+                  <p className="text-white font-medium text-sm">
+                    {enrolledSessions.filter(s => new Date(s.date) > new Date())[0]?.course?.title || "Session à venir"}
+                  </p>
+                ) : (
+                  <p className="text-white/70 text-sm">Aucune session prévue</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Metrics Cards */}
+      {/* Métriques principales avec tendances et mini-graphiques */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Total Enrolled Courses Card */}
+        {/* Formations inscrites */}
         <Card className="border-none shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
-          <div className="h-2 bg-gradient-to-r from-[#1D2B6C] to-[#5F8BFF]"></div>
-          <CardContent className="pt-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-[#1D2B6C]/10 rounded-lg">
-                <BookOpen className="h-6 w-6 text-[#1D2B6C]" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex justify-between items-center">
+              <span>Formations inscrites</span>
+              {trends.enrolledCourses.isPositive ? (
+                <ChevronUp className="h-4 w-4 text-green-600" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-red-600" />
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col space-y-2">
+              <div className="flex items-center justify-between">
+                <BookOpen className="h-5 w-5 text-[#1D2B6C]" />
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold">
+                    {Array.isArray(enrolledSessions) 
+                      ? new Set(enrolledSessions.filter(s => s.course?.id).map(s => s.course?.id)).size 
+                      : 0}
+                  </span>
+                  <span className={`text-xs font-medium ${trends.enrolledCourses.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    {trends.enrolledCourses.isPositive ? '+' : '-'}{trends.enrolledCourses.value}
+                  </span>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Formations inscrites</p>
-                <h3 className="text-2xl font-bold text-[#1D2B6C]">
-                  {Array.isArray(enrolledSessions) 
-                    ? new Set(enrolledSessions.filter(s => s.course?.id).map(s => s.course?.id)).size 
-                    : 0}
-                </h3>
-              </div>
-            </div>
-            <div className="mt-4">
-              <Link href="/catalog">
-                <p className="text-sm text-[#5F8BFF] font-medium flex items-center">
-                  Explorer plus de formations
-                  <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                </p>
-              </Link>
+              <Progress 
+                value={Array.isArray(enrolledSessions) 
+                  ? Math.min(new Set(enrolledSessions.filter(s => s.course?.id).map(s => s.course?.id)).size * 10, 100) 
+                  : 0
+                } 
+                className="h-2" 
+              />
             </div>
           </CardContent>
+          <div className="h-16 px-6 -mb-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={learningStats.slice(-5)}>
+                <Area 
+                  type="monotone" 
+                  dataKey="sessions" 
+                  stroke="#1D2B6C" 
+                  fill="url(#colorEnrolledCourses)" 
+                  strokeWidth={2}
+                />
+                <defs>
+                  <linearGradient id="colorEnrolledCourses" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#1D2B6C" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="#1D2B6C" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </Card>
-
-        {/* Upcoming Sessions Card */}
+        
+        {/* Sessions à venir */}
         <Card className="border-none shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
-          <div className="h-2 bg-gradient-to-r from-[#5F8BFF] to-[#7A6CFF]"></div>
-          <CardContent className="pt-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-[#5F8BFF]/10 rounded-lg">
-                <Calendar className="h-6 w-6 text-[#5F8BFF]" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex justify-between items-center">
+              <span>Sessions à venir</span>
+              {trends.upcomingSessions.isPositive ? (
+                <ChevronUp className="h-4 w-4 text-green-600" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-red-600" />
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col space-y-2">
+              <div className="flex items-center justify-between">
+                <Calendar className="h-5 w-5 text-[#5F8BFF]" />
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold">
+                    {Array.isArray(enrolledSessions) 
+                      ? enrolledSessions.filter(s => new Date(s.date) > new Date()).length 
+                      : 0}
+                  </span>
+                  <span className={`text-xs font-medium ${trends.upcomingSessions.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    {trends.upcomingSessions.isPositive ? '+' : '-'}{trends.upcomingSessions.value}
+                  </span>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Sessions à venir</p>
-                <h3 className="text-2xl font-bold text-[#5F8BFF]">
-                  {Array.isArray(enrolledSessions) 
-                    ? enrolledSessions.filter(s => new Date(s.date) > new Date()).length 
-                    : 0}
-                </h3>
-              </div>
-            </div>
-            <div className="mt-4">
-              <Link href="/schedule">
-                <p className="text-sm text-[#5F8BFF] font-medium flex items-center">
-                  Voir mon planning
-                  <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                </p>
-              </Link>
+              <Progress 
+                value={Array.isArray(enrolledSessions) 
+                  ? Math.min(enrolledSessions.filter(s => new Date(s.date) > new Date()).length * 20, 100) 
+                  : 0
+                } 
+                className="h-2" 
+              />
             </div>
           </CardContent>
+          <div className="h-16 px-6 -mb-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={weeklyProgress}>
+                <Bar 
+                  dataKey="sessions" 
+                  fill="#5F8BFF" 
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </Card>
-
-        {/* Hours Studied Card */}
+        
+        {/* Heures de formation */}
         <Card className="border-none shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
-          <div className="h-2 bg-gradient-to-r from-[#7A6CFF] to-[#5F8BFF]"></div>
-          <CardContent className="pt-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-[#7A6CFF]/10 rounded-lg">
-                <Clock className="h-6 w-6 text-[#7A6CFF]" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Heures de formation</p>
-                <h3 className="text-2xl font-bold text-[#7A6CFF]">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex justify-between items-center">
+              <span>Heures de formation</span>
+              {trends.hoursStudied.isPositive ? (
+                <ChevronUp className="h-4 w-4 text-green-600" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-red-600" />
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <Clock className="h-5 w-5 text-[#7A6CFF]" />
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold">
                   {enrolledSessions?.reduce((total, session) => {
-                    // Vérifier que session.course existe et a une durée valide
                     if (!session.course || typeof session.course.duration !== 'number') {
                       return total;
                     }
                     return total + Math.floor(session.course.duration / 60);
                   }, 0) || 0}h
-                </h3>
+                </span>
+                <span className={`text-xs font-medium ${trends.hoursStudied.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                  {trends.hoursStudied.isPositive ? '+' : '-'}{trends.hoursStudied.value}h
+                </span>
               </div>
-            </div>
-            <div className="mt-4">
-              <Link href="/achievements">
-                <p className="text-sm text-[#5F8BFF] font-medium flex items-center">
-                  Voir mes réussites
-                  <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                </p>
-              </Link>
             </div>
           </CardContent>
+          <div className="h-16 px-6 -mb-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={weeklyProgress}>
+                <Area 
+                  type="monotone" 
+                  dataKey="heures" 
+                  stroke="#7A6CFF" 
+                  fill="url(#colorHoursStudied)" 
+                  strokeWidth={2}
+                />
+                <defs>
+                  <linearGradient id="colorHoursStudied" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#7A6CFF" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="#7A6CFF" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </Card>
-
-        {/* Completion Progress Card */}
+        
+        {/* Progression */}
         <Card className="border-none shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
-          <div className="h-2 bg-gradient-to-r from-[#5F8BFF] to-[#1D2B6C]"></div>
-          <CardContent className="pt-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-[#5F8BFF]/10 rounded-lg">
-                <Trophy className="h-6 w-6 text-[#5F8BFF]" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex justify-between items-center">
+              <span>Progression</span>
+              {trends.progress.isPositive ? (
+                <ChevronUp className="h-4 w-4 text-green-600" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-red-600" />
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col space-y-2">
+              <div className="flex items-center justify-between">
+                <Trophy className="h-5 w-5 text-[#5F8BFF]" />
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold">{progressPercentage.toFixed(0)}%</span>
+                  <span className={`text-xs font-medium ${trends.progress.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    {trends.progress.isPositive ? '+' : '-'}{trends.progress.value}%
+                  </span>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Progression</p>
-                <h3 className="text-2xl font-bold text-[#5F8BFF]">
-                  {progressPercentage.toFixed(0)}%
-                </h3>
-              </div>
-            </div>
-            <div className="mt-2">
-              <div className="w-full bg-gray-200 rounded-full h-2.5">
-                <div 
-                  className="bg-[#5F8BFF] h-2.5 rounded-full" 
-                  style={{ width: `${progressPercentage}%` }}
-                ></div>
-              </div>
-            </div>
-            <div className="mt-2">
-              <p className="text-xs text-gray-500">
+              <Progress value={progressPercentage} className="h-2" />
+              <p className="text-xs text-muted-foreground">
                 {completedSessions} sur {totalEnrolledSessions} sessions terminées
               </p>
             </div>
           </CardContent>
+          <div className="h-16 px-6 -mb-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <RechartsLineChart data={learningStats}>
+                <Line 
+                  type="monotone" 
+                  dataKey="progression" 
+                  stroke="#5F8BFF" 
+                  strokeWidth={2}
+                  dot={false}
+                />
+              </RechartsLineChart>
+            </ResponsiveContainer>
+          </div>
         </Card>
       </div>
 
