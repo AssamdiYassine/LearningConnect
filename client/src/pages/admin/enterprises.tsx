@@ -130,8 +130,15 @@ export default function AdminEnterprises() {
       const response = await apiRequest("POST", "/api/admin/enterprises", enterpriseData);
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Échec de la création de l'entreprise");
+        try {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Échec de la création de l'entreprise");
+        } catch (jsonError) {
+          // Si la réponse n'est pas du JSON valide
+          const text = await response.text();
+          console.error("Réponse non-JSON reçue:", text);
+          throw new Error("Erreur serveur: La réponse n'est pas au format JSON");
+        }
       }
       
       return await response.json();
