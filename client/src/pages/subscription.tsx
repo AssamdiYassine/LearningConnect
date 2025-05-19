@@ -608,28 +608,29 @@ export default function Subscription(props: SubscriptionProps) {
                 </CardContent>
               </Card>
             ) : (
-              monthlyPlans.map(plan => (
-                <Card key={plan.id}>
-                  <CardHeader>
-                    <CardTitle>{plan.name}</CardTitle>
-                    <CardDescription>{plan.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-baseline">
-                        <span className="text-3xl font-bold text-gray-900">{plan.price}€</span>
-                        <span className="text-gray-500 ml-1">/ mois</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {monthlyPlans.map(plan => (
+                  <Card key={plan.id} className="flex flex-col h-full">
+                    <CardHeader>
+                      <CardTitle className="text-xl sm:text-2xl">{plan.name}</CardTitle>
+                      <CardDescription className="text-sm sm:text-base">{plan.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex-grow">
+                      <div className="space-y-4">
+                        <div className="flex items-baseline">
+                          <span className="text-2xl sm:text-3xl font-bold text-gray-900">{plan.price}€</span>
+                          <span className="text-xs sm:text-sm text-gray-500 ml-1">/ mois</span>
+                        </div>
+                        <ul className="space-y-3">
+                          {plan.features.map((feature, index) => (
+                            <li key={index} className="flex items-start text-gray-700">
+                              <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                              <span className="text-sm sm:text-base">{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                      <ul className="space-y-3">
-                        {plan.features.map((feature, index) => (
-                          <li key={index} className="flex items-center text-gray-700">
-                            <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                            <span>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </CardContent>
+                    </CardContent>
                   <CardFooter>
                     {showActionButtons ? (
                       <Button 
