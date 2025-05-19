@@ -74,11 +74,15 @@ export default function CourseDetail({ id }: CourseDetailProps) {
   });
 
   const handleEnroll = (sessionId: number) => {
+    // Vérifier si le cours est gratuit
+    const isFree = course?.isFree || false;
+    
     // Les employés d'entreprise n'ont pas besoin d'abonnement car l'entreprise paie déjà
-    if (!user?.isSubscribed && !user?.enterpriseId && user?.role !== 'enterprise_employee') {
+    // Aussi, les cours gratuits sont accessibles à tous
+    if (!user?.isSubscribed && !user?.enterpriseId && user?.role !== 'enterprise_employee' && !isFree) {
       toast({
         title: "Abonnement requis",
-        description: "Vous avez besoin d'un abonnement actif pour vous inscrire aux formations",
+        description: "Vous avez besoin d'un abonnement actif pour vous inscrire aux formations payantes",
         variant: "destructive",
       });
       return;
