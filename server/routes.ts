@@ -236,6 +236,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch courses" });
     }
   });
+  
+  // Route pour les cours publics (utilisée par la page du catalogue)
+  app.get("/api/courses/public", async (req, res) => {
+    try {
+      const courses = await storage.getAllCoursesWithDetails();
+      
+      // Filtrer pour ne montrer que les cours approuvés et publiés dans le catalogue
+      const publicCourses = courses.filter(course => 
+        course.isApproved === true && 
+        (course.isPublished === undefined || course.isPublished === true)
+      );
+      
+      res.json(publicCourses);
+    } catch (error) {
+      console.error("Error fetching public courses:", error);
+      res.status(500).json({ message: "Failed to fetch course" });
+    }
+  });
 
   app.get("/api/courses/:id", async (req, res) => {
     try {
