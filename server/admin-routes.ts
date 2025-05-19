@@ -681,15 +681,13 @@ export function registerAdminRoutes(app: Express) {
       
       console.log("Données de mise à jour:", dbUpdateData);
       
-      // Mettre à jour la session directement avec SQL
+      // Mettre à jour la session directement en SQL brut (sans paramètres avec $)
       try {
-        console.log("Données à mettre à jour:", dbUpdateData);
-        
-        // Mise à jour directe sans utiliser de paramètres avec $
-        const setValues = [];
+        // Préparation des valeurs à mettre à jour
+        const updateValues = [];
         
         if (dbUpdateData.courseId) {
-          setValues.push(`course_id = ${dbUpdateData.courseId}`);
+          updateValues.push(`course_id = ${dbUpdateData.courseId}`);
         }
         
         if (dbUpdateData.date) {
@@ -705,67 +703,58 @@ export function registerAdminRoutes(app: Express) {
           }
           // Échapper les apostrophes et guillemets
           dateValue = dateValue.replace(/'/g, "''");
-          setValues.push(`date = '${dateValue}'`);
+          updateValues.push(`date = '${dateValue}'`);
         }
         
         if (dbUpdateData.zoomLink !== undefined) {
           const safeZoomLink = (dbUpdateData.zoomLink || "").replace(/'/g, "''");
-          setValues.push(`zoom_link = '${safeZoomLink}'`);
+          updateValues.push(`zoom_link = '${safeZoomLink}'`);
         }
         
         if (dbUpdateData.recordingLink !== undefined) {
           if (dbUpdateData.recordingLink) {
             const safeRecordingLink = dbUpdateData.recordingLink.replace(/'/g, "''");
-            setValues.push(`recording_link = '${safeRecordingLink}'`);
+            updateValues.push(`recording_link = '${safeRecordingLink}'`);
           } else {
-            setValues.push(`recording_link = NULL`);
+            updateValues.push(`recording_link = NULL`);
           }
         }
         
         if (dbUpdateData.maxParticipants) {
-          setValues.push(`max_participants = ${dbUpdateData.maxParticipants}`);
+          updateValues.push(`max_participants = ${dbUpdateData.maxParticipants}`);
         }
         
-        if (setValues.length === 0) {
+        if (updateValues.length === 0) {
           return res.status(400).json({ message: "Aucune donnée à mettre à jour" });
         }
         
-        // Préparer une requête SQL directe sans paramètres
-        const updateSQL = `UPDATE sessions SET ${setValues.join(", ")} WHERE id = ${sessionId}`;
+        // Construction d'une requête SQL sans paramètres
+        const sqlQuery = `UPDATE sessions SET ${updateValues.join(", ")} WHERE id = ${sessionId}`;
         
-        console.log("SQL de mise à jour:", updateSQL);
+        console.log("SQL brut à exécuter:", sqlQuery);
         
+        // Exécution directe sans utiliser de méthode avec paramètres
+        const client = await pool.connect();
         try {
-          // Utiliser une connexion directe à la base de données
-          // Pour éviter les erreurs de paramètres avec $ dans les requêtes SQL
-          const client = await pool.connect();
-          try {
-            console.log("Exécution de requête directe:", updateSQL);
-            const result = await client.query(updateSQL);
-            console.log("Résultat de la mise à jour:", result.rowCount, "ligne(s) affectée(s)");
-          } finally {
-            client.release();
-          }
-        } catch (err) {
-          console.error("Erreur SQL spécifique:", err);
+          const result = await client.query(sqlQuery);
+          console.log("Mise à jour réussie:", result.rowCount, "ligne(s) affectée(s)");
+        } catch (dbErr) {
+          console.error("Erreur SQL:", dbErr);
           
-          // Tentative alternative par attribut individuel
-          try {
-            const client = await pool.connect();
+          // Plan B: mise à jour individuelle de chaque champ
+          console.log("Tentative de mise à jour individuelle par champ...");
+          for (const updateValue of updateValues) {
             try {
-              // Mise à jour individuelle de chaque attribut
-              for (const setValue of setValues) {
-                const singleUpdateSQL = `UPDATE sessions SET ${setValue} WHERE id = ${sessionId}`;
-                console.log("Tentative individuelle:", singleUpdateSQL);
-                await client.query(singleUpdateSQL);
-              }
-            } finally {
-              client.release();
+              const singleUpdate = `UPDATE sessions SET ${updateValue} WHERE id = ${sessionId}`;
+              await client.query(singleUpdate);
+              console.log("Mise à jour individuelle réussie:", updateValue);
+            } catch (fieldErr) {
+              console.error(`Échec de mise à jour pour ${updateValue}:`, fieldErr);
+              // On continue avec les autres champs même si un échoue
             }
-          } catch (secondErr) {
-            console.error("Échec de la tentative alternative:", secondErr);
-            throw secondErr;
           }
+        } finally {
+          client.release();
         }
         
         // Récupérer la session mise à jour
