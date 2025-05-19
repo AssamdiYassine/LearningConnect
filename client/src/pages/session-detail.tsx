@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { SocialShare } from "@/components/social-share";
 import { AchievementShare } from "@/components/achievement-share";
 import { useToast } from "@/hooks/use-toast";
+import ZoomButton from "@/components/zoom-button";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 // Extended interface to include the isEnrolled property
