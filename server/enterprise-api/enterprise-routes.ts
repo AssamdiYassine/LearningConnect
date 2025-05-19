@@ -1,9 +1,11 @@
 import { Request, Response, Router } from "express";
 import { db } from "../db";
 import { and, eq, sql } from "drizzle-orm";
+import bcryptjs from "bcryptjs";
 import {
   users,
   courses,
+  enterprises,
   enterpriseCourseAccess,
   enterpriseEmployeeCourseAccess,
   employeeCourseProgress,
@@ -161,7 +163,7 @@ router.post("/employees", isEnterprise, async (req, res) => {
     const defaultPassword = phoneNumber.replace(/\s+/g, ''); // Supprimer les espaces
     
     // Hashage du mot de passe
-    const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+    const hashedPassword = await bcryptjs.hash(defaultPassword, 10);
     
     // Vérifier si l'entreprise existe réellement
     const enterprise = await db.query.enterprises.findFirst({
