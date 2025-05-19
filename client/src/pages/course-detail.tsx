@@ -406,6 +406,22 @@ export default function CourseDetail({ id }: CourseDetailProps) {
                               </svg>
                               Déjà inscrit
                             </Button>
+                          ) : course.price === 0 ? (
+                            <Button 
+                              onClick={() => handleEnroll(session.id)}
+                              disabled={
+                                enrollMutation.isPending || 
+                                session.enrollmentCount >= course.maxStudents
+                              }
+                              className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
+                            >
+                              {enrollMutation.isPending 
+                                ? "Inscription..." 
+                                : session.enrollmentCount >= course.maxStudents 
+                                  ? "Session complète" 
+                                  : "Accès libre - S'inscrire"
+                              }
+                            </Button>
                           ) : !user?.isSubscribed ? (
                             <div className="flex flex-wrap gap-2">
                               <Button 
@@ -416,7 +432,7 @@ export default function CourseDetail({ id }: CourseDetailProps) {
                                 variant="default"
                                 className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                               >
-                                Acheter ({course.price || 49}€)
+                                Acheter ({course.price / 100}€)
                               </Button>
                               <Button 
                                 onClick={() => setLocation("/subscription")}
