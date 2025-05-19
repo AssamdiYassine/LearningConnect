@@ -588,9 +588,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Already enrolled in this session" });
       }
       
-      // Check if user has an active subscription
-      if (!req.user.isSubscribed) {
-        return res.status(403).json({ message: "You need an active subscription to enroll in sessions" });
+      // Récupérer les détails du cours pour vérifier s'il est gratuit
+      const courseDetails = await storage.getCourseWithDetails(session.courseId);
+      
+      // Check if user has an active subscription (skip check if the course is free)
+      if (!req.user.isSubscribed && !(courseDetails && courseDetails.price === 0)) {
+        return res.status(403).json({ message: "You need an active subscription to enroll in paid sessions" });
       }
       
       // Check if there are available spots
