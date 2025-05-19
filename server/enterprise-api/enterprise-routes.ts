@@ -163,6 +163,17 @@ router.post("/employees", isEnterprise, async (req, res) => {
     // Hashage du mot de passe
     const hashedPassword = await bcrypt.hash(defaultPassword, 10);
     
+    // Vérifier si l'entreprise existe réellement
+    const enterprise = await db.query.enterprises.findFirst({
+      where: eq(enterprises.id, enterpriseId)
+    });
+    
+    if (!enterprise) {
+      return res.status(400).json({ 
+        message: "L'entreprise associée à votre compte n'existe pas dans notre système." 
+      });
+    }
+    
     // Créer l'utilisateur
     const [newUser] = await db
       .insert(users)
@@ -174,6 +185,8 @@ router.post("/employees", isEnterprise, async (req, res) => {
         role: "student",
         enterpriseId,
         phoneNumber: defaultPassword, // Stocker le numéro de téléphone sans espaces
+        createdAt: new Date(),
+        updatedAt: new Date()
       })
       .returning();
     
@@ -184,10 +197,15 @@ router.post("/employees", isEnterprise, async (req, res) => {
       username: newUser.username,
       email: newUser.email,
       displayName: newUser.displayName,
+      phoneNumber: newUser.phoneNumber
     });
+    
   } catch (error) {
     console.error("Erreur lors de l'ajout d'un employé:", error);
-    res.status(500).json({ message: "Erreur interne du serveur" });
+    res.status(500).json({ 
+      message: "Erreur lors de la création de l'employé", 
+      error: error instanceof Error ? error.message : String(error)
+    });
   }
 });
 
