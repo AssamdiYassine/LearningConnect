@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { CourseWithDetails, SessionWithDetails, SessionWithEnrollment } from "@shared/schema";
 import { Star, Users, Clock, SignalHigh } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ export default function CourseCard({ course }: CourseCardProps) {
 
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   // Get the next session for this course
   const { data: sessions } = useQuery<SessionWithEnrollment[]>({
@@ -184,7 +185,7 @@ export default function CourseCard({ course }: CourseCardProps) {
                     className="w-full"
                     onClick={() => {
                       // Rediriger vers la page d'achat individuel
-                      window.location.href = `/purchase/${course.id}`;
+                      setLocation(`/purchase/${course.id}`);
                     }}
                   >
                     Acheter
@@ -194,7 +195,7 @@ export default function CourseCard({ course }: CourseCardProps) {
                     className="w-full"
                     onClick={() => {
                       // Rediriger vers la page d'abonnement
-                      window.location.href = "/subscription";
+                      setLocation("/subscription");
                     }}
                   >
                     S'abonner
