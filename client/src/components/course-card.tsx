@@ -191,7 +191,16 @@ export default function CourseCard({ course }: CourseCardProps) {
             </Button>
           ) : nextSession ? (
             <>
-              {!user?.isSubscribed && !user?.enterpriseId && user?.role !== 'enterprise_employee' && course.price ? (
+              {/* Important: On vérifie d'abord si le cours est gratuit avant d'afficher les options d'achat */}
+              {course.price === 0 ? (
+                <Button 
+                  className="w-full bg-green-600 hover:bg-green-700"
+                  onClick={handleEnroll}
+                  disabled={enrollMutation.isPending || remainingSpots <= 0}
+                >
+                  {enrollMutation.isPending ? "Inscription..." : remainingSpots <= 0 ? "Session complète" : "S'inscrire gratuitement"}
+                </Button>
+              ) : !user?.isSubscribed && !user?.enterpriseId && user?.role !== 'enterprise_employee' ? (
                 <div className="grid grid-cols-2 gap-2">
                   <Button 
                     className="w-full"
