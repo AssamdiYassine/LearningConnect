@@ -17,6 +17,7 @@ import enterpriseRoutes from "./enterprise-api/enterprise-routes";
 import enterpriseAdminRoutes from "./admin-api/enterprise-admin-routes";
 import enterpriseEmployeesRoutes from "./admin-api/enterprise-employees-routes";
 import blogCommentsRoutes from "./api/blog/comments";
+import { registerPurchaseRoutes } from "./routes/purchase";
 // Import des extensions pour les méthodes de stockage manquantes
 import "./db-storage-extensions";
 import { pool, db } from "./db";
@@ -1955,6 +1956,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enregistrer les routes pour le rôle enterprise
   app.use("/api/enterprise", enterpriseRoutes);
   app.use("/api/admin", enterpriseAdminRoutes);
+  
+  // Enregistrer les routes pour l'achat de formations individuelles
+  registerPurchaseRoutes(app);
   
   // API pour récupérer les statistiques par formateur - version statique temporaire
   app.get("/api/trainer/:id/stats", async (req, res) => {

@@ -124,6 +124,15 @@ function Router() {
         <ProtectedRoute component={Checkout} allowedRoles={["student", "trainer", "admin"]} />
       </Route>
       
+      <Route path="/purchase/:courseId">
+        {params => (
+          <ProtectedRoute 
+            component={() => <Subscription courseId={params.courseId} />} 
+            allowedRoles={["student", "trainer", "admin"]} 
+          />
+        )}
+      </Route>
+      
       <Route path="/course/:id">
         {params => (
           <ProtectedRoute 
