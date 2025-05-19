@@ -86,8 +86,9 @@ export default function SessionDetail({ id }: SessionDetailProps) {
     );
   }
 
-  // Utiliser le vrai lien Zoom de la session ou un lien par défaut si non disponible
-  const zoomLink = session.zoomLink || `https://zoom.us/j/1234567890?pwd=necform_session_${session.id}`;
+  // Utiliser le vrai lien Zoom de la session ou un lien par défaut si non disponible 
+  // Vérifier si le lien est bien présent pour éviter les redirections qui ne fonctionnent pas
+  const zoomLink = session.zoomLink || `https://us04web.zoom.us/j/71234567890?pwd=necform_${session.id}`;
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -177,7 +178,8 @@ export default function SessionDetail({ id }: SessionDetailProps) {
                       className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600" 
                       onClick={() => {
                         // Rediriger vers la page Zoom Session au lieu d'ouvrir la boîte de dialogue
-                        window.location.href = `/zoom-session/${session.id}`;
+                        // Rediriger vers le lien Zoom réel
+                        window.open(zoomLink, '_blank');
                       }}
                     >
                       <VideoIcon className="h-4 w-4 mr-2" />
