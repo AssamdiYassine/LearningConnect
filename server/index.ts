@@ -7,6 +7,8 @@ import { registerAdminApiExtensions } from "./admin-api-extensions";
 import { registerResetPasswordRoutes } from "./reset-password-routes";
 import { registerAdminRevenueRoutes } from "./admin-revenue-routes";
 import { registerZoomRoutes } from "./routes-zoom";
+import { registerSubscriptionPlansRoutes } from "./routes/subscription-plans-routes";
+import { registerPublicSubscriptionRoutes } from "./routes/subscription-public";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedBlogDemoData } from "./blog-demo-data";
 import seedNotifications from "./seed-notifications";
@@ -72,6 +74,9 @@ app.use((req, res, next) => {
   
   // Register Zoom routes
   registerZoomRoutes(app);
+  
+  // Enregistrer les routes pour les plans d'abonnement publics
+  registerPublicSubscriptionRoutes(app);
   
   // Enregistrer les routes pour la réinitialisation des mots de passe
   registerResetPasswordRoutes(app);
