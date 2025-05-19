@@ -6,6 +6,7 @@ import { registerAdminApiSettingsRoutes } from "./admin-api-settings-routes";
 import { registerAdminApiExtensions } from "./admin-api-extensions";
 import { registerResetPasswordRoutes } from "./reset-password-routes";
 import { registerAdminRevenueRoutes } from "./admin-revenue-routes";
+import { registerAdminPaymentRoutes } from "./admin-payment-routes";
 import { registerZoomRoutes } from "./routes-zoom";
 import { registerSubscriptionPlansRoutes } from "./routes/subscription-plans-routes";
 import { registerPublicSubscriptionRoutes } from "./routes/subscription-public";
@@ -13,6 +14,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { seedBlogDemoData } from "./blog-demo-data";
 import seedNotifications from "./seed-notifications";
 import seedPayments from "./seed-payments";
+import initDemoCourses from "./init-demo-courses";
 import { extendDatabaseStorageForApi } from "./db-storage-api";
 import { storage } from "./storage_fixed";
 
@@ -72,6 +74,9 @@ app.use((req, res, next) => {
   // Register admin revenue routes
   registerAdminRevenueRoutes(app);
   
+  // Register admin payment routes
+  registerAdminPaymentRoutes(app);
+  
   // Register Zoom routes
   registerZoomRoutes(app);
   
@@ -103,6 +108,14 @@ app.use((req, res, next) => {
     log("Données de paiement initialisées avec succès");
   } catch (error) {
     log("Erreur lors de l'initialisation des données de paiement:", error);
+  }
+  
+  // Initialiser les cours de démonstration
+  try {
+    await initDemoCourses();
+    log("Cours et sessions de démonstration initialisés avec succès");
+  } catch (error) {
+    log("Erreur lors de l'initialisation des cours de démonstration:", error);
   }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
