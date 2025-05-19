@@ -79,6 +79,7 @@ import BlogAdminPage from "@/pages/blog/admin";
 import AdminBlogCategoriesPage from "@/pages/blog/admin/categories";
 import EditBlogCategoryPage from "@/pages/blog/admin/edit-category";
 import EditBlogPostPage from "@/pages/blog/admin/edit-post";
+import UpcomingSessions from "@/pages/upcoming-sessions";
 
 function Router() {
   return (
@@ -116,6 +117,11 @@ function Router() {
       
       <Route path="/schedule">
         <Schedule />
+      </Route>
+      
+      {/* Nouvelle route spécifique pour les sessions à venir */}
+      <Route path="/upcoming-sessions">
+        <UpcomingSessions />
       </Route>
       
       <Route path="/subscription">
