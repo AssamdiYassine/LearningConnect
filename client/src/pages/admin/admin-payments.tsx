@@ -124,7 +124,22 @@ export default function AdminPayments() {
   if (isError && error instanceof Error) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <AdminHeader title="Gestion des paiements" />
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+          <div>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setLocation('/admin')} 
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4 inline mr-1" />
+                Tableau de bord
+              </button>
+              <span className="text-muted-foreground">/</span>
+              <h1 className="text-2xl font-bold">Gestion des paiements</h1>
+            </div>
+            <p className="text-muted-foreground mt-1">Gérez les paiements des utilisateurs</p>
+          </div>
+        </div>
         <Card className="mt-6">
           <CardContent className="p-6">
             <div className="flex flex-col items-center justify-center text-center p-8">
@@ -148,7 +163,22 @@ export default function AdminPayments() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <AdminHeader title="Gestion des paiements" />
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <div>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setLocation('/admin')} 
+              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              <ChevronLeft className="h-4 w-4 inline mr-1" />
+              Tableau de bord
+            </button>
+            <span className="text-muted-foreground">/</span>
+            <h1 className="text-2xl font-bold">Gestion des paiements</h1>
+          </div>
+          <p className="text-muted-foreground mt-1">Gérez les paiements des utilisateurs</p>
+        </div>
+      </div>
       
       <Card className="mt-6">
         <CardHeader>
