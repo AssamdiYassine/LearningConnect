@@ -46,16 +46,39 @@ async function createDemoEnterprise(
     
     // 3. Si des cours sont fournis, les associer à l'entreprise
     if (courseIds.length > 0) {
-      const courseAssignments = courseIds.map(courseId => ({
-        enterpriseId: enterprise.id,
-        courseId
-      }));
-      
-      await db
-        .insert(enterpriseAssignedCourses)
-        .values(courseAssignments);
-      
-      console.log(`${courseIds.length} cours assignés à l'entreprise ${name}`);
+      try {
+        // Récupérer d'abord les cours existants dans la base de données
+        const existingCoursesQuery = await db.execute(sql`
+          SELECT id FROM courses ORDER BY id LIMIT 10
+        `);
+        
+        const existingCourseIds = existingCoursesQuery.rows.map(row => row.id);
+        
+        if (existingCourseIds.length > 0) {
+          // Utiliser les IDs des cours existants plutôt que les IDs fournis
+          const validCourseIds = existingCourseIds.slice(0, courseIds.length);
+          
+          // Créer des assignations avec les IDs valides
+          const courseAssignments = validCourseIds.map(courseId => ({
+            enterpriseId: enterprise.id,
+            courseId
+          }));
+          
+          if (courseAssignments.length > 0) {
+            await db
+              .insert(enterpriseAssignedCourses)
+              .values(courseAssignments);
+            
+            console.log(`${courseAssignments.length} cours assignés à l'entreprise ${name}`);
+          } else {
+            console.log(`Aucun cours valide à assigner à l'entreprise ${name}`);
+          }
+        } else {
+          console.log("Aucun cours trouvé dans la base de données");
+        }
+      } catch (error) {
+        console.log(`Erreur lors de l'assignation des cours à l'entreprise: ${error.message}`);
+      }
     }
     
     // 4. Créer un administrateur d'entreprise
