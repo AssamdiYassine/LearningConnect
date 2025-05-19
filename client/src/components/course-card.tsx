@@ -146,7 +146,7 @@ export default function CourseCard({ course }: CourseCardProps) {
         
         <div className="mt-4 flex items-center justify-between">
           <div className="flex items-center">
-            {/* Mock rating stars - in a real app this would come from ratings data */}
+            {/* Rating stars */}
             {[1, 2, 3, 4, 5].map((star) => (
               <Star 
                 key={star} 
@@ -157,27 +157,62 @@ export default function CourseCard({ course }: CourseCardProps) {
           </div>
           {nextSession && (
             <span className="text-sm font-medium text-gray-900">
-              {remainingSpots} {remainingSpots === 1 ? 'spot' : 'spots'} left
+              {remainingSpots} {remainingSpots === 1 ? 'place' : 'places'} restantes
             </span>
           )}
+        </div>
+        
+        {/* Affichage du prix */}
+        <div className="mt-2 flex items-center justify-between">
+          <div className="flex items-center">
+            <span className="text-lg font-bold text-primary">
+              {course.price ? `${course.price} €` : 'Inclus avec l\'abonnement'}
+            </span>
+          </div>
         </div>
         
         <div className="mt-4">
           {isEnrolled ? (
             <Button variant="outline" className="w-full" disabled>
-              Already Enrolled
+              Déjà inscrit
             </Button>
           ) : nextSession ? (
-            <Button 
-              className="w-full"
-              onClick={handleEnroll}
-              disabled={enrollMutation.isPending || remainingSpots <= 0}
-            >
-              {enrollMutation.isPending ? "Enrolling..." : remainingSpots <= 0 ? "Session Full" : "Enroll"}
-            </Button>
+            <>
+              {!user?.isSubscribed && !user?.enterpriseId && user?.role !== 'enterprise_employee' && course.price ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    className="w-full"
+                    onClick={() => {
+                      // Rediriger vers la page d'achat individuel
+                      window.location.href = `/purchase/${course.id}`;
+                    }}
+                  >
+                    Acheter
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      // Rediriger vers la page d'abonnement
+                      window.location.href = "/subscription";
+                    }}
+                  >
+                    S'abonner
+                  </Button>
+                </div>
+              ) : (
+                <Button 
+                  className="w-full"
+                  onClick={handleEnroll}
+                  disabled={enrollMutation.isPending || remainingSpots <= 0}
+                >
+                  {enrollMutation.isPending ? "Inscription..." : remainingSpots <= 0 ? "Session complète" : "S'inscrire"}
+                </Button>
+              )}
+            </>
           ) : (
             <Button variant="outline" className="w-full" disabled>
-              No Upcoming Sessions
+              Pas de sessions à venir
             </Button>
           )}
         </div>
