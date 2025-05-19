@@ -102,9 +102,27 @@ function AdminCategories() {
 
   // Mutation pour supprimer une catégorie
   const deleteCategoryMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const res = await apiRequest("DELETE", `/api/admin/categories/${id}`);
-      return res.status === 204 ? null : res.json();
+    mutationFn: async ({ id, force = false }: { id: number; force?: boolean }) => {
+      const url = force 
+        ? `/api/admin/categories/${id}?force=true` 
+        : `/api/admin/categories/${id}`;
+      
+      const res = await apiRequest("DELETE", url);
+      
+      // Si la réponse est un succès sans contenu
+      if (res.status === 204) {
+        return null;
+      }
+      
+      // Si on a une réponse avec du contenu
+      const data = await res.json();
+      
+      // Si on a une erreur 400 avec canForceDelete, on la traite différemment
+      if (res.status === 400 && data.canForceDelete) {
+        throw new Error(data.message + " Voulez-vous forcer la suppression?");
+      }
+      
+      return data;
     },
     onSuccess: () => {
       toast({
@@ -116,11 +134,31 @@ function AdminCategories() {
       setCategoryToDelete(null);
     },
     onError: (error: Error) => {
-      toast({
-        title: "Erreur",
-        description: `Erreur lors de la suppression: ${error.message}`,
-        variant: "destructive",
-      });
+      // Si le message contient "force", proposer de forcer la suppression
+      if (error.message.includes("forcer la suppression") || error.message.includes("Voulez-vous forcer")) {
+        toast({
+          title: "Attention",
+          description: error.message,
+          variant: "destructive",
+          action: (
+            <Button 
+              onClick={() => {
+                if (categoryToDelete) {
+                  deleteCategoryMutation.mutate({ id: categoryToDelete.id, force: true });
+                }
+              }}
+            >
+              Forcer la suppression
+            </Button>
+          ),
+        });
+      } else {
+        toast({
+          title: "Erreur",
+          description: `Erreur lors de la suppression: ${error.message}`,
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -146,7 +184,7 @@ function AdminCategories() {
 
   const handleDeleteCategory = () => {
     if (categoryToDelete) {
-      deleteCategoryMutation.mutate(categoryToDelete.id);
+      deleteCategoryMutation.mutate({ id: categoryToDelete.id });
     }
   };
 
