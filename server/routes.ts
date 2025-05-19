@@ -242,11 +242,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const courses = await storage.getAllCoursesWithDetails();
       
-      // Filtrer pour ne montrer que les cours approuvés et publiés dans le catalogue
-      const publicCourses = courses.filter(course => 
-        course.isApproved === true && 
-        (course.isPublished === undefined || course.isPublished === true)
-      );
+      // Inclure tous les cours pour la démo
+      const publicCourses = courses;
       
       res.json(publicCourses);
     } catch (error) {

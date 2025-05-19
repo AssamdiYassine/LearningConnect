@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle, XCircle, AlertCircle, RefreshCw } from "lucide-react";
+import { useLocation } from "wouter";
+import { Loader2, CheckCircle, XCircle, AlertCircle, RefreshCw, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -29,7 +30,6 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { AdminHeader } from "../../components/admin/admin-header";
 
 interface Payment {
   id: number;
@@ -53,6 +53,8 @@ interface Payment {
 export default function AdminPayments() {
   const { toast } = useToast();
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  // Navigation
+  const [, setLocation] = useLocation();
 
   const { data: payments, isLoading, isError, error } = useQuery<Payment[]>({
     queryKey: ["/api/admin/payments"],
