@@ -1,278 +1,202 @@
-import { Request, Response, Router } from 'express';
-import { pool } from '../db';
-import { hasAdminRole } from '../middleware/auth-middleware';
+import { Router, Request, Response } from 'express';
+import { db } from '../db';
+import { hasAdminRole, isAuthenticated } from '../middleware/auth-middleware';
+import { eq, and, desc } from 'drizzle-orm';
+import { payments, users, courses, users as trainers } from '../../shared/schema';
 
 const router = Router();
 
-// Récupérer tous les paiements (admin)
+/**
+ * Route pour récupérer tous les paiements (admin only)
+ */
 router.get('/admin/payments', hasAdminRole, async (req: Request, res: Response) => {
   try {
-    // Requête SQL pour obtenir les paiements avec informations sur les utilisateurs et cours
-    const query = `
-      SELECT 
-        p.*,
-        u.username as user_name,
-        u.email as user_email,
-        c.title as course_name
-      FROM 
-        payments p
-      LEFT JOIN 
-        users u ON p.user_id = u.id
-      LEFT JOIN 
-        courses c ON p.course_id = c.id
-      ORDER BY 
-        p.payment_date DESC
-    `;
-    
-    const { rows } = await pool.query(query);
-    
-    // Transformer les résultats dans le format attendu par le frontend
-    const payments = rows.map(row => ({
-      id: row.id,
-      userId: row.user_id,
-      courseId: row.course_id,
-      amount: row.amount,
-      currency: row.currency || 'EUR',
-      status: row.status,
-      paymentMethod: row.payment_method || 'carte',
-      paymentDate: row.payment_date,
-      type: row.type || 'course',
-      userName: row.user_name,
-      userEmail: row.user_email,
-      courseName: row.course_name
+    const allPayments = await db
+      .select({
+        payment: payments,
+        user: users,
+        course: courses,
+        trainer: trainers
+      })
+      .from(payments)
+      .leftJoin(users, eq(payments.userId, users.id))
+      .leftJoin(courses, eq(payments.courseId, courses.id))
+      .leftJoin(trainers, eq(payments.trainerId, trainers.id))
+      .orderBy(desc(payments.createdAt));
+
+    const formattedPayments = allPayments.map(item => ({
+      ...item.payment,
+      userName: item.user ? `${item.user.displayName || item.user.username}` : 'Utilisateur inconnu',
+      userEmail: item.user ? item.user.email : '',
+      courseName: item.course ? item.course.title : (item.payment.type === 'subscription' ? 'Abonnement' : 'Paiement divers'),
+      trainerName: item.trainer ? `${item.trainer.displayName || item.trainer.username}` : ''
     }));
-    
-    res.json(payments);
-  } catch (error: any) {
+
+    res.json(formattedPayments);
+  } catch (error) {
     console.error('Erreur lors de la récupération des paiements:', error);
-    res.status(500).json({ message: 'Erreur serveur lors de la récupération des paiements' });
+    res.status(500).json({ message: 'Erreur lors de la récupération des paiements' });
   }
 });
 
-// Récupérer les paiements d'un utilisateur
+/**
+ * Route pour récupérer les paiements d'un utilisateur spécifique
+ */
 router.get('/payments/user/:userId', async (req: Request, res: Response) => {
   try {
     const userId = parseInt(req.params.userId);
     
-    const query = `
-      SELECT 
-        p.*,
-        c.title as course_name
-      FROM 
-        payments p
-      LEFT JOIN 
-        courses c ON p.course_id = c.id
-      WHERE 
-        p.user_id = $1
-      ORDER BY 
-        p.payment_date DESC
-    `;
-    
-    const { rows } = await pool.query(query, [userId]);
-    
-    const payments = rows.map(row => ({
-      id: row.id,
-      userId: row.user_id,
-      courseId: row.course_id,
-      amount: row.amount,
-      currency: row.currency || 'EUR',
-      status: row.status,
-      paymentMethod: row.payment_method || 'carte',
-      paymentDate: row.payment_date,
-      type: row.type || 'course',
-      courseName: row.course_name
+    // Vérifier si l'utilisateur connecté est admin ou s'il demande ses propres paiements
+    if (!req.isAuthenticated() || 
+        (req.user.role !== 'admin' && req.user.id !== userId)) {
+      return res.status(403).json({ message: 'Non autorisé' });
+    }
+
+    const userPayments = await db
+      .select({
+        payment: payments,
+        course: courses,
+        trainer: trainers
+      })
+      .from(payments)
+      .where(eq(payments.userId, userId))
+      .leftJoin(courses, eq(payments.courseId, courses.id))
+      .leftJoin(trainers, eq(payments.trainerId, trainers.id))
+      .orderBy(desc(payments.createdAt));
+
+    const formattedPayments = userPayments.map(item => ({
+      ...item.payment,
+      courseName: item.course ? item.course.title : (item.payment.type === 'subscription' ? 'Abonnement' : 'Paiement divers'),
+      trainerName: item.trainer ? `${item.trainer.displayName || item.trainer.username}` : ''
     }));
-    
-    res.json(payments);
-  } catch (error: any) {
-    console.error('Erreur lors de la récupération des paiements utilisateur:', error);
-    res.status(500).json({ message: 'Erreur serveur lors de la récupération des paiements utilisateur' });
+
+    res.json(formattedPayments);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des paiements:', error);
+    res.status(500).json({ message: 'Erreur lors de la récupération des paiements' });
   }
 });
 
-// Approuver l'accès à un cours après un paiement
+/**
+ * Route pour approuver un paiement (admin only)
+ */
 router.post('/admin/payments/:paymentId/approve', hasAdminRole, async (req: Request, res: Response) => {
   try {
     const paymentId = parseInt(req.params.paymentId);
-    const { userId, courseId } = req.body;
     
-    if (!userId || !courseId) {
-      return res.status(400).json({ message: 'ID utilisateur et ID de cours requis' });
-    }
+    // Récupérer le paiement
+    const [payment] = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.id, paymentId));
     
-    // Vérifier que le paiement existe et correspond aux IDs
-    const checkQuery = `
-      SELECT * FROM payments 
-      WHERE id = $1 AND user_id = $2 AND course_id = $3 AND status = 'completed'
-    `;
-    
-    const { rows: paymentRows } = await pool.query(checkQuery, [paymentId, userId, courseId]);
-    
-    if (paymentRows.length === 0) {
-      return res.status(404).json({ message: 'Paiement non trouvé ou informations incorrectes' });
-    }
-    
-    // Vérifier si l'utilisateur a déjà accès au cours
-    const checkAccessQuery = `
-      SELECT * FROM course_access 
-      WHERE user_id = $1 AND course_id = $2
-    `;
-    
-    const { rows: accessRows } = await pool.query(checkAccessQuery, [userId, courseId]);
-    
-    // Si l'accès existe déjà
-    if (accessRows.length > 0) {
-      return res.status(200).json({ 
-        message: 'L\'utilisateur a déjà accès à ce cours',
-        existed: true,
-        access: accessRows[0]
-      });
-    }
-    
-    // Accorder l'accès au cours
-    const grantAccessQuery = `
-      INSERT INTO course_access (user_id, course_id, access_type, granted_at, payment_id)
-      VALUES ($1, $2, 'purchased', NOW(), $3)
-      RETURNING *
-    `;
-    
-    const { rows: newAccess } = await pool.query(grantAccessQuery, [userId, courseId, paymentId]);
-    
-    // Mettre à jour le statut du paiement pour indiquer que l'accès a été accordé
-    const updatePaymentQuery = `
-      UPDATE payments
-      SET access_granted = true, updated_at = NOW()
-      WHERE id = $1
-    `;
-    
-    await pool.query(updatePaymentQuery, [paymentId]);
-    
-    res.status(201).json({
-      message: 'Accès au cours accordé avec succès',
-      access: newAccess[0]
-    });
-    
-  } catch (error: any) {
-    console.error('Erreur lors de l\'approbation de l\'accès:', error);
-    res.status(500).json({ message: 'Erreur serveur lors de l\'approbation de l\'accès au cours' });
-  }
-});
-
-// Mettre à jour le statut d'un paiement
-router.patch('/admin/payments/:paymentId', hasAdminRole, async (req: Request, res: Response) => {
-  try {
-    const paymentId = parseInt(req.params.paymentId);
-    const { status } = req.body;
-    
-    if (!status) {
-      return res.status(400).json({ message: 'Statut requis' });
-    }
-    
-    // Valider le statut
-    const validStatuses = ['pending', 'completed', 'failed', 'refunded'];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ message: 'Statut invalide' });
-    }
-    
-    // Mettre à jour le statut du paiement
-    const updateQuery = `
-      UPDATE payments
-      SET status = $1, updated_at = NOW()
-      WHERE id = $2
-      RETURNING *
-    `;
-    
-    const { rows } = await pool.query(updateQuery, [status, paymentId]);
-    
-    if (rows.length === 0) {
+    if (!payment) {
       return res.status(404).json({ message: 'Paiement non trouvé' });
     }
     
-    res.json({
-      message: 'Statut du paiement mis à jour avec succès',
-      payment: rows[0]
-    });
+    // Mettre à jour le statut du paiement
+    await db
+      .update(payments)
+      .set({ 
+        status: 'approved',
+        updatedAt: new Date()
+      })
+      .where(eq(payments.id, paymentId));
     
-  } catch (error: any) {
-    console.error('Erreur lors de la mise à jour du statut du paiement:', error);
-    res.status(500).json({ message: 'Erreur serveur lors de la mise à jour du statut du paiement' });
+    // Si c'est un paiement pour un cours, donner accès à l'utilisateur
+    if (payment.type === 'course' && payment.courseId) {
+      // TODO: Donner accès au cours pour l'utilisateur
+      // Cela nécessite une table d'accès aux cours ou une mise à jour de la table d'inscriptions
+      
+      // Envoi d'une notification à l'utilisateur
+      // TODO: Implémenter la création de notification
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'Paiement approuvé avec succès',
+      paymentId
+    });
+  } catch (error) {
+    console.error('Erreur lors de l\'approbation du paiement:', error);
+    res.status(500).json({ message: 'Erreur lors de l\'approbation du paiement' });
   }
 });
 
-// Créer un nouveau paiement (utilisé lors de l'achat de cours ou d'abonnement)
+/**
+ * Route pour mettre à jour un paiement (admin only)
+ */
+router.patch('/admin/payments/:paymentId', hasAdminRole, async (req: Request, res: Response) => {
+  try {
+    const paymentId = parseInt(req.params.paymentId);
+    const { status, notes } = req.body;
+    
+    // Mise à jour du paiement
+    await db
+      .update(payments)
+      .set({ 
+        status,
+        updatedAt: new Date()
+      })
+      .where(eq(payments.id, paymentId));
+    
+    res.json({ 
+      success: true, 
+      message: 'Paiement mis à jour avec succès',
+      paymentId
+    });
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du paiement:', error);
+    res.status(500).json({ message: 'Erreur lors de la mise à jour du paiement' });
+  }
+});
+
+/**
+ * Route pour créer un nouveau paiement
+ */
 router.post('/payments', async (req: Request, res: Response) => {
   try {
-    const { 
-      userId, 
-      courseId, 
-      amount, 
-      currency, 
-      status, 
-      paymentMethod, 
-      type
-    } = req.body;
-    
-    if (!userId || !amount || !status) {
-      return res.status(400).json({ message: 'Informations de paiement incomplètes' });
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: 'Utilisateur non authentifié' });
     }
     
-    const insertQuery = `
-      INSERT INTO payments 
-        (user_id, course_id, amount, currency, status, payment_method, type, payment_date)
-      VALUES 
-        ($1, $2, $3, $4, $5, $6, $7, NOW())
-      RETURNING *
-    `;
+    const { amount, type, courseId, trainerId, paymentMethod } = req.body;
     
-    const values = [
-      userId,
-      courseId || null,
-      amount,
-      currency || 'EUR',
-      status,
-      paymentMethod || 'carte',
-      type || 'course'
-    ];
-    
-    const { rows } = await pool.query(insertQuery, values);
-    
-    // Si c'est un paiement d'abonnement et qu'il est complété, mettre à jour les infos d'abonnement
-    if (type === 'subscription' && status === 'completed') {
-      // Déterminer la durée de l'abonnement en fonction du montant
-      let subscriptionType = 'monthly';
-      let durationDays = 30;
-      
-      if (amount >= 250) {
-        subscriptionType = 'annual';
-        durationDays = 365;
-      }
-      
-      // Calculer la date de fin d'abonnement
-      const endDate = new Date();
-      endDate.setDate(endDate.getDate() + durationDays);
-      
-      // Mettre à jour l'utilisateur avec le nouvel abonnement
-      const updateUserQuery = `
-        UPDATE users
-        SET 
-          is_subscribed = true,
-          subscription_type = $1,
-          subscription_end_date = $2,
-          updated_at = NOW()
-        WHERE id = $3
-      `;
-      
-      await pool.query(updateUserQuery, [subscriptionType, endDate, userId]);
+    // Validation des données
+    if (!amount || !type) {
+      return res.status(400).json({ message: 'Données manquantes' });
     }
     
-    res.status(201).json({
+    // Calcul des frais de plateforme (20% par défaut)
+    const platformFee = Math.round(amount * 0.2);
+    const trainerShare = type === 'course' ? Math.round(amount * 0.8) : 0;
+    
+    // Création du paiement
+    const [newPayment] = await db
+      .insert(payments)
+      .values({
+        userId: req.user.id,
+        amount,
+        type,
+        courseId: type === 'course' ? courseId : null,
+        trainerId: type === 'course' ? trainerId : null,
+        status: 'pending', // Les paiements sont en attente par défaut
+        paymentMethod: paymentMethod || 'stripe',
+        platformFee,
+        trainerShare: type === 'course' ? trainerShare : null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    
+    res.status(201).json({ 
+      success: true, 
       message: 'Paiement enregistré avec succès',
-      payment: rows[0]
+      payment: newPayment 
     });
-    
-  } catch (error: any) {
+  } catch (error) {
     console.error('Erreur lors de la création du paiement:', error);
-    res.status(500).json({ message: 'Erreur serveur lors de la création du paiement' });
+    res.status(500).json({ message: 'Erreur lors de la création du paiement' });
   }
 });
 

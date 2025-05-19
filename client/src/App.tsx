@@ -372,6 +372,11 @@ function Router() {
         <ProtectedRoute component={EnterpriseEmployeesPage} allowedRoles={["admin"]} />
       </Route>
       
+      {/* Route de gestion des paiements */}
+      <Route path="/admin/payments">
+        <ProtectedRoute component={AdminPayments} allowedRoles={["admin"]} />
+      </Route>
+      
       {/* Enterprise routes */}
       <Route path="/enterprise">
         <ProtectedRoute component={EnterpriseDashboard} allowedRoles={["enterprise"]} />

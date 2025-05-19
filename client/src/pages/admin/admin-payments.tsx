@@ -1,319 +1,267 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { 
-  Search, 
-  Check, 
-  DollarSign,
-  ShoppingCart,
-  CreditCard, 
-  User,
-  Calendar,
-  FileText,
-  BarChart
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AdminDashboardLayout } from '@/components/admin-dashboard-layout';
+import { Loader2, CheckCircle, XCircle, AlertCircle, Eye, Filter } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { toast } from '@/hooks/use-toast';
+import { formatDistanceToNow } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { apiRequest } from '@/lib/queryClient';
 
-type Payment = {
+// Interface pour les paiements
+interface Payment {
   id: number;
   userId: number;
-  courseId: number | null;
-  amount: number;
-  currency: string;
-  status: string;
-  paymentMethod: string;
-  paymentDate: string;
-  type: 'subscription' | 'course';
-  courseName?: string;
   userName?: string;
   userEmail?: string;
-};
-
-type User = {
-  id: number;
-  username: string;
-  email: string;
-  displayName: string;
-};
+  amount: number;
+  type: 'subscription' | 'course' | 'session' | 'other';
+  courseId?: number;
+  courseName?: string;
+  trainerId?: number;
+  trainerName?: string;
+  status: 'pending' | 'approved' | 'rejected' | 'refunded';
+  paymentMethod?: string;
+  platformFee?: number;
+  trainerShare?: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function AdminPayments() {
-  const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
-  const [activeTab, setActiveTab] = useState('all');
-  
-  // Fetch payments
-  const { data: payments = [], isLoading } = useQuery<Payment[]>({
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
+  // Récupérer tous les paiements
+  const { data: payments, isLoading, error } = useQuery<Payment[]>({
     queryKey: ['/api/admin/payments'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/admin/payments');
+      return res.json();
+    }
   });
-  
-  // Fetch users (for reference)
-  const { data: users = [] } = useQuery<User[]>({
-    queryKey: ['/api/admin/users'],
-  });
-  
-  // Approve course access after payment mutation
-  const approvePaymentAccessMutation = useMutation({
-    mutationFn: async ({ 
-      paymentId,
-      userId,
-      courseId
-    }: { 
-      paymentId: number,
-      userId: number,
-      courseId: number
-    }) => {
-      const res = await apiRequest('POST', `/api/admin/payments/${paymentId}/approve`, { 
-        userId, 
-        courseId
-      });
-      return await res.json();
+
+  // Mutation pour approuver un paiement
+  const approveMutation = useMutation({
+    mutationFn: async (paymentId: number) => {
+      const res = await apiRequest('POST', `/api/admin/payments/${paymentId}/approve`);
+      return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/payments'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       toast({
-        title: "Accès approuvé",
-        description: "L'accès au cours a été accordé avec succès",
+        title: 'Paiement approuvé',
+        description: 'Le paiement a été approuvé avec succès.',
+        variant: 'default',
       });
-      setIsDetailsDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/payments'] });
+      setDetailsOpen(false);
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
       toast({
-        title: "Erreur",
-        description: "Échec de l'attribution d'accès: " + error.message,
-        variant: "destructive",
+        title: 'Erreur',
+        description: error.message || 'Une erreur est survenue lors de l\'approbation du paiement.',
+        variant: 'destructive',
       });
     }
   });
-  
-  // Update payment status mutation
-  const updatePaymentStatusMutation = useMutation({
-    mutationFn: async ({ 
-      paymentId,
-      status
-    }: { 
-      paymentId: number,
-      status: string
-    }) => {
-      const res = await apiRequest('PATCH', `/api/admin/payments/${paymentId}`, { 
-        status
-      });
-      return await res.json();
+
+  // Mutation pour rejeter un paiement
+  const rejectMutation = useMutation({
+    mutationFn: async (paymentId: number) => {
+      const res = await apiRequest('PATCH', `/api/admin/payments/${paymentId}`, { status: 'rejected' });
+      return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/payments'] });
       toast({
-        title: "Statut mis à jour",
-        description: "Le statut du paiement a été mis à jour avec succès",
+        title: 'Paiement rejeté',
+        description: 'Le paiement a été rejeté.',
+        variant: 'default',
       });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/payments'] });
+      setDetailsOpen(false);
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
       toast({
-        title: "Erreur",
-        description: "Échec de mise à jour du statut: " + error.message,
-        variant: "destructive",
+        title: 'Erreur',
+        description: error.message || 'Une erreur est survenue lors du rejet du paiement.',
+        variant: 'destructive',
       });
     }
   });
-  
-  // Filter payments based on active tab and search query
-  const filteredPayments = payments.filter(payment => {
-    // Filter by tab
-    if (activeTab === 'subscription' && payment.type !== 'subscription') return false;
-    if (activeTab === 'course' && payment.type !== 'course') return false;
-    if (activeTab === 'pending' && payment.status !== 'pending') return false;
-    if (activeTab === 'completed' && payment.status !== 'completed') return false;
+
+  // Filtrer les paiements
+  const filteredPayments = payments?.filter(payment => {
+    const matchesStatus = filterStatus === 'all' || payment.status === filterStatus;
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = searchTerm === '' ||
+      (payment.userName && payment.userName.toLowerCase().includes(searchLower)) ||
+      (payment.userEmail && payment.userEmail.toLowerCase().includes(searchLower)) ||
+      (payment.courseName && payment.courseName.toLowerCase().includes(searchLower));
     
-    // Filter by search query
-    return (
-      searchQuery === '' ||
-      (payment.userName && payment.userName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (payment.userEmail && payment.userEmail.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (payment.courseName && payment.courseName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      payment.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      payment.paymentMethod.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    return matchesStatus && matchesSearch;
   });
-  
-  // Calculate total revenue from completed payments
-  const totalRevenue = payments
-    .filter(payment => payment.status === 'completed')
-    .reduce((sum, payment) => sum + payment.amount, 0);
-  
-  // Calculate subscription vs course revenue
-  const subscriptionRevenue = payments
-    .filter(payment => payment.status === 'completed' && payment.type === 'subscription')
-    .reduce((sum, payment) => sum + payment.amount, 0);
-  
-  const courseRevenue = payments
-    .filter(payment => payment.status === 'completed' && payment.type === 'course')
-    .reduce((sum, payment) => sum + payment.amount, 0);
-  
-  // Count payments by status
-  const pendingPayments = payments.filter(payment => payment.status === 'pending').length;
-  const completedPayments = payments.filter(payment => payment.status === 'completed').length;
-  
-  const openPaymentDetails = (payment: Payment) => {
+
+  // Fonction pour afficher les détails d'un paiement
+  const handleViewDetails = (payment: Payment) => {
     setSelectedPayment(payment);
-    setIsDetailsDialogOpen(true);
+    setDetailsOpen(true);
   };
-  
-  const handleApproveAccess = () => {
-    if (!selectedPayment || !selectedPayment.courseId) {
-      toast({
-        title: "Erreur",
-        description: "Impossible d'accorder l'accès: informations manquantes",
-        variant: "destructive",
-      });
-      return;
+
+  // Formatter le montant en euros
+  const formatAmount = (amount: number) => {
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount / 100);
+  };
+
+  // Formatter la date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return formatDistanceToNow(date, { addSuffix: true, locale: fr });
+  };
+
+  // Déterminer la couleur du badge de statut
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'rejected':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'refunded':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
-    
-    approvePaymentAccessMutation.mutate({
-      paymentId: selectedPayment.id,
-      userId: selectedPayment.userId,
-      courseId: selectedPayment.courseId
-    });
   };
-  
-  const handleUpdateStatus = (paymentId: number, status: string) => {
-    updatePaymentStatusMutation.mutate({ paymentId, status });
+
+  // Traduire le statut en français
+  const translateStatus = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return 'Approuvé';
+      case 'pending':
+        return 'En attente';
+      case 'rejected':
+        return 'Rejeté';
+      case 'refunded':
+        return 'Remboursé';
+      default:
+        return status;
+    }
   };
-  
+
+  // Traduire le type de paiement en français
+  const translateType = (type: string) => {
+    switch (type) {
+      case 'subscription':
+        return 'Abonnement';
+      case 'course':
+        return 'Formation';
+      case 'session':
+        return 'Session';
+      case 'other':
+        return 'Autre';
+      default:
+        return type;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <AdminDashboardLayout>
+        <div className="flex items-center justify-center h-screen">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AdminDashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminDashboardLayout>
+        <div className="p-4">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <p>Une erreur est survenue lors du chargement des paiements.</p>
+          </div>
+        </div>
+      </AdminDashboardLayout>
+    );
+  }
+
   return (
     <AdminDashboardLayout>
-      <div className="p-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Revenus totaux</p>
-                  <h3 className="text-2xl font-bold">{totalRevenue} €</h3>
-                </div>
-                <div className="p-3 bg-blue-100 rounded-full">
-                  <BarChart className="h-6 w-6 text-blue-700" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Formations</p>
-                  <h3 className="text-2xl font-bold">{courseRevenue} €</h3>
-                </div>
-                <div className="p-3 bg-purple-100 rounded-full">
-                  <FileText className="h-6 w-6 text-purple-700" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Abonnements</p>
-                  <h3 className="text-2xl font-bold">{subscriptionRevenue} €</h3>
-                </div>
-                <div className="p-3 bg-indigo-100 rounded-full">
-                  <CreditCard className="h-6 w-6 text-indigo-700" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Transactions</p>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-2xl font-bold">{completedPayments}</h3>
-                    {pendingPayments > 0 && (
-                      <Badge className="bg-amber-500">{pendingPayments} en attente</Badge>
-                    )}
-                  </div>
-                </div>
-                <div className="p-3 bg-green-100 rounded-full">
-                  <DollarSign className="h-6 w-6 text-green-700" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      <div className="p-4 space-y-4">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Transactions</h1>
+            <p className="text-muted-foreground">
+              Gérez les paiements des utilisateurs et approuvez leurs accès aux formations
+            </p>
+          </div>
         </div>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <div>
-              <CardTitle>Gestion des paiements</CardTitle>
-              <CardDescription>
-                Gérez les paiements des utilisateurs et accordez l'accès aux formations
-              </CardDescription>
-            </div>
-          </CardHeader>
-          
-          <CardContent>
-            <Tabs defaultValue="all" className="mb-6" onValueChange={setActiveTab}>
-              <TabsList>
-                <TabsTrigger value="all">Tous</TabsTrigger>
-                <TabsTrigger value="subscription">Abonnements</TabsTrigger>
-                <TabsTrigger value="course">Formations</TabsTrigger>
-                <TabsTrigger value="pending">En attente</TabsTrigger>
-                <TabsTrigger value="completed">Complétés</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            
-            <div className="mb-6 flex items-center gap-2">
-              <Search className="text-gray-400 h-5 w-5" />
+
+        {/* Filtres */}
+        <div className="flex flex-col md:flex-row gap-4 mb-6 items-end">
+          <div className="flex-1 space-y-2">
+            <label htmlFor="search" className="text-sm font-medium">Rechercher</label>
+            <div className="relative">
               <Input
-                placeholder="Rechercher un paiement..."
-                className="max-w-sm"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                id="search"
+                placeholder="Rechercher par nom, email ou formation..."
+                className="w-full"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            
-            <div className="rounded-md border">
+          </div>
+          
+          <div className="w-full md:w-64 space-y-2">
+            <label htmlFor="status-filter" className="text-sm font-medium">Statut</label>
+            <Select
+              value={filterStatus}
+              onValueChange={setFilterStatus}
+            >
+              <SelectTrigger id="status-filter" className="w-full">
+                <SelectValue placeholder="Tous les statuts" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les statuts</SelectItem>
+                <SelectItem value="pending">En attente</SelectItem>
+                <SelectItem value="approved">Approuvé</SelectItem>
+                <SelectItem value="rejected">Rejeté</SelectItem>
+                <SelectItem value="refunded">Remboursé</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Tableau des paiements */}
+        <Card>
+          <CardHeader className="p-4">
+            <CardTitle>Paiements ({filteredPayments?.length || 0})</CardTitle>
+            <CardDescription>
+              Liste de tous les paiements avec leur statut
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>ID</TableHead>
                     <TableHead>Utilisateur</TableHead>
                     <TableHead>Type</TableHead>
-                    <TableHead>Formation</TableHead>
+                    <TableHead>Produit</TableHead>
                     <TableHead>Montant</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Statut</TableHead>
@@ -321,231 +269,165 @@ export default function AdminPayments() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-4">
-                        <div className="flex justify-center">
-                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Chargement des paiements...
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredPayments.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                        Aucun paiement trouvé
-                      </TableCell>
-                    </TableRow>
-                  ) : (
+                  {filteredPayments && filteredPayments.length > 0 ? (
                     filteredPayments.map((payment) => (
-                      <TableRow key={payment.id} className="cursor-pointer hover:bg-gray-50" onClick={() => openPaymentDetails(payment)}>
-                        <TableCell>#{payment.id}</TableCell>
+                      <TableRow key={payment.id}>
+                        <TableCell className="font-medium">{payment.id}</TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarFallback className="bg-purple-100 text-purple-800">
-                                {payment.userName ? payment.userName.substring(0, 2).toUpperCase() : 'U'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="font-medium">{payment.userName || 'Utilisateur'}</div>
-                              <div className="text-xs text-gray-500">{payment.userEmail}</div>
-                            </div>
+                          <div className="flex flex-col">
+                            <span>{payment.userName}</span>
+                            <span className="text-sm text-muted-foreground">{payment.userEmail}</span>
                           </div>
                         </TableCell>
+                        <TableCell>{translateType(payment.type)}</TableCell>
+                        <TableCell>{payment.courseName || '-'}</TableCell>
+                        <TableCell>{formatAmount(payment.amount)}</TableCell>
+                        <TableCell>{formatDate(payment.createdAt)}</TableCell>
                         <TableCell>
-                          <Badge className={payment.type === 'subscription' ? 'bg-purple-600' : 'bg-blue-600'}>
-                            {payment.type === 'subscription' ? 'Abonnement' : 'Cours'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {payment.type === 'course' ? payment.courseName : '-'}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {payment.amount} {payment.currency.toUpperCase()}
-                        </TableCell>
-                        <TableCell>
-                          {new Date(payment.paymentDate).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={
-                            payment.status === 'completed' ? 'bg-green-600' : 
-                            payment.status === 'pending' ? 'bg-amber-500' : 
-                            payment.status === 'failed' ? 'bg-red-600' : 'bg-gray-500'
-                          }>
-                            {payment.status === 'completed' ? 'Complété' :
-                             payment.status === 'pending' ? 'En attente' :
-                             payment.status === 'failed' ? 'Échec' : payment.status}
+                          <Badge className={`${getStatusColor(payment.status)}`}>
+                            {translateStatus(payment.status)}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            {payment.type === 'course' && payment.status === 'completed' && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="bg-green-50 text-green-700 hover:bg-green-100 border-green-200"
-                                onClick={(e) => {
-                                  e.stopPropagation(); // Éviter d'ouvrir la boîte de dialogue
-                                  if (payment.courseId) {
-                                    approvePaymentAccessMutation.mutate({
-                                      paymentId: payment.id,
-                                      userId: payment.userId,
-                                      courseId: payment.courseId
-                                    });
-                                  } else {
-                                    toast({
-                                      title: "Erreur",
-                                      description: "Impossible d'accorder l'accès: ID de cours manquant",
-                                      variant: "destructive",
-                                    });
-                                  }
-                                }}
-                              >
-                                <Check className="h-4 w-4 mr-1" />
-                                Accorder accès
-                              </Button>
-                            )}
-                            {payment.status === 'pending' && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleUpdateStatus(payment.id, 'completed');
-                                }}
-                              >
-                                <Check className="h-4 w-4 mr-1" />
-                                Marquer comme payé
-                              </Button>
-                            )}
-                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleViewDetails(payment)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-6">
+                        Aucun paiement trouvé
+                      </TableCell>
+                    </TableRow>
                   )}
                 </TableBody>
               </Table>
             </div>
           </CardContent>
         </Card>
-      </div>
-      
-      {/* Boîte de dialogue de détails du paiement */}
-      <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          {selectedPayment && (
-            <>
+
+        {/* Modal de détails du paiement */}
+        {selectedPayment && (
+          <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+            <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>Détails du paiement #{selectedPayment.id}</DialogTitle>
                 <DialogDescription>
-                  Informations complètes sur cette transaction
+                  Informations complètes sur la transaction
                 </DialogDescription>
               </DialogHeader>
               
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-4 py-2">
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm text-muted-foreground">Statut</span>
+                  <Badge className={`w-fit ${getStatusColor(selectedPayment.status)}`}>
+                    {translateStatus(selectedPayment.status)}
+                  </Badge>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-1">Utilisateur</h3>
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-gray-500" />
-                      <span>{selectedPayment.userName}</span>
-                    </div>
-                    <div className="text-sm text-gray-500 ml-6">{selectedPayment.userEmail}</div>
+                    <span className="text-sm text-muted-foreground">Utilisateur</span>
+                    <p className="font-medium">{selectedPayment.userName}</p>
+                    <p className="text-sm">{selectedPayment.userEmail}</p>
                   </div>
-                  
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-1">Type de paiement</h3>
-                    <div className="flex items-center gap-2">
-                      {selectedPayment.type === 'subscription' ? (
-                        <CreditCard className="h-4 w-4 text-purple-600" />
-                      ) : (
-                        <ShoppingCart className="h-4 w-4 text-blue-600" />
-                      )}
-                      <Badge className={selectedPayment.type === 'subscription' ? 'bg-purple-600' : 'bg-blue-600'}>
-                        {selectedPayment.type === 'subscription' ? 'Abonnement' : 'Cours'}
-                      </Badge>
-                    </div>
+                    <span className="text-sm text-muted-foreground">Montant</span>
+                    <p className="font-medium">{formatAmount(selectedPayment.amount)}</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-sm text-muted-foreground">Type</span>
+                    <p>{translateType(selectedPayment.type)}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-muted-foreground">Méthode</span>
+                    <p>{selectedPayment.paymentMethod || 'Non spécifié'}</p>
                   </div>
                 </div>
                 
                 {selectedPayment.type === 'course' && (
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-1">Formation</h3>
-                    <div className="font-medium">{selectedPayment.courseName}</div>
+                    <span className="text-sm text-muted-foreground">Formation</span>
+                    <p className="font-medium">{selectedPayment.courseName}</p>
+                    {selectedPayment.trainerName && (
+                      <p className="text-sm">Formateur: {selectedPayment.trainerName}</p>
+                    )}
                   </div>
                 )}
                 
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-1">Montant</h3>
-                    <div className="text-2xl font-bold">{selectedPayment.amount} {selectedPayment.currency.toUpperCase()}</div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-1">Statut</h3>
-                    <Badge className={
-                      selectedPayment.status === 'completed' ? 'bg-green-600' : 
-                      selectedPayment.status === 'pending' ? 'bg-amber-500' : 
-                      selectedPayment.status === 'failed' ? 'bg-red-600' : 'bg-gray-500'
-                    }>
-                      {selectedPayment.status === 'completed' ? 'Complété' :
-                       selectedPayment.status === 'pending' ? 'En attente' :
-                       selectedPayment.status === 'failed' ? 'Échec' : selectedPayment.status}
-                    </Badge>
-                  </div>
-                </div>
+                {(selectedPayment.platformFee !== undefined || selectedPayment.trainerShare !== undefined) && (
+                  <>
+                    <Separator />
+                    <div className="grid grid-cols-2 gap-4">
+                      {selectedPayment.platformFee !== undefined && (
+                        <div>
+                          <span className="text-sm text-muted-foreground">Frais plateforme</span>
+                          <p>{formatAmount(selectedPayment.platformFee)}</p>
+                        </div>
+                      )}
+                      {selectedPayment.trainerShare !== undefined && (
+                        <div>
+                          <span className="text-sm text-muted-foreground">Part formateur</span>
+                          <p>{formatAmount(selectedPayment.trainerShare)}</p>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
                 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-1">Date de paiement</h3>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-gray-500" />
-                      <span>{new Date(selectedPayment.paymentDate).toLocaleDateString()}</span>
-                    </div>
+                    <span className="text-sm text-muted-foreground">Créé le</span>
+                    <p>{new Date(selectedPayment.createdAt).toLocaleString('fr-FR')}</p>
                   </div>
-                  
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-1">Méthode de paiement</h3>
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-gray-500" />
-                      <span className="capitalize">{selectedPayment.paymentMethod}</span>
-                    </div>
+                    <span className="text-sm text-muted-foreground">Mis à jour le</span>
+                    <p>{new Date(selectedPayment.updatedAt).toLocaleString('fr-FR')}</p>
                   </div>
                 </div>
               </div>
               
-              <DialogFooter>
-                {selectedPayment.type === 'course' && selectedPayment.status === 'completed' && (
-                  <Button
-                    variant="default"
-                    className="bg-green-600 hover:bg-green-700"
-                    onClick={handleApproveAccess}
-                  >
-                    <Check className="mr-2 h-4 w-4" />
-                    Accorder l'accès au cours
-                  </Button>
-                )}
-                
+              <DialogFooter className="flex sm:justify-between">
                 {selectedPayment.status === 'pending' && (
-                  <Button
-                    variant="default"
-                    className="bg-amber-600 hover:bg-amber-700"
-                    onClick={() => handleUpdateStatus(selectedPayment.id, 'completed')}
-                  >
-                    <Check className="mr-2 h-4 w-4" />
-                    Marquer comme payé
+                  <div className="flex gap-2 w-full justify-between">
+                    <Button 
+                      variant="destructive"
+                      onClick={() => rejectMutation.mutate(selectedPayment.id)}
+                      disabled={rejectMutation.isPending}
+                      className="flex-1"
+                    >
+                      {rejectMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Rejeter
+                    </Button>
+                    <Button 
+                      onClick={() => approveMutation.mutate(selectedPayment.id)}
+                      disabled={approveMutation.isPending}
+                      className="flex-1"
+                    >
+                      {approveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Approuver
+                    </Button>
+                  </div>
+                )}
+                {selectedPayment.status !== 'pending' && (
+                  <Button variant="outline" onClick={() => setDetailsOpen(false)}>
+                    Fermer
                   </Button>
                 )}
               </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
     </AdminDashboardLayout>
   );
 }
