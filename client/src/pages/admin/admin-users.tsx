@@ -300,6 +300,41 @@ export default function AdminUsers() {
     }
   });
 
+  // Approve course access after payment mutation
+  const approvePaymentAccessMutation = useMutation({
+    mutationFn: async ({ 
+      paymentId,
+      userId,
+      courseId
+    }: { 
+      paymentId: number,
+      userId: number,
+      courseId: number
+    }) => {
+      const res = await apiRequest('POST', `/api/admin/payments/${paymentId}/approve`, { 
+        userId, 
+        courseId
+      });
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/payments'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      toast({
+        title: "Accès approuvé",
+        description: "L'accès au cours a été accordé avec succès",
+      });
+      setIsPaymentsDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: "Échec de l'attribution d'accès: " + error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -469,7 +504,29 @@ export default function AdminUsers() {
     <div className="p-6 space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Gestion des utilisateurs</CardTitle>
+          <div className="flex items-center gap-4">
+            <CardTitle>Gestion des utilisateurs</CardTitle>
+            <div className="flex bg-gray-100 p-1 rounded-lg">
+              <Button 
+                variant={activeTab === 'users' ? 'default' : 'ghost'}
+                size="sm"
+                className={activeTab === 'users' ? 'bg-[#1D2B6C] hover:bg-[#1D2B6C]/90' : ''}
+                onClick={() => setActiveTab('users')}
+              >
+                <UserPlus className="h-4 w-4 mr-1" />
+                Utilisateurs
+              </Button>
+              <Button 
+                variant={activeTab === 'payments' ? 'default' : 'ghost'}
+                size="sm"
+                className={activeTab === 'payments' ? 'bg-[#1D2B6C] hover:bg-[#1D2B6C]/90' : ''}
+                onClick={() => setActiveTab('payments')}
+              >
+                <DollarSign className="h-4 w-4 mr-1" />
+                Paiements
+              </Button>
+            </div>
+          </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <Button 
               className="bg-[#1D2B6C] hover:bg-[#1D2B6C]/90"

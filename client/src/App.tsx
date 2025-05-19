@@ -16,6 +16,7 @@ import TrainerSchedule from "@/pages/trainer-schedule";
 import TrainerRatings from "@/pages/trainer-ratings";
 import TrainerNotifications from "@/pages/trainer-notifications";
 import AdminDashboard from "@/pages/admin-dashboard";
+import AdminPayments from "@/pages/admin/admin-payments";
 import Catalog from "@/pages/catalog";
 import Schedule from "@/pages/schedule";
 import Subscription from "@/pages/subscription";
@@ -300,6 +301,10 @@ function Router() {
       
       <Route path="/admin/settings">
         <ProtectedRoute component={AdminSettingsWithDashboard} allowedRoles={["admin"]} />
+      </Route>
+      
+      <Route path="/admin/payments">
+        <ProtectedRoute component={AdminPayments} allowedRoles={["admin"]} />
       </Route>
       
       <Route path="/admin/subscriptions">
