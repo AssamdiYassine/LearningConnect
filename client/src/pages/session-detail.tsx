@@ -10,7 +10,8 @@ import {
   formatTime, 
   formatDuration,
   getLevelBadgeColor,
-  getCategoryBadgeColor
+  getCategoryBadgeColor,
+  calculateDurationInMinutes
 } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
@@ -141,7 +142,9 @@ export default function SessionDetail({ id }: SessionDetailProps) {
                   <Clock className="h-6 w-6 text-indigo-500 mr-3" />
                   <div>
                     <p className="text-sm text-gray-500">Durée</p>
-                    <p className="font-medium">{formatDuration(session.course.duration)}</p>
+                    <p className="font-medium">
+                      {formatDuration(calculateDurationInMinutes(session.date, session.endDate))}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center bg-gray-50 p-4 rounded-lg">

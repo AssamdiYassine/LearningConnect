@@ -1,7 +1,7 @@
 import { SessionWithDetails } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { formatDate, formatTime, getRelativeDateLabel } from "@/lib/utils";
+import { formatDate, formatTime, formatDuration, calculateDurationInMinutes, getRelativeDateLabel } from "@/lib/utils";
 import { Laptop, Users, Clock, Signal } from "lucide-react";
 import { Link } from "wouter";
 import { useMutation } from "@tanstack/react-query";
@@ -114,7 +114,7 @@ export default function SessionItem({ session, showActions = true }: SessionItem
             
             <div className="flex items-center">
               <Clock className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-              <span>{Math.floor(course.duration / 60)} hour{course.duration >= 120 ? 's' : ''}</span>
+              <span>{formatDuration(calculateDurationInMinutes(session.date, session.endDate) || course.duration)}</span>
             </div>
           </div>
           
