@@ -303,7 +303,7 @@ export default function AboutPage() {
                       <p className="leading-relaxed">
                         Notre objectif est de devenir la référence en matière de formation IT en direct, en combinant l'excellence technique avec une approche pédagogique innovante et humaine.
                       </p>
-                      <div className="grid grid-cols-2 gap-4 pt-4">
+                      <div className="grid grid-cols-1 xs:grid-cols-2 gap-4 pt-4">
                         {[
                           { title: "Excellence", icon: Star },
                           { title: "Innovation", icon: Lightbulb },

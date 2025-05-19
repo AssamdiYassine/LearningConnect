@@ -33,16 +33,16 @@ export default function HeroSection() {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="text-center lg:text-left"
           >
-            <div className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-500/20 backdrop-blur-sm border border-indigo-400/30 text-indigo-200 text-sm font-medium mb-6">
-              <Sparkles className="h-4 w-4 mr-2" />
-              <span>Formations 100% en direct par visioconférence</span>
+            <div className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-500/20 backdrop-blur-sm border border-indigo-400/30 text-indigo-200 text-sm font-medium mb-6 max-w-full overflow-hidden">
+              <Sparkles className="h-4 w-4 min-w-[16px] mr-2" />
+              <span className="truncate">Formations 100% en direct par visioconférence</span>
             </div>
             
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 tracking-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight mb-4 sm:mb-6 tracking-tight">
               Révolutionnez vos <span className="bg-gradient-to-r from-blue-400 to-indigo-300 bg-clip-text text-transparent">compétences tech</span> avec des experts
             </h1>
             
-            <p className="text-lg sm:text-xl mb-8 text-white/80 max-w-2xl mx-auto lg:mx-0">
+            <p className="text-base sm:text-lg md:text-xl mb-6 sm:mb-8 text-white/80 max-w-2xl mx-auto lg:mx-0">
               Des formations live interactives dans les domaines de pointe de l'IT, animées par des formateurs experts passionnés. Progressez à votre rythme, posez vos questions en direct.
             </p>
             
@@ -68,19 +68,19 @@ export default function HeroSection() {
               </Button>
             </div>
             
-            {/* Badges below CTA */}
-            <div className="mt-10 flex flex-wrap justify-center lg:justify-start gap-4">
-              <div className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-                <Award className="h-5 w-5 text-yellow-400 mr-2" />
-                <span className="text-sm font-medium text-white/90">Formateurs certifiés</span>
+            {/* Badges below CTA - optimisés pour mobile */}
+            <div className="mt-8 sm:mt-10 flex flex-wrap justify-center lg:justify-start gap-2 sm:gap-4">
+              <div className="flex items-center bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full">
+                <Award className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400 mr-1.5 sm:mr-2 flex-shrink-0" />
+                <span className="text-xs sm:text-sm font-medium text-white/90 whitespace-nowrap">Formateurs certifiés</span>
               </div>
-              <div className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-                <Video className="h-5 w-5 text-blue-400 mr-2" />
-                <span className="text-sm font-medium text-white/90">Sessions live Zoom</span>
+              <div className="flex items-center bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full">
+                <Video className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400 mr-1.5 sm:mr-2 flex-shrink-0" />
+                <span className="text-xs sm:text-sm font-medium text-white/90 whitespace-nowrap">Sessions live Zoom</span>
               </div>
-              <div className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-                <RefreshCw className="h-5 w-5 text-green-400 mr-2" />
-                <span className="text-sm font-medium text-white/90">Accès illimité</span>
+              <div className="flex items-center bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full">
+                <RefreshCw className="h-4 w-4 sm:h-5 sm:w-5 text-green-400 mr-1.5 sm:mr-2 flex-shrink-0" />
+                <span className="text-xs sm:text-sm font-medium text-white/90 whitespace-nowrap">Accès illimité</span>
               </div>
             </div>
           </motion.div>
