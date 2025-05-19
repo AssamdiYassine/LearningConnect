@@ -8,7 +8,8 @@ import { registerResetPasswordRoutes } from "./reset-password-routes";
 import { registerAdminRevenueRoutes } from "./admin-revenue-routes";
 import { registerAdminPaymentRoutes } from "./admin-payment-routes";
 import { registerZoomRoutes } from "./routes-zoom";
-import { registerEnterpriseAdminRoutes } from "./admin-api/enterprise-admin-routes";
+// Import les routes pour les entreprises
+import { default as enterpriseRouter } from "./admin-api/enterprise-admin-routes";
 import { registerSubscriptionPlansRoutes } from "./routes/subscription-plans-routes";
 import { registerPublicSubscriptionRoutes } from "./routes/subscription-public";
 import { setupVite, serveStatic, log } from "./vite";
@@ -81,6 +82,9 @@ app.use((req, res, next) => {
   
   // Register Zoom routes
   registerZoomRoutes(app);
+  
+  // Register Enterprise admin routes
+  app.use('/api/admin', enterpriseRouter);
   
   // Enregistrer les routes pour les plans d'abonnement publics
   registerPublicSubscriptionRoutes(app);
