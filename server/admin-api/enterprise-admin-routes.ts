@@ -157,22 +157,36 @@ router.post("/enterprises", isAdmin, async (req, res) => {
     const hashedPassword = await bcrypt.hash(adminPassword, 10);
     
     try {
-      // Utilisons l'API Drizzle plus fiable au lieu de SQL brut
-      const [enterpriseAdmin] = await db
-        .insert(users)
-        .values({
-          username: adminUsername,
-          email: contactEmail,
-          password: hashedPassword,
-          displayName: 'Admin ' + name,
-          role: 'enterprise_admin',
-          isSubscribed: true,
-          subscriptionEndDate: formattedDate,
-          enterpriseId: enterprise.id,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
-        .returning();
+      // Utilisons SQL brut pour éviter les problèmes de types avec Drizzle
+      const adminResult = await db.execute(sql`
+        INSERT INTO users (
+          username, 
+          email,
+          password,
+          display_name,
+          role,
+          is_subscribed,
+          subscription_end_date,
+          enterprise_id,
+          created_at,
+          updated_at
+        ) 
+        VALUES (
+          ${adminUsername},
+          ${contactEmail},
+          ${hashedPassword},
+          ${'Admin ' + name},
+          ${'enterprise_admin'},
+          ${true},
+          ${formattedDate},
+          ${enterprise.id},
+          ${new Date()},
+          ${new Date()}
+        )
+        RETURNING *
+      `);
+      
+      const enterpriseAdmin = adminResult.rows[0];
       
       console.log("Administrateur d'entreprise créé avec succès:", adminUsername);
       
