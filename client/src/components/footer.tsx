@@ -111,98 +111,173 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="relative mt-20">
-      {/* Vague en haut du footer */}
-      <div className="relative h-24">
-        <WaveDivider 
-          position="top" 
-          color="#1D2B6C" 
-          height={80} 
-          className="absolute top-0 left-0 right-0 w-full"
-        />
+    <footer className="relative mt-20 w-full overflow-hidden">
+      {/* Section décorative avec vague */}
+      <div className="relative w-full h-24 overflow-hidden">
+        <svg className="absolute bottom-0 left-0 w-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+          <path fill="#1D2B6C" fillOpacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,202.7C672,203,768,181,864,186.7C960,192,1056,224,1152,229.3C1248,235,1344,213,1392,202.7L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+        </svg>
       </div>
       
-      {/* Footer principal */}
-      <div className="bg-primary pt-10 pb-12 relative">
-        <div className="container-wide">
-          {/* Logo et description */}
-          <div className="flex flex-col md:flex-row justify-between gap-10 pb-12 border-b border-white/10">
-            <div className="max-w-sm">
-              <div className="mb-6">
-                <h2 className="text-3xl font-bold tracking-tight text-white mb-2">
-                  Necform
-                </h2>
-                <div className="h-1 w-16 bg-gradient-to-r from-secondary to-accent rounded-full"></div>
+      {/* Section principale du footer avec dégradé */}
+      <div className="bg-gradient-to-br from-[#1D2B6C] via-[#263373] to-[#1D2B6C] relative pt-16 pb-12">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iLjMiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMjkuNSIvPjxwYXRoIGQ9Ik0yOS41IDE1Ljk5OEgzMC41VjQ0aC0xeiIvPjxwYXRoIGQ9Ik0xNiAyOS41VjMwLjVINDR2LTF6Ii8+PC9nPjwvc3ZnPg==')] opacity-[0.04]"></div>
+        
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Section supérieure: Logo, description et newsletter */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 mb-16">
+            {/* Logo et description */}
+            <div className="lg:col-span-2">
+              <div className="flex items-center mb-6">
+                <h2 className="text-3xl font-bold text-white">Necform</h2>
+                <div className="h-8 w-[3px] bg-gradient-to-b from-secondary to-accent mx-3 rounded-full"></div>
+                <BookOpen className="h-7 w-7 text-accent" />
               </div>
-              <p className="text-white/70 mb-8 text-sm">
+              
+              <p className="text-white/80 mb-8 text-base max-w-md leading-relaxed">
                 Plateforme française de formations IT 100% live. Développez vos compétences avec des experts et des sessions interactives pour progresser à votre rythme.
               </p>
               
-              {/* Bouton CTA */}
+              {/* Badges décoratifs */}
+              <div className="flex flex-wrap gap-3 mb-8">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-secondary/20 text-secondary-foreground">
+                  <BookOpen className="h-3 w-3 mr-1" /> 100% Live
+                </span>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-accent/20 text-accent-foreground">
+                  <GraduationCap className="h-3 w-3 mr-1" /> Expertise IT
+                </span>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20 text-white">
+                  <Calendar className="h-3 w-3 mr-1" /> Sessions interactives
+                </span>
+              </div>
+              
               <Link href="/catalog">
-                <Button className="bg-white hover:bg-white/90 text-primary hover:text-primary font-medium">
+                <Button className="bg-white hover:bg-yellow-300 text-primary hover:text-primary-dark font-medium shadow-lg shadow-primary/20 px-6 rounded-full transition-all duration-300">
                   <Sparkles size={16} className="mr-2" /> Découvrir nos formations
                 </Button>
               </Link>
             </div>
-
-            {/* Formulaire Newsletter */}
-            <div className="max-w-md w-full">
-              <h3 className="text-lg font-medium text-white mb-4">
-                Rejoignez notre communauté
-              </h3>
-              <p className="text-white/70 text-sm mb-5">
-                Recevez nos actualités et conseils exclusifs pour développer vos compétences IT
-              </p>
-              <form onSubmit={handleSubmit} className="space-y-3">
-                <div className="flex items-center">
-                  <Input
-                    type="email"
-                    placeholder="Votre adresse email"
-                    className="bg-white/10 border-0 focus-visible:ring-secondary text-white placeholder:text-white/50"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                  <Button 
-                    type="submit" 
-                    className="ml-2 bg-gradient-to-r from-secondary to-accent hover:opacity-90 text-white flex-none w-10 h-10 p-0"
-                  >
-                    <Send size={16} />
-                  </Button>
-                </div>
-                <p className="text-xs text-white/50">
-                  En vous inscrivant, vous acceptez notre politique de confidentialité et de recevoir nos communications.
+            
+            {/* Navigation */}
+            <div className="lg:col-span-2">
+              <div className="grid grid-cols-2 gap-8">
+                {footerLinks.map((group, i) => (
+                  <div key={i}>
+                    <h3 className="text-white font-semibold mb-4 flex items-center">
+                      {group.title === "Formation" && <BookOpen className="h-4 w-4 mr-2 text-accent" />}
+                      {group.title === "Entreprise" && <Building className="h-4 w-4 mr-2 text-accent" />}
+                      {group.title === "Ressources" && <Info className="h-4 w-4 mr-2 text-accent" />}
+                      {group.title === "À propos" && <Users className="h-4 w-4 mr-2 text-accent" />}
+                      {group.title}
+                    </h3>
+                    <ul className="space-y-3">
+                      {group.links.map((link) => (
+                        <li key={link.href}>
+                          <Link 
+                            href={link.href}
+                            className="text-white/70 hover:text-white hover:translate-x-1 flex items-center text-sm transition-all duration-200"
+                          >
+                            <span className="h-1 w-1 bg-accent/50 rounded-full mr-2"></span>
+                            {link.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Newsletter */}
+            <div className="lg:col-span-1">
+              <div className="bg-white/10 rounded-xl p-5 backdrop-blur-sm border border-white/10 hover:shadow-xl hover:border-white/20 transition-all duration-300">
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
+                  <Mail className="h-5 w-5 mr-2 text-yellow-300" />
+                  Rejoignez-nous
+                </h3>
+                <p className="text-white/80 text-sm mb-4">
+                  Recevez nos actualités et conseils exclusifs pour développer vos compétences IT
                 </p>
-              </form>
+                <form onSubmit={handleSubmit} className="space-y-3">
+                  <div className="flex flex-col space-y-2">
+                    <Input
+                      type="email"
+                      placeholder="Votre adresse email"
+                      className="bg-white/10 border border-white/20 focus-visible:ring-accent text-white placeholder:text-white/50 rounded-lg py-2"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                    <Button 
+                      type="submit" 
+                      className="bg-gradient-to-r from-secondary to-accent hover:opacity-90 text-white w-full font-medium rounded-lg"
+                    >
+                      <Send size={16} className="mr-2" /> S'abonner
+                    </Button>
+                  </div>
+                  <p className="text-xs text-white/50">
+                    En vous inscrivant, vous acceptez notre politique de confidentialité et de recevoir nos communications.
+                  </p>
+                </form>
+              </div>
+              
+              {/* Réseaux sociaux */}
+              <div className="mt-6">
+                <h4 className="text-sm font-medium text-white mb-3">Suivez-nous</h4>
+                <div className="flex items-center space-x-3">
+                  {socialLinks.map((social) => {
+                    const Icon = social.icon;
+                    return (
+                      <a
+                        key={social.href}
+                        href={social.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 hover:scale-110 border border-white/5 text-white transition-all duration-200"
+                        aria-label={social.label}
+                      >
+                        <Icon size={16} />
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
-
-          {/* Liens groupés par catégorie */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 py-10">
-            {footerLinks.map((group) => (
-              <div key={group.title}>
-                <h3 className="text-white font-medium mb-4">{group.title}</h3>
-                <ul className="space-y-2">
-                  {group.links.map((link) => (
-                    <li key={link.href}>
-                      <Link 
-                        href={link.href}
-                        className="text-white/60 hover:text-white text-sm transition-colors duration-200"
-                      >
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+          
+          {/* Contact information */}
+          <div className="flex flex-wrap justify-center gap-6 md:gap-8 mb-10">
+            <a 
+              href="mailto:contact@necform.fr"
+              className="flex items-center text-white/80 hover:text-white transition-colors duration-200 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full border border-white/10"
+            >
+              <Mail size={18} className="mr-2 text-accent" /> contact@necform.fr
+            </a>
+            <a 
+              href="tel:+33123456789"
+              className="flex items-center text-white/80 hover:text-white transition-colors duration-200 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full border border-white/10"
+            >
+              <Phone size={18} className="mr-2 text-accent" /> +33 1 23 45 67 89
+            </a>
+            <span className="flex items-center text-white/80 bg-white/5 px-4 py-2 rounded-full border border-white/10">
+              <MapPin size={18} className="mr-2 text-accent" /> 25 Rue de l'Innovation, 75001 Paris
+            </span>
           </div>
-
-          {/* Bas de footer avec liens légaux et sociaux */}
-          <div className="pt-6 mt-6 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="text-white/50 text-sm">
-              &copy; {currentYear} Necform. Tous droits réservés.
+          
+          {/* Séparateur décoratif */}
+          <div className="flex items-center justify-center my-8">
+            <div className="h-px w-24 bg-white/10"></div>
+            <div className="mx-4 text-white/30">
+              <Heart size={16} className="text-accent" />
+            </div>
+            <div className="h-px w-24 bg-white/10"></div>
+          </div>
+          
+          {/* Bas de footer */}
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-4">
+            {/* Copyright */}
+            <div className="text-white/60 text-sm flex items-center">
+              <Heart size={12} className="mr-2 text-secondary" /> &copy; {currentYear} Necform. Tous droits réservés.
             </div>
             
             {/* Liens légaux */}
@@ -216,53 +291,6 @@ export default function Footer() {
                   {link.label}
                 </Link>
               ))}
-            </div>
-            
-            {/* Réseaux sociaux */}
-            <div className="flex items-center space-x-3">
-              {socialLinks.map((social) => {
-                const Icon = social.icon;
-                return (
-                  <a
-                    key={social.href}
-                    href={social.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200"
-                    aria-label={social.label}
-                  >
-                    <Icon size={16} />
-                  </a>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Informations de contact */}
-      <div className="bg-primary-dark/90 text-white py-4">
-        <div className="container-wide">
-          <div className="flex flex-wrap items-center justify-center md:justify-between gap-4 text-xs">
-            <div className="flex items-center space-x-6">
-              <a 
-                href="mailto:contact@necform.fr"
-                className="flex items-center text-white/80 hover:text-white transition-colors duration-200"
-              >
-                <Mail size={14} className="mr-2" /> contact@necform.fr
-              </a>
-              <a 
-                href="tel:+33123456789"
-                className="flex items-center text-white/80 hover:text-white transition-colors duration-200"
-              >
-                <Phone size={14} className="mr-2" /> +33 1 23 45 67 89
-              </a>
-              <span className="hidden md:flex items-center text-white/80">
-                <MapPin size={14} className="mr-2" /> 25 Rue de l'Innovation, 75001 Paris
-              </span>
-            </div>
-            <div className="text-white/60 flex items-center">
-              <Heart size={12} className="mr-1 text-secondary" /> Conçu avec passion en France
             </div>
           </div>
         </div>
