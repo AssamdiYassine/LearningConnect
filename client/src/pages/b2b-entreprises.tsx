@@ -209,7 +209,7 @@ export default function B2BEntreprises() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section avec vagues */}
+      {/* Hero Section avec fond coloré */}
       <HeroSection
         title={
           <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
@@ -217,9 +217,10 @@ export default function B2BEntreprises() {
           </h1>
         }
         subtitle="Des formations live, interactives et sur mesure pour développer les compétences tech de vos collaborateurs et accélérer votre transformation numérique."
-        gradient={true}
+        gradient={false}
         height="large"
         withPattern={true}
+        className="bg-gradient-to-br from-[#1D2B6C] via-[#5F8BFF] to-[#7A6CFF]"
       >
         <div className="flex flex-col md:flex-row items-start gap-8 w-full max-w-6xl mx-auto">
           <div className="w-full md:w-1/2 flex flex-col items-start">
