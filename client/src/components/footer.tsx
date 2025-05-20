@@ -18,7 +18,9 @@ import {
   Sparkles,
   Building,
   GraduationCap as TeachIcon,
-  Send
+  Send,
+  User,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
