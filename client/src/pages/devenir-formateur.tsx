@@ -131,65 +131,106 @@ export default function DevenirFormateur() {
   ];
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section avec vagues */}
-      <HeroSection
-        title={
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-            Partagez votre expertise tech et <span className="text-yellow-300">boostez votre carrière</span>
-          </h1>
-        }
-        subtitle="Devenez formateur chez Necform et transmettez vos connaissances à une communauté passionnée d'apprenants. Enseignez à votre rythme, 100% en ligne."
-        gradient={true}
-        height="large"
-        withPattern={true}
-      >
-        <div className="flex flex-col items-center md:items-start space-y-6 md:space-y-8">
-          <Badge className="bg-white/20 text-white hover:bg-white/30 px-3 py-1 text-sm">
-            Rejoignez notre équipe de formateurs
-          </Badge>
+    <div className="min-h-screen w-full overflow-x-hidden">
+      {/* Section Hero personnalisée avec fond coloré et animations modernes */}
+      <div className="relative w-full min-h-[700px] overflow-hidden bg-gradient-to-br from-[#1D2B6C] via-[#5F8BFF] to-[#7A6CFF] text-white">
+        {/* Éléments décoratifs */}
+        <div className="absolute inset-0 overflow-hidden">
+          {/* Motif de fond */}
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iLjMiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMjkuNSIvPjxwYXRoIGQ9Ik0yOS41IDE1Ljk5OEgzMC41VjQ0aC0xeiIvPjxwYXRoIGQ9Ik0xNiAyOS41VjMwLjVINDR2LTF6Ii8+PC9nPjwvc3ZnPg==')] opacity-[0.04]"></div>
           
-          <Button 
-            size="lg" 
-            className="bg-white text-primary hover:bg-yellow-300 hover:text-primary-dark font-semibold px-8 rounded-full"
-            onClick={() => {
-              const formElement = document.getElementById('application-form');
-              if (formElement) {
-                formElement.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-          >
-            Postuler maintenant
-          </Button>
+          {/* Vagues animées */}
+          <div className="absolute bottom-0 left-0 right-0 h-40 overflow-hidden z-10 opacity-20">
+            <svg viewBox="0 0 1200 120" className="absolute animate-wave-1 opacity-50" fill="none">
+              <path d="M0,80 C200,100 400,10 600,80 C800,150 1000,50 1200,100 L1200,120 L0,120 Z" fill="rgba(255,255,255,0.1)"></path>
+            </svg>
+            <svg viewBox="0 0 1200 120" className="absolute animate-wave-2 opacity-30" fill="none">
+              <path d="M0,60 C150,120 350,0 500,100 C650,200 800,80 1200,80 L1200,120 L0,120 Z" fill="rgba(255,255,255,0.1)"></path>
+            </svg>
+            <svg viewBox="0 0 1200 120" className="absolute animate-wave-3 opacity-20" fill="none">
+              <path d="M0,40 C250,0 350,150 500,50 C650,-50 900,80 1200,20 L1200,120 L0,120 Z" fill="rgba(255,255,255,0.05)"></path>
+            </svg>
+          </div>
           
-          <div className="grid grid-cols-2 gap-4 mt-8 w-full max-w-2xl mx-auto">
-            <div className="flex flex-col space-y-4">
-              <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl shadow-lg">
-                <BookOpen className="h-8 w-8 mb-2 text-yellow-300" />
-                <h3 className="text-lg font-semibold">Liberté pédagogique</h3>
-                <p className="text-sm opacity-80">Créez vos propres formations selon votre style d'enseignement</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl shadow-lg">
-                <Users className="h-8 w-8 mb-2 text-yellow-300" />
-                <h3 className="text-lg font-semibold">Communauté engagée</h3>
-                <p className="text-sm opacity-80">Rejoignez un réseau d'experts et d'apprenants passionnés</p>
-              </div>
+          {/* Bulles et formes abstraites */}
+          <div className="absolute -top-40 -left-40 w-80 h-80 rounded-full bg-white/10 blur-3xl animate-pulse"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full bg-blue-500/10 blur-3xl"></div>
+          <div className="absolute -bottom-40 -right-40 w-80 h-80 rounded-full bg-indigo-500/10 blur-3xl animate-pulse"></div>
+        </div>
+        
+        {/* Contenu principal */}
+        <div className="container relative z-10 pt-24 pb-16 px-4 mx-auto">
+          <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-indigo-500/20 backdrop-blur-sm border border-indigo-400/30 text-indigo-200 text-sm font-medium mb-10">
+              <Sparkles className="h-4 w-4 mr-2 text-yellow-300" />
+              <span>Pour les professionnels tech expérimentés</span>
             </div>
-            <div className="flex flex-col space-y-4">
-              <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl shadow-lg">
-                <Laptop className="h-8 w-8 mb-2 text-yellow-300" />
-                <h3 className="text-lg font-semibold">100% en ligne</h3>
-                <p className="text-sm opacity-80">Enseignez de n'importe où, dans un format live interactif</p>
+            
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+              Partagez votre expertise tech et{" "}
+              <span className="text-yellow-300 inline-block relative">
+                boostez votre carrière
+                <span className="absolute -bottom-2 left-0 w-full h-1 bg-yellow-300/50 rounded-full"></span>
+              </span>
+            </h1>
+            
+            <p className="text-xl md:text-2xl text-white/80 max-w-3xl mx-auto mb-10">
+              Devenez formateur chez Necform et transmettez vos connaissances à une communauté passionnée d'apprenants. Enseignez à votre rythme, 100% en ligne.
+            </p>
+            
+            <Button 
+              size="lg" 
+              className="bg-white text-primary hover:bg-yellow-300 hover:text-primary-dark font-semibold px-10 py-6 rounded-full shadow-lg shadow-indigo-900/30 transition-all duration-300"
+              onClick={() => {
+                const formElement = document.getElementById('application-form');
+                if (formElement) {
+                  formElement.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+            >
+              Postuler maintenant
+            </Button>
+            
+            {/* Cartes des avantages */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5 mt-16 w-full max-w-4xl mx-auto">
+              <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl border border-white/20 shadow-lg hover:shadow-xl hover:border-white/30 transition-all duration-300">
+                <div className="bg-indigo-500/20 p-3 rounded-full w-14 h-14 flex items-center justify-center mb-4 mx-auto">
+                  <BookOpen className="h-7 w-7 text-yellow-300" />
+                </div>
+                <h3 className="text-lg font-semibold">Liberté pédagogique</h3>
+                <p className="text-sm text-white/70 mt-2">Créez vos propres formations selon votre style d'enseignement</p>
               </div>
-              <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl shadow-lg">
-                <Mail className="h-8 w-8 mb-2 text-yellow-300" />
+              
+              <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl border border-white/20 shadow-lg hover:shadow-xl hover:border-white/30 transition-all duration-300">
+                <div className="bg-blue-500/20 p-3 rounded-full w-14 h-14 flex items-center justify-center mb-4 mx-auto">
+                  <Users className="h-7 w-7 text-yellow-300" />
+                </div>
+                <h3 className="text-lg font-semibold">Communauté engagée</h3>
+                <p className="text-sm text-white/70 mt-2">Rejoignez un réseau d'experts et d'apprenants passionnés</p>
+              </div>
+              
+              <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl border border-white/20 shadow-lg hover:shadow-xl hover:border-white/30 transition-all duration-300">
+                <div className="bg-purple-500/20 p-3 rounded-full w-14 h-14 flex items-center justify-center mb-4 mx-auto">
+                  <Laptop className="h-7 w-7 text-yellow-300" />
+                </div>
+                <h3 className="text-lg font-semibold">100% en ligne</h3>
+                <p className="text-sm text-white/70 mt-2">Enseignez de n'importe où, dans un format live interactif</p>
+              </div>
+              
+              <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl border border-white/20 shadow-lg hover:shadow-xl hover:border-white/30 transition-all duration-300">
+                <div className="bg-green-500/20 p-3 rounded-full w-14 h-14 flex items-center justify-center mb-4 mx-auto">
+                  <Mail className="h-7 w-7 text-yellow-300" />
+                </div>
                 <h3 className="text-lg font-semibold">Support dédié</h3>
-                <p className="text-sm opacity-80">Accompagnement complet dans la création de votre contenu</p>
+                <p className="text-sm text-white/70 mt-2">Accompagnement complet dans la création de votre contenu</p>
               </div>
             </div>
           </div>
         </div>
-      </HeroSection>
+        
+        {/* Transition douce */}
+        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent"></div>
+      </div>
 
       {/* Avantages Section */}
       <section className="py-20 bg-white">
