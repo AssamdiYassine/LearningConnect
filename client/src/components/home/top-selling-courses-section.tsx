@@ -4,8 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useRef } from "react";
 import { useLocation } from "wouter";
 
-// Vérifiez si ce chemin d'importation est correct
-import CourseCard from "@/components/course-card";
+import SimpleCourseCard from "@/components/simple-course-card";
 
 type Course = {
   id: number;
@@ -120,7 +119,7 @@ export default function TopSellingCoursesSection() {
             {topSellingCourses.length > 0 ? (
               topSellingCourses.map((course) => (
                 <div key={course.id} className="flex-none w-64 md:w-72">
-                  <CourseCard
+                  <SimpleCourseCard
                     id={course.id}
                     title={course.title}
                     description={course.description}

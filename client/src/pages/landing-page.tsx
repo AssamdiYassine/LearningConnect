@@ -10,6 +10,9 @@ import SubscriptionPlansSection from "@/components/home/subscription-plans-secti
 import TestimonialsSection from "@/components/home/testimonials-section";
 import CtaSection from "@/components/home/cta-section";
 import PartnersSection from "@/components/home/partners-section";
+import PopularCoursesSection from "@/components/home/popular-courses-section";
+import RecentCoursesSection from "@/components/home/recent-courses-section";
+import TopSellingCoursesSection from "@/components/home/top-selling-courses-section";
 
 export default function LandingPage() {
   const { user } = useAuth();
@@ -26,11 +29,20 @@ export default function LandingPage() {
       {/* USP Section */}
       <USPSection />
       
+      {/* Popular Courses Section - NEW */}
+      <PopularCoursesSection />
+      
       {/* How It Works Section */}
       <HowItWorksSection />
       
+      {/* Recent Courses Section - NEW */}
+      <RecentCoursesSection />
+      
       {/* Categories Section */}
       <CategoriesSection />
+      
+      {/* Top Selling Courses Section - NEW */}
+      <TopSellingCoursesSection />
       
       {/* Subscription Plans Section */}
       <SubscriptionPlansSection />

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import CourseCard from "@/components/course-card";
+import SimpleCourseCard from "@/components/simple-course-card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useRef } from "react";
@@ -106,7 +106,7 @@ export default function RecentCoursesSection() {
             {recentCourses.length > 0 ? (
               recentCourses.map((course) => (
                 <div key={course.id} className="flex-none w-64 md:w-72">
-                  <CourseCard
+                  <SimpleCourseCard
                     id={course.id}
                     title={course.title}
                     description={course.description}
