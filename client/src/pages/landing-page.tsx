@@ -22,57 +22,80 @@ export default function LandingPage() {
   }, []);
   
   return (
-    <div className="flex flex-col min-h-screen w-full">
+    <div className="flex flex-col min-h-screen w-full bg-gradient-to-b from-slate-50 to-white">
       {/* Hero Section */}
       <HeroSection />
       
+      {/* Séparateur décoratif */}
+      <div className="py-8 bg-gradient-to-r from-indigo-50 to-blue-50"></div>
+      
       {/* Popular Courses Section */}
-      <div className="mt-0">
-        <PopularCoursesSection />
-      </div>
+      <PopularCoursesSection />
 
       {/* Recent Courses Section */}
-      <div className="mt-0">
-        <RecentCoursesSection />
-      </div>
+      <RecentCoursesSection />
+
+      {/* Séparateur décoratif */}
+      <div className="py-6 bg-gradient-to-r from-blue-50 to-indigo-50"></div>
 
       {/* Top Selling Courses Section */}
-      <div className="mt-0">
+      <div className="mt-4">
         <TopSellingCoursesSection />
       </div>
       
-      {/* USP Section */}
-      <div className="mt-0">
+      {/* Séparateur décoratif */}
+      <div className="py-8 bg-gradient-to-r from-indigo-50 to-blue-50"></div>
+      
+      {/* USP Section avec espacement */}
+      <div className="mt-8">
         <USPSection />
       </div>
       
-      {/* How It Works Section */}
-      <div className="mt-0">
+      {/* Séparateur décoratif */}
+      <div className="py-6"></div>
+      
+      {/* How It Works Section avec espacement */}
+      <div className="mt-4">
         <HowItWorksSection />
       </div>
       
-      {/* Categories Section */}
-      <div className="mt-0">
+      {/* Séparateur décoratif */}
+      <div className="py-8 bg-gradient-to-r from-blue-50 to-indigo-50"></div>
+      
+      {/* Categories Section avec espacement */}
+      <div className="mt-4">
         <CategoriesSection />
       </div>
       
-      {/* Subscription Plans Section */}
-      <div className="mt-0">
+      {/* Séparateur décoratif */}
+      <div className="py-6"></div>
+      
+      {/* Subscription Plans Section avec espacement */}
+      <div className="mt-4">
         <SubscriptionPlansSection />
       </div>
       
-      {/* Testimonials Section */}
-      <div className="mt-0">
+      {/* Séparateur décoratif */}
+      <div className="py-8 bg-gradient-to-r from-indigo-50 to-blue-50"></div>
+      
+      {/* Testimonials Section avec espacement */}
+      <div className="mt-4">
         <TestimonialsSection />
       </div>
       
-      {/* CTA Section */}
-      <div className="mt-0">
+      {/* Séparateur décoratif */}
+      <div className="py-6"></div>
+      
+      {/* CTA Section avec espacement */}
+      <div className="mt-4">
         <CtaSection />
       </div>
       
-      {/* Partners Section */}
-      <div className="mt-0">
+      {/* Séparateur décoratif */}
+      <div className="py-8 bg-gradient-to-r from-blue-50 to-indigo-50"></div>
+      
+      {/* Partners Section avec espacement */}
+      <div className="mt-4">
         <PartnersSection />
       </div>
     </div>
