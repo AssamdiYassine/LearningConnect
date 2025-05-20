@@ -343,6 +343,8 @@ body, html {
   margin: 0;
   padding: 0;
   width: 100%;
+  box-sizing: border-box;
+  max-width: 100vw;
 }
 
 /* Solution pour vraiment éliminer tout espace blanc sur les côtés */
@@ -354,9 +356,27 @@ body, html {
   margin-left: -50vw;
   margin-right: -50vw;
   padding: 0;
-  max-width: none;
+  max-width: 100vw;
   overflow-x: hidden;
   box-sizing: border-box;
+}
+
+/* Classe anti-marges pour tous les conteneurs principaux */
+.zero-margin-container {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* Utiliser cette classe sur tous les layouts principaux */
+.main-layout-container {
+  width: 100%;
+  overflow-x: hidden;
+  max-width: 100vw;
+  margin: 0;
+  padding: 0;
 }
 
 /* Container classes */

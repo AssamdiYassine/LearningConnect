@@ -8,12 +8,10 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen main-layout-container overflow-x-hidden">
       <Navbar />
-      <main className="flex-grow">
-        <div className="w-full px-4 sm:px-5 md:px-6 lg:px-8 mx-auto max-w-[1400px]">
-          {children}
-        </div>
+      <main className="flex-grow w-full overflow-x-hidden">
+        {children}
       </main>
       <Footer />
       
