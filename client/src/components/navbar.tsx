@@ -9,6 +9,13 @@ import {
   Sun,
   ChevronDown,
   Bell,
+  GraduationCap,
+  Calendar,
+  CreditCard,
+  BookOpen,
+  Info,
+  Building,
+  Users,
 } from "lucide-react";
 import NotificationBell from "@/components/notification-bell";
 import {
@@ -56,14 +63,16 @@ export default function Navbar() {
 
   // Filtrer les éléments de navigation en fonction du rôle de l'utilisateur
   const navItems = [
-    { name: "Catalogue", path: "/catalog" },
-    { name: "Calendrier", path: "/schedule" },
+    { name: "Catalogue", path: "/catalog", icon: GraduationCap },
+    { name: "Calendrier", path: "/schedule", icon: Calendar },
     // Masquer les tarifs pour les employés d'entreprise
     ...(user && (user.enterpriseId || user.role === 'enterprise_employee') 
       ? [] 
-      : [{ name: "Tarifs", path: "/subscription" }]),
-    { name: "Blog", path: "/blog" },
-    { name: "À propos", path: "/about" },
+      : [{ name: "Tarifs", path: "/subscription", icon: CreditCard }]),
+    { name: "Entreprises", path: "/entreprises", icon: Building },
+    { name: "Devenir formateur", path: "/devenir-formateur", icon: Users },
+    { name: "Blog", path: "/blog", icon: BookOpen },
+    { name: "À propos", path: "/about", icon: Info },
   ];
 
   const isActive = (path: string) => {

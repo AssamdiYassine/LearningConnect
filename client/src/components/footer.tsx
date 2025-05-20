@@ -14,7 +14,11 @@ import {
   Calendar,
   CreditCard,
   Info,
-  BookOpen
+  BookOpen,
+  Users,
+  Building,
+  GraduationCap as TeachIcon,
+  BarChart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +46,8 @@ export default function Footer() {
     { href: "/catalog", label: "Nos formations", icon: GraduationCap },
     { href: "/schedule", label: "Calendrier", icon: Calendar },
     { href: "/subscription", label: "Abonnements", icon: CreditCard },
+    { href: "/devenir-formateur", label: "Devenir formateur", icon: TeachIcon },
+    { href: "/entreprises", label: "Solutions B2B", icon: Building },
     { href: "/about-page", label: "À propos", icon: Info },
     { href: "/blog", label: "Blog", icon: BookOpen }
   ];
