@@ -100,19 +100,23 @@ export default function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-1">
-            {navItems.map((item) => (
-              <div
-                key={item.path}
-                onClick={() => window.location.href = item.path}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
-                  isActive(item.path)
-                    ? "text-primary dark:text-white font-semibold"
-                    : "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-white"
-                }`}
-              >
-                {item.name}
-              </div>
-            ))}
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={item.path}
+                  onClick={() => window.location.href = item.path}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
+                    isActive(item.path)
+                      ? "text-primary dark:text-white font-semibold"
+                      : "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-white"
+                  }`}
+                >
+                  {Icon && <Icon className="h-4 w-4" />}
+                  {item.name}
+                </div>
+              );
+            })}
           </div>
 
           {/* Auth Buttons / User Menu */}
@@ -276,19 +280,23 @@ export default function Navbar() {
         {isOpen && (
           <div className="md:hidden pt-4 pb-2">
             <div className="flex flex-col space-y-2">
-              {navItems.map((item) => (
-                <div 
-                  key={item.path}
-                  onClick={() => window.location.href = item.path}
-                  className={`px-4 py-3 rounded-md text-sm font-medium transition-colors cursor-pointer ${
-                    isActive(item.path)
-                      ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-white font-semibold"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  }`}
-                >
-                  {item.name}
-                </div>
-              ))}
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div 
+                    key={item.path}
+                    onClick={() => window.location.href = item.path}
+                    className={`px-4 py-3 rounded-md text-sm font-medium transition-colors cursor-pointer flex items-center gap-2 ${
+                      isActive(item.path)
+                        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-white font-semibold"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    }`}
+                  >
+                    {Icon && <Icon className="h-4 w-4" />}
+                    {item.name}
+                  </div>
+                );
+              })}
 
               {/* Auth Buttons Mobile */}
               <div className="border-t border-gray-200 dark:border-gray-800 my-2 pt-2">

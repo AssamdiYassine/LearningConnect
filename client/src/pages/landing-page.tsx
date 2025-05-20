@@ -26,35 +26,55 @@ export default function LandingPage() {
       {/* Hero Section */}
       <HeroSection />
       
-      {/* USP Section */}
-      <USPSection />
+      {/* Popular Courses Section */}
+      <div className="mt-0">
+        <PopularCoursesSection />
+      </div>
+
+      {/* Recent Courses Section */}
+      <div className="mt-0">
+        <RecentCoursesSection />
+      </div>
+
+      {/* Top Selling Courses Section */}
+      <div className="mt-0">
+        <TopSellingCoursesSection />
+      </div>
       
-      {/* Popular Courses Section - NEW */}
-      <PopularCoursesSection />
+      {/* USP Section */}
+      <div className="mt-0">
+        <USPSection />
+      </div>
       
       {/* How It Works Section */}
-      <HowItWorksSection />
-      
-      {/* Recent Courses Section - NEW */}
-      <RecentCoursesSection />
+      <div className="mt-0">
+        <HowItWorksSection />
+      </div>
       
       {/* Categories Section */}
-      <CategoriesSection />
-      
-      {/* Top Selling Courses Section - NEW */}
-      <TopSellingCoursesSection />
+      <div className="mt-0">
+        <CategoriesSection />
+      </div>
       
       {/* Subscription Plans Section */}
-      <SubscriptionPlansSection />
+      <div className="mt-0">
+        <SubscriptionPlansSection />
+      </div>
       
       {/* Testimonials Section */}
-      <TestimonialsSection />
+      <div className="mt-0">
+        <TestimonialsSection />
+      </div>
       
       {/* CTA Section */}
-      <CtaSection />
+      <div className="mt-0">
+        <CtaSection />
+      </div>
       
       {/* Partners Section */}
-      <PartnersSection />
+      <div className="mt-0">
+        <PartnersSection />
+      </div>
     </div>
   );
 }
