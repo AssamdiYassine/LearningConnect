@@ -59,47 +59,52 @@ export default function PopularCoursesSection() {
   };
 
   return (
-    <section className="py-10 bg-white">
+    <section className="py-12 bg-gradient-to-r from-slate-50 to-indigo-50">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-primary-900">Formations les plus populaires</h2>
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+          <div>
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-[#1D2B6C] to-[#7A6CFF] inline-block text-transparent bg-clip-text">
+              🔥 Formations les plus populaires
+            </h2>
+            <p className="text-gray-600 mt-2">Découvrez les formations préférées par nos apprenants</p>
+          </div>
+          <div className="flex items-center gap-3">
             <Button 
               variant="outline" 
               size="icon" 
               onClick={scrollLeft} 
-              className="rounded-full"
+              className="rounded-full h-10 w-10 border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300"
               disabled={scrollPosition <= 0}
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-5 w-5 text-indigo-600" />
             </Button>
             <Button 
               variant="outline" 
               size="icon" 
               onClick={scrollRight} 
-              className="rounded-full" 
+              className="rounded-full h-10 w-10 border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300" 
               disabled={containerRef.current ? scrollPosition >= containerRef.current.scrollWidth - containerRef.current.clientWidth : false}
             >
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRight className="h-5 w-5 text-indigo-600" />
             </Button>
             <Button
-              variant="link"
+              variant="outline"
               onClick={() => setLocation("/catalog")}
-              className="text-primary-600 hover:text-primary-700"
+              className="rounded-full bg-white px-5 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all duration-300"
             >
-              Voir tout
+              Tout voir
             </Button>
           </div>
         </div>
 
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full"></div>
+            <div className="animate-spin w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full"></div>
           </div>
         ) : (
           <div 
             ref={containerRef}
-            className="flex space-x-4 overflow-x-auto pb-4 hide-scrollbar"
+            className="flex space-x-6 overflow-x-auto pb-6 hide-scrollbar"
             style={{ scrollBehavior: "smooth" }}
           >
             {popularCourses.length > 0 ? (

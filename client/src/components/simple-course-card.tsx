@@ -61,10 +61,10 @@ export default function SimpleCourseCard({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-300">
+    <div className="group bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:border-indigo-400 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
       <div className="relative" style={{ paddingBottom: "56.25%" }}>
         <img 
-          className="absolute h-full w-full object-cover" 
+          className="absolute h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" 
           src={imageUrl || `https://images.unsplash.com/photo-${id % 5 === 0 
             ? "1573164713988-8665fc963095" 
             : id % 4 === 0 
@@ -76,57 +76,62 @@ export default function SimpleCourseCard({
                   : "1551434678-e076c223a692"}?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80`}
           alt={title} 
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black opacity-60"></div>
-        <div className="absolute bottom-0 left-0 p-4">
-          <Badge variant="outline" className="bg-white/90 text-gray-800">
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1D2B6C]/90 to-transparent"></div>
+        
+        {/* Badge flottant de catégorie - design moderne */}
+        <div className="absolute top-3 left-3">
+          <Badge variant="outline" className="bg-white/90 backdrop-blur-sm text-gray-800 rounded-full px-3 font-medium">
             {category}
           </Badge>
           {isNew && (
-            <Badge className="ml-2 bg-red-500 text-white">Nouveau</Badge>
+            <Badge className="ml-2 bg-gradient-to-r from-pink-500 to-orange-500 text-white border-0 rounded-full px-3 font-medium">
+              Nouveau 🔥
+            </Badge>
+          )}
+        </div>
+        
+        {/* Indicateur de prix - style accrocheur */}
+        <div className="absolute top-3 right-3">
+          {isFree ? (
+            <Badge className="bg-gradient-to-r from-green-400 to-emerald-500 text-white border-0 rounded-full px-3 shadow-md font-medium">
+              GRATUIT
+            </Badge>
+          ) : (
+            <Badge className="bg-gradient-to-r from-[#7A6CFF] to-[#5F8BFF] text-white border-0 rounded-full px-3 shadow-md font-medium">
+              {price} €
+            </Badge>
           )}
         </div>
       </div>
       
-      <div className="p-4">
+      <div className="p-5">
         <Link href={`/course/${id}`}>
-          <h3 className="text-lg font-medium text-gray-900 cursor-pointer hover:text-primary-600 line-clamp-2 min-h-[3.5rem]">{title}</h3>
+          <h3 className="text-lg font-semibold text-gray-900 cursor-pointer hover:text-[#7A6CFF] transition-colors duration-200 line-clamp-2 min-h-[3.5rem]">{title}</h3>
         </Link>
         
-        <div className="mt-2 flex items-center text-sm text-gray-500">
-          <span>{instructor}</span>
+        <div className="flex flex-wrap gap-2 mt-3 items-center">
+          <Badge variant="outline" className={`rounded-full px-3 ${getLevelBadgeColor(level)}`}>
+            {getLevelText(level)}
+          </Badge>
+          
+          <Badge variant="outline" className="rounded-full px-3 bg-indigo-50 text-indigo-700 border-indigo-200">
+            <Users className="inline mr-1 h-3 w-3" />
+            {students}
+          </Badge>
         </div>
         
-        <div className="mt-2 flex items-center text-sm text-gray-500">
-          <SignalHigh className="mr-1.5 h-4 w-4 text-gray-400" />
-          <span className="capitalize">{getLevelText(level)}</span>
-        </div>
-        
-        <div className="mt-2 flex items-center justify-between">
-          <div className="flex items-center">
-            {/* Rating stars */}
-            <div className="flex">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star 
-                  key={star} 
-                  className={`w-3 h-3 ${star <= Math.round(rating) ? "text-yellow-400 fill-current" : "text-gray-300"}`} 
-                />
-              ))}
+        <div className="mt-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 rounded-full bg-gradient-to-r from-[#5F8BFF] to-[#7A6CFF] flex items-center justify-center text-white text-xs font-bold">
+              {instructor.charAt(0).toUpperCase()}
             </div>
-            <span className="ml-1 text-xs text-gray-500">({rating.toFixed(1)})</span>
+            <span className="text-sm font-medium text-gray-700">{instructor}</span>
           </div>
-          <div className="flex items-center text-xs text-gray-500">
-            <Users className="mr-1 h-3 w-3" />
-            <span>{students} étudiants</span>
+          
+          <div className="flex items-center bg-yellow-50 px-2 py-1 rounded-full">
+            <Star className="h-4 w-4 text-yellow-500 fill-current" />
+            <span className="ml-1 text-xs font-semibold text-yellow-700">{rating.toFixed(1)}</span>
           </div>
-        </div>
-        
-        {/* Prix */}
-        <div className="mt-3 flex items-center justify-between">
-          {isFree ? (
-            <span className="text-base font-bold text-green-600">GRATUIT</span>
-          ) : (
-            <span className="text-base font-bold text-primary-900">{price} €</span>
-          )}
         </div>
       </div>
     </div>
