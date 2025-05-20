@@ -16,6 +16,7 @@ import {
   ChevronRight,
   CheckCircle2
 } from 'lucide-react';
+import HeroSection from '@/components/hero-section';
 
 import {
   Form,
@@ -207,101 +208,105 @@ export default function B2BEntreprises() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-b from-indigo-900 to-indigo-700 text-white">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center gap-12">
-            <div className="w-full md:w-1/2">
-              <Badge className="mb-6 bg-white/20 hover:bg-white/30 text-white px-3 py-1.5">
-                Solutions Entreprises
-              </Badge>
-              <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-                Formez vos équipes IT avec des experts de l'industrie
-              </h1>
-              <p className="text-xl opacity-90 mb-8 leading-relaxed">
-                Des formations live, interactives et sur mesure pour développer les compétences tech de vos collaborateurs et accélérer votre transformation numérique.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button 
-                  size="lg" 
-                  className="bg-white text-indigo-700 hover:bg-yellow-300 hover:text-indigo-800 font-semibold px-8 rounded-full"
-                  onClick={() => {
-                    const formElement = document.getElementById('contact-form');
-                    if (formElement) {
-                      formElement.scrollIntoView({ behavior: 'smooth' });
-                    }
-                  }}
-                >
-                  Demander un devis
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="border-white text-white hover:bg-white/20 px-8 rounded-full"
-                >
-                  Découvrir nos offres
-                </Button>
-              </div>
+    <div className="min-h-screen">
+      {/* Hero Section avec vagues */}
+      <HeroSection
+        title={
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+            Formez vos équipes IT avec des experts de l'industrie
+          </h1>
+        }
+        subtitle="Des formations live, interactives et sur mesure pour développer les compétences tech de vos collaborateurs et accélérer votre transformation numérique."
+        gradient={true}
+        height="large"
+        withPattern={true}
+      >
+        <div className="flex flex-col md:flex-row items-start gap-8 w-full max-w-6xl mx-auto">
+          <div className="w-full md:w-1/2 flex flex-col items-start">
+            <Badge className="mb-6 bg-white/20 hover:bg-white/30 text-white px-3 py-1.5">
+              Solutions Entreprises
+            </Badge>
+            
+            <div className="flex flex-col sm:flex-row gap-4 mt-4">
+              <Button 
+                size="lg" 
+                className="bg-white text-primary hover:bg-yellow-300 hover:text-primary-dark font-semibold px-8 rounded-full"
+                onClick={() => {
+                  const formElement = document.getElementById('contact-form');
+                  if (formElement) {
+                    formElement.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+              >
+                Demander un devis
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="border-white text-white hover:bg-white/20 px-8 rounded-full"
+              >
+                Découvrir nos offres
+              </Button>
             </div>
-            <div className="w-full md:w-1/2">
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="col-span-2 flex items-center gap-3 mb-2">
-                    <Trophy className="h-8 w-8 text-yellow-300" />
-                    <h3 className="text-xl font-semibold">Pourquoi nous choisir ?</h3>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-green-400 mt-1 flex-shrink-0" />
-                    <p>100% des formations en direct avec des experts</p>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-green-400 mt-1 flex-shrink-0" />
-                    <p>Programmes personnalisés selon vos besoins</p>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-green-400 mt-1 flex-shrink-0" />
-                    <p>Dashboard entreprise pour suivre la progression</p>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-green-400 mt-1 flex-shrink-0" />
-                    <p>97% de taux de satisfaction client</p>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-green-400 mt-1 flex-shrink-0" />
-                    <p>Formateurs issus des plus grandes entreprises tech</p>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-green-400 mt-1 flex-shrink-0" />
-                    <p>Intégration à vos outils RH et LMS existants</p>
-                  </div>
+          </div>
+          
+          <div className="w-full md:w-1/2">
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 shadow-xl">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="col-span-2 flex items-center gap-3 mb-2">
+                  <Trophy className="h-8 w-8 text-yellow-300" />
+                  <h3 className="text-xl font-semibold">Pourquoi nous choisir ?</h3>
                 </div>
                 
-                <Separator className="my-6 bg-white/20" />
-                
-                <div className="flex items-center gap-2 mb-2">
-                  <Building className="h-5 w-5 text-yellow-300" />
-                  <p className="font-semibold">Ils nous font confiance :</p>
+                <div className="flex items-start gap-3">
+                  <Check className="h-5 w-5 text-green-400 mt-1 flex-shrink-0" />
+                  <p>100% des formations en direct avec des experts</p>
                 </div>
                 
-                <div className="flex flex-wrap items-center gap-6 opacity-80">
-                  <div className="text-lg font-semibold">Microsoft</div>
-                  <div className="text-lg font-semibold">Orange</div>
-                  <div className="text-lg font-semibold">BNP Paribas</div>
-                  <div className="text-lg font-semibold">Thales</div>
-                  <div className="text-lg font-semibold">Atos</div>
+                <div className="flex items-start gap-3">
+                  <Check className="h-5 w-5 text-green-400 mt-1 flex-shrink-0" />
+                  <p>Programmes personnalisés selon vos besoins</p>
                 </div>
+                
+                <div className="flex items-start gap-3">
+                  <Check className="h-5 w-5 text-green-400 mt-1 flex-shrink-0" />
+                  <p>Dashboard entreprise pour suivre la progression</p>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <Check className="h-5 w-5 text-green-400 mt-1 flex-shrink-0" />
+                  <p>97% de taux de satisfaction client</p>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <Check className="h-5 w-5 text-green-400 mt-1 flex-shrink-0" />
+                  <p>Formateurs issus des plus grandes entreprises tech</p>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <Check className="h-5 w-5 text-green-400 mt-1 flex-shrink-0" />
+                  <p>Intégration à vos outils RH et LMS existants</p>
+                </div>
+              </div>
+              
+              <Separator className="my-6 bg-white/20" />
+              
+              <div className="flex items-center gap-2 mb-2">
+                <Building className="h-5 w-5 text-yellow-300" />
+                <p className="font-semibold">Ils nous font confiance :</p>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-6 opacity-80">
+                <div className="text-lg font-semibold">Microsoft</div>
+                <div className="text-lg font-semibold">Orange</div>
+                <div className="text-lg font-semibold">BNP Paribas</div>
+                <div className="text-lg font-semibold">Thales</div>
+                <div className="text-lg font-semibold">Atos</div>
               </div>
             </div>
           </div>
         </div>
-      </section>
+      </HeroSection>
 
       {/* Avantages Section */}
       <section className="py-20">

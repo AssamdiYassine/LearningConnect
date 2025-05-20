@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/accordion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import HeroSection from '@/components/hero-section';
 
 const formSchema = z.object({
   firstName: z.string().min(2, 'Le prénom doit contenir au moins 2 caractères'),
@@ -130,65 +131,65 @@ export default function DevenirFormateur() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      {/* Hero Section */}
-      <section className="py-16 bg-gradient-to-r from-indigo-600 to-violet-600 text-white">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="w-full md:w-1/2">
-              <Badge className="mb-4 bg-white/20 text-white hover:bg-white/30 px-3 py-1 text-sm">
-                Rejoignez notre équipe de formateurs
-              </Badge>
-              <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-                Partagez votre expertise tech et <span className="text-yellow-300">boostez votre carrière</span>
-              </h1>
-              <p className="text-xl opacity-90 mb-8">
-                Devenez formateur chez Necform et transmettez vos connaissances à une communauté passionnée d'apprenants. Enseignez à votre rythme, 100% en ligne.
-              </p>
-              <Button 
-                size="lg" 
-                className="bg-white text-indigo-700 hover:bg-yellow-300 hover:text-indigo-800 font-semibold px-8 rounded-full"
-                onClick={() => {
-                  const formElement = document.getElementById('application-form');
-                  if (formElement) {
-                    formElement.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
-              >
-                Postuler maintenant
-              </Button>
+    <div className="min-h-screen">
+      {/* Hero Section avec vagues */}
+      <HeroSection
+        title={
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+            Partagez votre expertise tech et <span className="text-yellow-300">boostez votre carrière</span>
+          </h1>
+        }
+        subtitle="Devenez formateur chez Necform et transmettez vos connaissances à une communauté passionnée d'apprenants. Enseignez à votre rythme, 100% en ligne."
+        gradient={true}
+        height="large"
+        withPattern={true}
+      >
+        <div className="flex flex-col items-center md:items-start space-y-6 md:space-y-8">
+          <Badge className="bg-white/20 text-white hover:bg-white/30 px-3 py-1 text-sm">
+            Rejoignez notre équipe de formateurs
+          </Badge>
+          
+          <Button 
+            size="lg" 
+            className="bg-white text-primary hover:bg-yellow-300 hover:text-primary-dark font-semibold px-8 rounded-full"
+            onClick={() => {
+              const formElement = document.getElementById('application-form');
+              if (formElement) {
+                formElement.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
+            Postuler maintenant
+          </Button>
+          
+          <div className="grid grid-cols-2 gap-4 mt-8 w-full max-w-2xl mx-auto">
+            <div className="flex flex-col space-y-4">
+              <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl shadow-lg">
+                <BookOpen className="h-8 w-8 mb-2 text-yellow-300" />
+                <h3 className="text-lg font-semibold">Liberté pédagogique</h3>
+                <p className="text-sm opacity-80">Créez vos propres formations selon votre style d'enseignement</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl shadow-lg">
+                <Users className="h-8 w-8 mb-2 text-yellow-300" />
+                <h3 className="text-lg font-semibold">Communauté engagée</h3>
+                <p className="text-sm opacity-80">Rejoignez un réseau d'experts et d'apprenants passionnés</p>
+              </div>
             </div>
-            <div className="w-full md:w-1/2 flex justify-center items-center">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col space-y-4 mt-8">
-                  <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl">
-                    <BookOpen className="h-8 w-8 mb-2 text-yellow-300" />
-                    <h3 className="text-lg font-semibold">Liberté pédagogique</h3>
-                    <p className="text-sm opacity-80">Créez vos propres formations selon votre style d'enseignement</p>
-                  </div>
-                  <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl">
-                    <Users className="h-8 w-8 mb-2 text-yellow-300" />
-                    <h3 className="text-lg font-semibold">Communauté engagée</h3>
-                    <p className="text-sm opacity-80">Rejoignez un réseau d'experts et d'apprenants passionnés</p>
-                  </div>
-                </div>
-                <div className="flex flex-col space-y-4">
-                  <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl">
-                    <Laptop className="h-8 w-8 mb-2 text-yellow-300" />
-                    <h3 className="text-lg font-semibold">100% en ligne</h3>
-                    <p className="text-sm opacity-80">Enseignez de n'importe où, dans un format live interactif</p>
-                  </div>
-                  <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl">
-                    <Mail className="h-8 w-8 mb-2 text-yellow-300" />
-                    <h3 className="text-lg font-semibold">Support dédié</h3>
-                    <p className="text-sm opacity-80">Accompagnement complet dans la création de votre contenu</p>
-                  </div>
-                </div>
+            <div className="flex flex-col space-y-4">
+              <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl shadow-lg">
+                <Laptop className="h-8 w-8 mb-2 text-yellow-300" />
+                <h3 className="text-lg font-semibold">100% en ligne</h3>
+                <p className="text-sm opacity-80">Enseignez de n'importe où, dans un format live interactif</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl shadow-lg">
+                <Mail className="h-8 w-8 mb-2 text-yellow-300" />
+                <h3 className="text-lg font-semibold">Support dédié</h3>
+                <p className="text-sm opacity-80">Accompagnement complet dans la création de votre contenu</p>
               </div>
             </div>
           </div>
         </div>
-      </section>
+      </HeroSection>
 
       {/* Avantages Section */}
       <section className="py-20 bg-white">
