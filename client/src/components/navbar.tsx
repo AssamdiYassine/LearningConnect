@@ -16,6 +16,8 @@ import {
   Info,
   Building,
   Users,
+  MoreHorizontal,
+  Sparkles
 } from "lucide-react";
 import NotificationBell from "@/components/notification-bell";
 import {
@@ -62,17 +64,21 @@ export default function Navbar() {
   const toggleMenu = () => setIsOpen(!isOpen);
 
   // Filtrer les éléments de navigation en fonction du rôle de l'utilisateur
-  const navItems = [
+  const mainNavItems = [
     { name: "Catalogue", path: "/catalog", icon: GraduationCap },
     { name: "Calendrier", path: "/schedule", icon: Calendar },
     // Masquer les tarifs pour les employés d'entreprise
     ...(user && (user.enterpriseId || user.role === 'enterprise_employee') 
       ? [] 
       : [{ name: "Tarifs", path: "/subscription", icon: CreditCard }]),
-    { name: "Entreprises", path: "/entreprises", icon: Building },
-    { name: "Devenir formateur", path: "/devenir-formateur", icon: Users },
     { name: "Blog", path: "/blog", icon: BookOpen },
     { name: "À propos", path: "/about", icon: Info },
+  ];
+  
+  // Éléments supplémentaires pour un menu déroulant "Plus"
+  const extraNavItems = [
+    { name: "Solutions Entreprises", path: "/entreprises", icon: Building },
+    { name: "Devenir formateur", path: "/devenir-formateur", icon: Users },
   ];
 
   const isActive = (path: string) => {
@@ -100,7 +106,8 @@ export default function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-1">
-            {navItems.map((item) => {
+            {/* Éléments principaux du menu */}
+            {mainNavItems.map((item) => {
               const Icon = item.icon;
               return (
                 <div
@@ -117,6 +124,34 @@ export default function Navbar() {
                 </div>
               );
             })}
+
+            {/* Menu déroulant pour "Opportunités" */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <div className="px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer flex items-center gap-1.5 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-white">
+                  <Sparkles className="h-4 w-4" />
+                  Opportunités
+                  <ChevronDown className="h-3 w-3 ml-1 opacity-70" />
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {extraNavItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <DropdownMenuItem 
+                      key={item.path}
+                      className="cursor-pointer"
+                      onClick={() => window.location.href = item.path}
+                    >
+                      <div className="flex items-center gap-2">
+                        {Icon && <Icon className="h-4 w-4" />}
+                        {item.name}
+                      </div>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Auth Buttons / User Menu */}
@@ -280,7 +315,8 @@ export default function Navbar() {
         {isOpen && (
           <div className="md:hidden pt-4 pb-2">
             <div className="flex flex-col space-y-2">
-              {navItems.map((item) => {
+              {/* Éléments principaux du menu */}
+              {mainNavItems.map((item) => {
                 const Icon = item.icon;
                 return (
                   <div 
@@ -291,6 +327,25 @@ export default function Navbar() {
                         ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-white font-semibold"
                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                     }`}
+                  >
+                    {Icon && <Icon className="h-4 w-4" />}
+                    {item.name}
+                  </div>
+                );
+              })}
+              
+              {/* Section des opportunités */}
+              <div className="px-4 py-2 font-medium text-sm text-gray-500 dark:text-gray-400">
+                Opportunités
+              </div>
+              
+              {extraNavItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div 
+                    key={item.path}
+                    onClick={() => window.location.href = item.path}
+                    className="px-4 py-3 rounded-md text-sm font-medium transition-colors cursor-pointer flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
                     {Icon && <Icon className="h-4 w-4" />}
                     {item.name}

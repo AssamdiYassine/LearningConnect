@@ -282,6 +282,43 @@ html {
   @apply flex items-center justify-center rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 font-medium;
 }
 
+/* Animations de vague pour les sections héros */
+@keyframes wave-1 {
+  0% { transform: translate(85px, 0); }
+  100% { transform: translate(-50px, 0); }
+}
+
+@keyframes wave-2 {
+  0% { transform: translate(-90px, 0); }
+  100% { transform: translate(85px, 0); }
+}
+
+@keyframes wave-3 {
+  0% { transform: translate(85px, 0); }
+  100% { transform: translate(-85px, 0); }
+}
+
+@keyframes wave-4 {
+  0% { transform: translate(-5px, 0); }
+  100% { transform: translate(-35px, 0); }
+}
+
+.animate-wave-1 {
+  animation: wave-1 25s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
+}
+
+.animate-wave-2 {
+  animation: wave-2 20s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
+}
+
+.animate-wave-3 {
+  animation: wave-3 17s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
+}
+
+.animate-wave-4 {
+  animation: wave-4 15s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
+}
+
 /* Timeline styles for about page */
 .timeline-container {
   @apply relative pl-8 border-l border-gray-300 dark:border-gray-700;
