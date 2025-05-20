@@ -209,124 +209,173 @@ export default function B2BEntreprises() {
 
   return (
     <div className="min-h-screen overflow-hidden">
-      <div className="relative min-h-[700px] py-20 md:py-28 overflow-hidden bg-gradient-to-br from-[#1D2B6C] via-[#5F8BFF] to-[#7A6CFF] text-white">
-        {/* Éléments décoratifs */}
+      {/* Hero Section Immersive */}
+      <div className="relative min-h-[800px] overflow-hidden bg-gradient-to-br from-[#1D2B6C] via-[#263373] to-[#1E2D72]">
+        {/* Overlay patterns et éléments décoratifs */}
         <div className="absolute inset-0 overflow-hidden">
-          {/* Maillage géométrique subtil */}
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iLjMiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMjkuNSIvPjxwYXRoIGQ9Ik0yOS41IDE1Ljk5OEgzMC41VjQ0aC0xeiIvPjxwYXRoIGQ9Ik0xNiAyOS41VjMwLjVINDR2LTF6Ii8+PC9nPjwvc3ZnPg==')] opacity-[0.04]"></div>
+          {/* Motifs géométriques */}
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iLjMiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMjkuNSIvPjxwYXRoIGQ9Ik0yOS41IDE1Ljk5OEgzMC41VjQ0aC0xeiIvPjxwYXRoIGQ9Ik0xNiAyOS41VjMwLjVINDR2LTF6Ii8+PC9nPjwvc3ZnPg==')] opacity-[0.03]"></div>
           
-          {/* Bulles et formes abstraites */}
-          <div className="absolute -top-40 -left-40 w-80 h-80 rounded-full bg-white/10 blur-3xl animate-pulse"></div>
-          <div className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full bg-blue-500/10 blur-3xl"></div>
-          <div className="absolute -bottom-40 -right-40 w-80 h-80 rounded-full bg-indigo-500/10 blur-3xl animate-pulse"></div>
-        </div>
-        
-        {/* Contenu principal */}
-        <div className="container mx-auto relative z-10 px-4 sm:px-6 md:px-8 lg:px-12">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white mb-6 leading-tight">
-              Formez vos équipes IT avec des<br className="hidden md:block" /> experts de l'industrie
-            </h1>
-            
-            <p className="mt-4 text-xl md:text-2xl text-white/80 max-w-3xl mx-auto">
-              Des formations live, interactives et sur mesure pour développer les compétences tech de vos collaborateurs et accélérer votre transformation numérique.
-            </p>
+          {/* Lignes diagonales animées */}
+          <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-[0.07]">
+            <div className="w-[150%] h-[150%] absolute -top-1/4 -left-1/4 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.1)_25%,rgba(255,255,255,0.1)_50%,transparent_50%,transparent_75%,rgba(255,255,255,0.1)_75%)] bg-[length:100px_100px] animate-move-diagonal"></div>
           </div>
           
-          <div className="flex flex-col md:flex-row items-center gap-8 w-full max-w-6xl mx-auto">
-            <div className="w-full md:w-1/2 flex flex-col items-center md:items-start">
-              <div className="inline-flex items-center px-4 py-2 rounded-full bg-indigo-500/20 backdrop-blur-sm border border-indigo-400/30 text-indigo-200 text-sm font-medium mb-6">
-                <Trophy className="h-4 w-4 mr-2 text-yellow-300" />
-                <span className="truncate">Solutions Entreprises Premium</span>
+          {/* Effets de lumière */}
+          <div className="absolute top-0 right-0 w-[800px] h-[800px] rounded-full radial-gradient-blue opacity-20 blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-[600px] h-[600px] rounded-full radial-gradient-purple opacity-20 blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/3 transform -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-blue-400/10 blur-3xl animate-pulse-slow"></div>
+          
+          {/* Particules flottantes */}
+          <div className="absolute top-20 left-[20%] w-8 h-8 rounded-full bg-white/5 blur-sm animate-float-slow"></div>
+          <div className="absolute top-[30%] right-[15%] w-6 h-6 rounded-full bg-white/5 blur-sm animate-float-medium"></div>
+          <div className="absolute bottom-40 left-[40%] w-10 h-10 rounded-full bg-white/5 blur-sm animate-float-fast"></div>
+          
+          {/* Vagues animées en bas */}
+          <div className="absolute bottom-0 left-0 right-0 h-48 overflow-hidden z-10 opacity-30">
+            <svg viewBox="0 0 1200 120" className="absolute animate-wave-1" fill="none">
+              <path d="M0,80 C200,100 400,10 600,80 C800,150 1000,50 1200,100 L1200,120 L0,120 Z" fill="rgba(255,255,255,0.1)"></path>
+            </svg>
+            <svg viewBox="0 0 1200 120" className="absolute animate-wave-2" fill="none">
+              <path d="M0,60 C150,120 350,0 500,100 C650,200 800,80 1200,80 L1200,120 L0,120 Z" fill="rgba(255,255,255,0.1)"></path>
+            </svg>
+          </div>
+        </div>
+        
+        {/* Contenu principal du héros */}
+        <div className="container relative z-10 mx-auto px-4 py-20 md:py-28 lg:py-32">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col lg:flex-row lg:items-center gap-12">
+              {/* Colonne gauche - texte et CTA */}
+              <div className="w-full lg:w-1/2 space-y-8">
+                <div className="inline-flex items-center px-4 py-2 rounded-full bg-indigo-500/20 backdrop-blur-sm border border-indigo-400/30 text-indigo-100 text-sm font-medium">
+                  <Trophy className="h-4 w-4 mr-2 text-yellow-300" />
+                  <span>Solutions B2B Premium</span>
+                </div>
+                
+                <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-white leading-tight">
+                  <span className="relative inline-block">
+                    <span className="relative z-10">Formez</span>
+                    <span className="absolute -bottom-1.5 left-0 w-full h-3 bg-gradient-to-r from-purple-500/40 to-blue-500/40 rounded-full blur-sm"></span>
+                  </span>{" "}
+                  vos équipes IT avec les meilleurs experts
+                </h1>
+                
+                <p className="text-xl md:text-2xl text-white/80 leading-relaxed max-w-xl">
+                  Des formations <span className="text-yellow-300 font-medium">100% live et interactives</span> pour développer les compétences tech de vos collaborateurs et accélérer votre transformation numérique.
+                </p>
+                
+                <div className="pt-4 flex flex-col sm:flex-row gap-4">
+                  <Button 
+                    size="lg" 
+                    className="bg-white text-primary hover:bg-yellow-300 hover:text-primary-dark font-semibold px-10 py-7 rounded-xl shadow-xl shadow-indigo-900/30 transform hover:-translate-y-1 transition-all duration-300"
+                    onClick={() => {
+                      const formElement = document.getElementById('contact-form');
+                      if (formElement) {
+                        formElement.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
+                  >
+                    <Trophy className="h-5 w-5 mr-2" /> Demander un devis
+                  </Button>
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="border-white text-white hover:bg-white/20 px-10 py-7 rounded-xl backdrop-blur-sm transition-all duration-300"
+                  >
+                    <Building className="h-5 w-5 mr-2" /> Découvrir nos offres
+                  </Button>
+                </div>
+                
+                {/* Statistiques */}
+                <div className="pt-6 grid grid-cols-2 sm:grid-cols-3 gap-6">
+                  <div className="relative flex flex-col items-center bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 hover:bg-white/10 transition-all">
+                    <span className="text-3xl font-bold text-white mb-1">97%</span>
+                    <span className="text-sm text-white/70 text-center">Satisfaction client</span>
+                    <div className="absolute -top-2 -right-2 bg-gradient-to-br from-green-400 to-green-600 text-white text-xs p-1 rounded-md shadow-lg">
+                      <CheckCircle2 className="h-3 w-3" />
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-center bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 hover:bg-white/10 transition-all">
+                    <span className="text-3xl font-bold text-white mb-1">50+</span>
+                    <span className="text-sm text-white/70 text-center">Entreprises partenaires</span>
+                  </div>
+                  <div className="flex flex-col items-center bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 hover:bg-white/10 transition-all">
+                    <span className="text-3xl font-bold text-white mb-1">100%</span>
+                    <span className="text-sm text-white/70 text-center">Formations en direct</span>
+                  </div>
+                </div>
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-4 mt-4">
-                <Button 
-                  size="lg" 
-                  className="bg-white text-primary hover:bg-yellow-300 hover:text-primary-dark font-semibold px-8 rounded-full shadow-lg shadow-indigo-900/20 transition-all duration-300"
-                  onClick={() => {
-                    const formElement = document.getElementById('contact-form');
-                    if (formElement) {
-                      formElement.scrollIntoView({ behavior: 'smooth' });
-                    }
-                  }}
-                >
-                  Demander un devis
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="border-white text-white hover:bg-white/20 px-8 rounded-full backdrop-blur-sm transition-all duration-300"
-                >
-                  Découvrir nos offres
-                </Button>
-              </div>
-            </div>
-            
-            <div className="w-full md:w-1/2">
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="bg-yellow-500/20 p-2 rounded-full">
-                    <Trophy className="h-6 w-6 text-yellow-300" />
+              {/* Colonne droite - carte informative */}
+              <div className="w-full lg:w-1/2">
+                <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md rounded-3xl p-8 border border-white/10 shadow-2xl">
+                  {/* Badge supérieur */}
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-sm font-bold px-4 py-1.5 rounded-full shadow-lg">
+                    Exclusivité Entreprises
                   </div>
-                  <h3 className="text-xl font-semibold">Pourquoi nous choisir ?</h3>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="flex items-start gap-3 group">
-                    <div className="rounded-full bg-green-500/20 p-1.5 mt-0.5">
-                      <Check className="h-4 w-4 text-green-400" />
+                  
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="bg-gradient-to-br from-yellow-400 to-yellow-500 p-3 rounded-xl shadow-lg">
+                      <Trophy className="h-6 w-6 text-white" />
                     </div>
-                    <div>
-                      <p className="font-medium text-white">100% en direct</p>
-                      <p className="text-sm text-white/70">Formations live avec des experts reconnus</p>
+                    <h3 className="text-2xl font-bold text-white">Pourquoi nous choisir ?</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div className="flex items-start gap-4 group bg-white/5 hover:bg-white/10 p-4 rounded-xl border border-white/10 transition-all">
+                      <div className="bg-gradient-to-br from-green-400 to-green-600 p-2 rounded-lg shadow-md mt-1">
+                        <Laptop className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white mb-1 group-hover:text-yellow-300 transition-colors">100% en direct</p>
+                        <p className="text-sm text-white/70">Formations live avec des experts reconnus du secteur</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-4 group bg-white/5 hover:bg-white/10 p-4 rounded-xl border border-white/10 transition-all">
+                      <div className="bg-gradient-to-br from-blue-400 to-blue-600 p-2 rounded-lg shadow-md mt-1">
+                        <Users className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white mb-1 group-hover:text-yellow-300 transition-colors">Programmes sur mesure</p>
+                        <p className="text-sm text-white/70">Adaptés précisément aux besoins de votre entreprise</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-4 group bg-white/5 hover:bg-white/10 p-4 rounded-xl border border-white/10 transition-all">
+                      <div className="bg-gradient-to-br from-purple-400 to-purple-600 p-2 rounded-lg shadow-md mt-1">
+                        <BarChart className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white mb-1 group-hover:text-yellow-300 transition-colors">Analytics avancés</p>
+                        <p className="text-sm text-white/70">Dashboard détaillé pour suivre la progression de vos équipes</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-4 group bg-white/5 hover:bg-white/10 p-4 rounded-xl border border-white/10 transition-all">
+                      <div className="bg-gradient-to-br from-orange-400 to-orange-600 p-2 rounded-lg shadow-md mt-1">
+                        <CheckCircle2 className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white mb-1 group-hover:text-yellow-300 transition-colors">97% satisfaction</p>
+                        <p className="text-sm text-white/70">Avis clients vérifiés et retours positifs garantis</p>
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="flex items-start gap-3">
-                    <div className="rounded-full bg-blue-500/20 p-1.5 mt-0.5">
-                      <Check className="h-4 w-4 text-blue-400" />
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Building className="h-5 w-5 text-yellow-300" />
+                      <p className="font-bold text-lg text-white">Ils nous font confiance :</p>
                     </div>
-                    <div>
-                      <p className="font-medium text-white">Programmes sur mesure</p>
-                      <p className="text-sm text-white/70">Adaptés aux besoins spécifiques de votre entreprise</p>
+                    
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="bg-white/10 hover:bg-white/20 px-4 py-3 rounded-xl border border-white/10 text-white/90 font-medium text-center transition-all shadow-sm hover:shadow-md">Microsoft</div>
+                      <div className="bg-white/10 hover:bg-white/20 px-4 py-3 rounded-xl border border-white/10 text-white/90 font-medium text-center transition-all shadow-sm hover:shadow-md">Orange</div>
+                      <div className="bg-white/10 hover:bg-white/20 px-4 py-3 rounded-xl border border-white/10 text-white/90 font-medium text-center transition-all shadow-sm hover:shadow-md">BNP Paribas</div>
+                      <div className="bg-white/10 hover:bg-white/20 px-4 py-3 rounded-xl border border-white/10 text-white/90 font-medium text-center transition-all shadow-sm hover:shadow-md">Thales</div>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <div className="rounded-full bg-purple-500/20 p-1.5 mt-0.5">
-                      <Check className="h-4 w-4 text-purple-400" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-white">Analytics avancés</p>
-                      <p className="text-sm text-white/70">Dashboard pour suivre la progression de vos équipes</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <div className="rounded-full bg-orange-500/20 p-1.5 mt-0.5">
-                      <Check className="h-4 w-4 text-orange-400" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-white">97% satisfaction</p>
-                      <p className="text-sm text-white/70">Avis clients vérifiés et retours positifs</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <Separator className="my-6 bg-white/20" />
-                
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Building className="h-5 w-5 text-yellow-300" />
-                    <p className="font-semibold">Ils nous font confiance :</p>
-                  </div>
-                  
-                  <div className="flex flex-wrap justify-between items-center gap-4">
-                    <div className="bg-white/5 px-3 py-1.5 rounded-md border border-white/10 text-white/90">Microsoft</div>
-                    <div className="bg-white/5 px-3 py-1.5 rounded-md border border-white/10 text-white/90">Orange</div>
-                    <div className="bg-white/5 px-3 py-1.5 rounded-md border border-white/10 text-white/90">BNP Paribas</div>
-                    <div className="bg-white/5 px-3 py-1.5 rounded-md border border-white/10 text-white/90">Thales</div>
                   </div>
                 </div>
               </div>
@@ -334,8 +383,8 @@ export default function B2BEntreprises() {
           </div>
         </div>
         
-        {/* Transition douce */}
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent"></div>
+        {/* Transition douce vers la section suivante */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white to-transparent"></div>
       </div>
 
       {/* Avantages Section */}

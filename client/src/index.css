@@ -2,6 +2,86 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Animations personnalisées pour la page entreprises */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes float-medium {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  25% { transform: translateY(-10px) translateX(5px); }
+  50% { transform: translateY(0) translateX(10px); }
+  75% { transform: translateY(10px) translateX(5px); }
+}
+
+@keyframes float-fast {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  25% { transform: translateY(-5px) translateX(5px); }
+  50% { transform: translateY(-10px) translateX(0); }
+  75% { transform: translateY(-5px) translateX(-5px); }
+}
+
+@keyframes wave-1 {
+  0% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-30%) translateY(-20px); }
+  100% { transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes wave-2 {
+  0% { transform: translateX(-30%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-30px); }
+  100% { transform: translateX(-30%) translateY(0); }
+}
+
+@keyframes move-diagonal {
+  0% { background-position: 0 0; }
+  100% { background-position: 100px 100px; }
+}
+
+/* Classes pour les animations */
+.animate-pulse-slow {
+  animation: pulse-slow 7s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 12s ease-in-out infinite;
+}
+
+.animate-float-medium {
+  animation: float-medium 10s ease-in-out infinite;
+}
+
+.animate-float-fast {
+  animation: float-fast 8s ease-in-out infinite;
+}
+
+.animate-wave-1 {
+  animation: wave-1 15s ease-in-out infinite;
+}
+
+.animate-wave-2 {
+  animation: wave-2 18s ease-in-out infinite;
+}
+
+.animate-move-diagonal {
+  animation: move-diagonal 10s linear infinite;
+}
+
+/* Gradients personnalisés */
+.radial-gradient-blue {
+  background: radial-gradient(circle, rgba(95, 139, 255, 0.3) 0%, rgba(29, 43, 108, 0.1) 70%, transparent 100%);
+}
+
+.radial-gradient-purple {
+  background: radial-gradient(circle, rgba(122, 108, 255, 0.3) 0%, rgba(29, 43, 108, 0.1) 70%, transparent 100%);
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
