@@ -423,25 +423,13 @@ export default function CourseDetail({ id }: CourseDetailProps) {
                               }
                             </Button>
                           ) : !user?.isSubscribed ? (
-                            <div className="flex flex-wrap gap-2">
-                              <Button 
-                                onClick={() => {
-                                  const coursePrice = course.price || 49;
-                                  setLocation(`/checkout?type=course&courseId=${course.id}&price=${coursePrice}&courseName=${encodeURIComponent(course.title)}`);
-                                }}
-                                variant="default"
-                                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                              >
-                                Acheter ({course.price / 100}€)
-                              </Button>
-                              <Button 
-                                onClick={() => setLocation("/subscription")}
-                                variant="default"
-                                className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                              >
-                                S'abonner
-                              </Button>
-                            </div>
+                            <Button 
+                              onClick={() => setLocation("/subscription")}
+                              variant="default"
+                              className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                            >
+                              Voir nos abonnements
+                            </Button>
                           ) : (
                             <Button 
                               onClick={() => handleEnroll(session.id)}
@@ -539,21 +527,11 @@ export default function CourseDetail({ id }: CourseDetailProps) {
               ) : !user?.isSubscribed && !user?.enterpriseId && user?.role !== 'enterprise_employee' ? (
                 <div className="flex flex-wrap gap-4">
                   <Button 
-                    onClick={() => {
-                      const coursePrice = course.price || 49;
-                      setLocation(`/checkout?type=course&courseId=${course.id}&price=${coursePrice}&courseName=${encodeURIComponent(course.title)}`);
-                    }}
-                    variant="default"
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
-                  >
-                    Acheter cette formation ({course.price}€)
-                  </Button>
-                  <Button 
                     onClick={() => setLocation("/subscription")}
                     variant="default"
                     className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg"
                   >
-                    S'abonner pour accès illimité
+                    Voir nos forfaits d'abonnement
                   </Button>
                 </div>
               ) : (
