@@ -90,7 +90,7 @@ export default function SimpleCourseCard({
           )}
         </div>
         
-        {/* Indicateur de prix - style accrocheur */}
+        {/* Badge d'accès par abonnement */}
         <div className="absolute top-3 right-3">
           {isFree ? (
             <Badge className="bg-gradient-to-r from-green-400 to-emerald-500 text-white border-0 rounded-full px-3 shadow-md font-medium">
@@ -98,7 +98,7 @@ export default function SimpleCourseCard({
             </Badge>
           ) : (
             <Badge className="bg-gradient-to-r from-[#7A6CFF] to-[#5F8BFF] text-white border-0 rounded-full px-3 shadow-md font-medium">
-              {price} €
+              Abonnement
             </Badge>
           )}
         </div>

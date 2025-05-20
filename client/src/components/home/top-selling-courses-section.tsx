@@ -73,8 +73,8 @@ export default function TopSellingCoursesSection() {
   };
 
   return (
-    <section className="py-12 bg-gradient-to-r from-indigo-50 to-slate-50">
-      <div className="container mx-auto px-4">
+    <section className="py-0 bg-gradient-to-r from-indigo-50 to-slate-50">
+      <div className="container mx-auto px-0">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
             <h2 className="text-3xl font-bold bg-gradient-to-r from-[#7A6CFF] to-[#1D2B6C] inline-block text-transparent bg-clip-text">

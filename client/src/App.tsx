@@ -27,6 +27,8 @@ import ZoomSession from "@/pages/zoom-session";
 import LandingPage from "@/pages/landing-page";
 import AboutPage from "@/pages/about-page";
 import ProfilePage from "./pages/profile";
+import DevenirFormateur from "@/pages/devenir-formateur";
+import B2BEntreprises from "@/pages/b2b-entreprises";
 import TrainerProfilePage from "./pages/trainer-profile";
 import PurchasePage from "@/pages/purchase-page";
 import CreateCourse from "@/pages/create-course";
@@ -90,6 +92,8 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route path="/reset-password" component={ResetPasswordPage} />
+      <Route path="/devenir-formateur" component={DevenirFormateur} />
+      <Route path="/entreprises" component={B2BEntreprises} />
       
       {/* Student routes */}
       <Route path="/student">

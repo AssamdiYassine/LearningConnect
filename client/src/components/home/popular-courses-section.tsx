@@ -59,8 +59,8 @@ export default function PopularCoursesSection() {
   };
 
   return (
-    <section className="py-12 bg-gradient-to-r from-slate-50 to-indigo-50">
-      <div className="container mx-auto px-4">
+    <section className="py-0 bg-gradient-to-r from-slate-50 to-indigo-50">
+      <div className="container mx-auto px-0">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
             <h2 className="text-3xl font-bold bg-gradient-to-r from-[#1D2B6C] to-[#7A6CFF] inline-block text-transparent bg-clip-text">
