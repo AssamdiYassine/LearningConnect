@@ -22,80 +22,62 @@ export default function LandingPage() {
   }, []);
   
   return (
-    <div className="flex flex-col min-h-screen w-full bg-gradient-to-b from-slate-50 to-white">
+    <div className="flex flex-col min-h-screen w-full bg-gradient-to-b from-slate-50 to-white overflow-hidden">
       {/* Hero Section */}
-      <HeroSection />
+      <div className="w-full">
+        <HeroSection />
+      </div>
       
-      {/* Séparateur décoratif */}
-      <div className="py-8 bg-gradient-to-r from-indigo-50 to-blue-50"></div>
-      
-      {/* Popular Courses Section */}
-      <PopularCoursesSection />
+      {/* Sections avec transitions fluides sans marges blanches */}
+      <div className="w-full">
+        <PopularCoursesSection />
+      </div>
 
-      {/* Recent Courses Section */}
-      <RecentCoursesSection />
+      <div className="w-full">
+        <RecentCoursesSection />
+      </div>
 
-      {/* Séparateur décoratif */}
-      <div className="py-6 bg-gradient-to-r from-blue-50 to-indigo-50"></div>
-
-      {/* Top Selling Courses Section */}
-      <div className="mt-4">
+      <div className="w-full">
         <TopSellingCoursesSection />
       </div>
       
-      {/* Séparateur décoratif */}
-      <div className="py-8 bg-gradient-to-r from-indigo-50 to-blue-50"></div>
+      {/* Séparateur léger */}
+      <div className="py-2 bg-gradient-to-r from-indigo-50 to-blue-50"></div>
       
-      {/* USP Section avec espacement */}
-      <div className="mt-8">
+      <div className="w-full">
         <USPSection />
       </div>
       
-      {/* Séparateur décoratif */}
-      <div className="py-6"></div>
-      
-      {/* How It Works Section avec espacement */}
-      <div className="mt-4">
+      <div className="w-full">
         <HowItWorksSection />
       </div>
       
-      {/* Séparateur décoratif */}
-      <div className="py-8 bg-gradient-to-r from-blue-50 to-indigo-50"></div>
+      {/* Séparateur léger */}
+      <div className="py-2 bg-gradient-to-r from-blue-50 to-indigo-50"></div>
       
-      {/* Categories Section avec espacement */}
-      <div className="mt-4">
+      <div className="w-full">
         <CategoriesSection />
       </div>
       
-      {/* Séparateur décoratif */}
-      <div className="py-6"></div>
-      
-      {/* Subscription Plans Section avec espacement */}
-      <div className="mt-4">
+      <div className="w-full">
         <SubscriptionPlansSection />
       </div>
       
-      {/* Séparateur décoratif */}
-      <div className="py-8 bg-gradient-to-r from-indigo-50 to-blue-50"></div>
+      {/* Séparateur léger */}
+      <div className="py-2 bg-gradient-to-r from-indigo-50 to-blue-50"></div>
       
-      {/* Testimonials Section avec espacement */}
-      <div className="mt-4">
+      <div className="w-full">
         <TestimonialsSection />
       </div>
       
-      {/* Séparateur décoratif */}
-      <div className="py-6"></div>
-      
-      {/* CTA Section avec espacement */}
-      <div className="mt-4">
+      <div className="w-full">
         <CtaSection />
       </div>
       
-      {/* Séparateur décoratif */}
-      <div className="py-8 bg-gradient-to-r from-blue-50 to-indigo-50"></div>
+      {/* Séparateur léger */}
+      <div className="py-2 bg-gradient-to-r from-blue-50 to-indigo-50"></div>
       
-      {/* Partners Section avec espacement */}
-      <div className="mt-4">
+      <div className="w-full">
         <PartnersSection />
       </div>
     </div>

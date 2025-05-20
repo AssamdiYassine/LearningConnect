@@ -47,7 +47,7 @@ export default function HeroSection({
 
   const bgClass = gradient
     ? "bg-gradient-to-br from-primary via-primary/90 to-primary/80"
-    : "bg-primary";
+    : "bg-gradient-to-br from-[#1D2B6C] via-[#5F8BFF] to-[#7A6CFF]";
 
   return (
     <section
