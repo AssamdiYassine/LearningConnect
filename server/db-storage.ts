@@ -10,11 +10,15 @@ import {
   UserOnboarding, InsertUserOnboarding,
   ApprovalRequest, InsertApprovalRequest,
   ApprovalRequestWithDetails,
-  users, courses, categories, sessions, enrollments, notifications, settings, userOnboarding, approvalRequests,
-  CourseWithDetails, SessionWithDetails
+  users, courses, categories, sessions, enrollments, notifications, settings, userOnboarding, approvalRequests, payments,
+  CourseWithDetails, SessionWithDetails,
+  InsertPayment,
+  InsertSubscriptionPlan,
+  Payment,
+  SubscriptionPlan
 } from "@shared/schema";
-import { eq, and, gte, desc, sql, alias } from "drizzle-orm";
-import session from "express-session";
+import { eq, and, gte, desc, sql } from "drizzle-orm";
+import session, { Store } from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
 import { IStorage } from "./storage_fixed";
@@ -22,14 +26,118 @@ import { IStorage } from "./storage_fixed";
 const PostgresSessionStore = connectPg(session);
 
 export class DatabaseStorage implements IStorage {
-  sessionStore: any; // Use any type for sessionStore to avoid TypeScript issues
+  sessionStore: Store;
 
   constructor() {
     this.sessionStore = new PostgresSessionStore({ 
-      pool, 
+      pool: pool, 
       createTableIfMissing: true,
       tableName: 'session' 
     });
+  }
+
+  async getAllPayments(): Promise<Payment[]> {
+    const result = await db.select().from(payments);
+    return result as Payment[];
+  }
+
+  async getPaymentsByUserId(userId: number): Promise<Payment[]> {
+    const result = await db.select().from(payments).where(eq(payments.userId, userId));
+    return result as Payment[];
+  }
+
+
+  async createPayment(payment: InsertPayment): Promise<Payment> {
+    const [newPayment] = await db.insert(payments).values(payment).returning();
+    return newPayment as Payment;
+  }
+
+  async getRevenueStats(timeframe: string): Promise<any> {
+    // Example: timeframe = 'monthly' or 'yearly'
+    let groupBy;
+    if (timeframe === "monthly") {
+      groupBy = `DATE_TRUNC('month', created_at)`;
+    } else if (timeframe === "yearly") {
+      groupBy = `DATE_TRUNC('year', created_at)`;
+    } else {
+      groupBy = `DATE_TRUNC('day', created_at)`;
+    }
+    const result = await db.execute(sql`
+      SELECT ${sql.raw(groupBy)} as period, SUM(amount) as total
+      FROM payments
+      GROUP BY period
+      ORDER BY period DESC
+    `);
+    return result.rows;
+  }
+
+  async getTrainerRevenueStats(): Promise<any> {
+    // Returns total revenue per trainer
+    const result = await db.execute(sql`
+      SELECT c.trainer_id, SUM(p.amount) as total
+      FROM payments p
+      JOIN courses c ON p.course_id = c.id
+      GROUP BY c.trainer_id
+    `);
+    return result.rows;
+  }
+  async getPaymentsByTrainerId(trainerId: number): Promise<Payment[]> {
+    // Join payments with courses to filter by trainerId
+    const result = await db.execute(sql`
+      SELECT p.* FROM payments p
+      JOIN courses c ON p.course_id = c.id
+      WHERE c.trainer_id = ${trainerId}
+    `);
+    return result.rows as Payment[];
+  }
+  updateUser(id: number, userData: any): Promise<User>;
+  updateUser(id: number, data: Partial<User>): Promise<User>;
+  updateUser(id: unknown, data: unknown): Promise<{ role: "student" | "trainer" | "admin" | "enterprise" | "enterprise_admin"; email: string; id: number; createdAt: Date; updatedAt: Date; username: string; password: string; displayName: string; isSubscribed: boolean | null; subscriptionType: "monthly" | "annual" | null; subscriptionEndDate: Date | null; stripeCustomerId: string | null; stripeSubscriptionId: string | null; resetPasswordToken: string | null; resetTokenExpires: Date | null; phoneNumber: string | null; enterpriseId: number | null; }> {
+    throw new Error("Method not implemented.");
+  }
+  getUsersByRole(role: string): Promise<User[]>;
+  getUsersByRole(role: string): Promise<User[]>;
+  getUsersByRole(role: unknown): Promise<{ role: "student" | "trainer" | "admin" | "enterprise" | "enterprise_admin"; email: string; id: number; createdAt: Date; updatedAt: Date; username: string; password: string; displayName: string; isSubscribed: boolean | null; subscriptionType: "monthly" | "annual" | null; subscriptionEndDate: Date | null; stripeCustomerId: string | null; stripeSubscriptionId: string | null; resetPasswordToken: string | null; resetTokenExpires: Date | null; phoneNumber: string | null; enterpriseId: number | null; }[]> {
+    throw new Error("Method not implemented.");
+  }
+  getUserCourseAccess(userId: number): Promise<number[]> {
+    throw new Error("Method not implemented.");
+  }
+  updateUserCourseAccess(userId: number, courseIds: number[]): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  getFormattedApiSettings(): Promise<{ stripePublicKey?: string; stripeSecretKey?: string; zoomApiKey?: string; zoomApiSecret?: string; zoomAccountEmail?: string; }> {
+    throw new Error("Method not implemented.");
+  }
+  testStripeConnection(): Promise<{ success: boolean; message: string; }> {
+    throw new Error("Method not implemented.");
+  }
+  testZoomConnection(): Promise<{ success: boolean; message: string; }> {
+    throw new Error("Method not implemented.");
+  }
+  getAllSubscriptions(): Promise<any[]> {
+    throw new Error("Method not implemented.");
+  }
+  getSubscription(id: number): Promise<SubscriptionPlan | undefined> {
+    throw new Error("Method not implemented.");
+  }
+  getAllSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    throw new Error("Method not implemented.");
+  }
+  getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined> {
+    throw new Error("Method not implemented.");
+  }
+  getSubscriptionPlanByName(name: string): Promise<SubscriptionPlan | undefined> {
+    throw new Error("Method not implemented.");
+  }
+  createSubscriptionPlan(data: InsertSubscriptionPlan): Promise<SubscriptionPlan> {
+    throw new Error("Method not implemented.");
+  }
+  updateSubscriptionPlan(id: number, data: Partial<InsertSubscriptionPlan & { isActive?: boolean; }>): Promise<SubscriptionPlan> {
+    throw new Error("Method not implemented.");
+  }
+  updateNotificationStatus(id: number, isRead: boolean): Promise<Notification> {
+    throw new Error("Method not implemented.");
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -180,9 +288,6 @@ export class DatabaseStorage implements IStorage {
     }
   }
   
-  async getCoursesByCategory(categoryId: number): Promise<Course[]> {
-    return await db.select().from(courses).where(eq(courses.categoryId, categoryId));
-  }
 
   // Course operations
   async createCourse(course: InsertCourse): Promise<Course> {
@@ -235,7 +340,29 @@ export class DatabaseStorage implements IStorage {
     if (result.length === 0) return undefined;
 
     const { course, category, trainer } = result[0];
-    return { ...course, category, trainer };
+    return { 
+      ...course, 
+      category: category ?? { id: 0, name: "", slug: "" },
+      trainer: trainer ?? {
+        id: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        role: "trainer",
+        email: "",
+        username: "",
+        password: "",
+        displayName: "",
+        isSubscribed: null,
+        subscriptionType: null,
+        subscriptionEndDate: null,
+        stripeCustomerId: null,
+        stripeSubscriptionId: null,
+        resetPasswordToken: null,
+        resetTokenExpires: null,
+        phoneNumber: null,
+        enterpriseId: null
+      }
+    };
   }
 
   async getAllCoursesWithDetails(): Promise<CourseWithDetails[]> {
@@ -251,8 +378,30 @@ export class DatabaseStorage implements IStorage {
 
     return result.map(({ course, category, trainer }) => ({
       ...course,
-      category,
-      trainer
+      category: category ?? {
+        id: 0,
+        name: "",
+        slug: ""
+      },
+      trainer: trainer ?? {
+        id: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        role: "trainer",
+        email: "",
+        username: "",
+        password: "",
+        displayName: "",
+        isSubscribed: null,
+        subscriptionType: null,
+        subscriptionEndDate: null,
+        stripeCustomerId: null,
+        stripeSubscriptionId: null,
+        resetPasswordToken: null,
+        resetTokenExpires: null,
+        phoneNumber: null,
+        enterpriseId: null
+      }
     }));
   }
 
@@ -313,7 +462,7 @@ export class DatabaseStorage implements IStorage {
   async getSessionsByTrainer(trainerId: number): Promise<SessionWithDetails[]> {
     try {
       // Utiliser une requête SQL paramétrée pour éviter les injections SQL
-      const result = await db.execute(`
+      const result = await db.execute(sql`
         SELECT 
           s.id, s.course_id, s.date, s.zoom_link, s.created_at, s.updated_at, s.is_completed,
           c.id as course_id, c.title as course_title, c.description as course_description,
@@ -331,12 +480,12 @@ export class DatabaseStorage implements IStorage {
         LEFT JOIN 
           enrollments e ON s.id = e.session_id
         WHERE 
-          c.trainer_id = $1
+          c.trainer_id = ${trainerId}
         GROUP BY 
           s.id, c.id, cat.id, u.id
         ORDER BY 
           s.date DESC
-      `, [trainerId]);
+      `);
       
       console.log("Résultat getSessionsByTrainer:", result);
       
@@ -348,25 +497,33 @@ export class DatabaseStorage implements IStorage {
       // Transformer les résultats en objets SessionWithDetails
       return result.rows.map(row => {
         return {
-          id: row.id,
-          courseId: row.course_id,
-          date: new Date(row.date),
-          zoomLink: row.zoom_link,
-          createdAt: new Date(row.created_at),
-          updatedAt: new Date(row.updated_at),
-          isCompleted: row.is_completed,
+          id: typeof row.id === "number" ? row.id : 0,
+          courseId: typeof row.course_id === "number" ? row.course_id : 0,
+          date: row.date ? new Date(row.date) : new Date(),
+          zoomLink: row.zoom_link ?? "",
+          createdAt: row.created_at ? new Date(row.created_at) : new Date(),
+          updatedAt: row.updated_at ? new Date(row.updated_at) : new Date(),
+          isCompleted: typeof row.is_completed === "boolean" ? row.is_completed : false,
+          // Add all required SessionWithDetails fields with fallback values
+          description: row.description ?? null,
+          title: row.title ?? null,
+          endDate: row.end_date ? new Date(row.end_date) : null,
+          recordingLink: row.recording_link ?? null,
+          maxParticipants: row.max_participants ?? null,
+          materialsLink: row.materials_link ?? null,
+          isPublished: typeof row.is_published === "boolean" ? row.is_published : null,
           course: {
-            id: row.course_id,
-            title: row.course_title,
-            description: row.course_description,
+            id: typeof row.course_id === "number" ? row.course_id : 0,
+            title: row.course_title ?? "",
+            description: row.course_description ?? "",
             category: {
-              id: row.category_id,
-              name: row.category_name
+              id: typeof row.category_id === "number" ? row.category_id : 0,
+              name: row.category_name ?? ""
             },
             trainer: {
-              id: row.trainer_id,
-              username: row.trainer_username,
-              displayName: row.trainer_display_name
+              id: typeof row.trainer_id === "number" ? row.trainer_id : 0,
+              username: row.trainer_username ?? "",
+              displayName: row.trainer_display_name ?? ""
             }
           },
           enrollmentCount: parseInt(row.enrollment_count)
@@ -915,7 +1072,7 @@ export class DatabaseStorage implements IStorage {
     const [updated] = await db
       .update(userOnboarding)
       .set({
-        currentStep: currentStep as any, // Type casting
+        currentStep,
         lastUpdatedAt: new Date()
       })
       .where(eq(userOnboarding.userId, userId))
@@ -1192,27 +1349,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Implémentations des méthodes manquantes pour le Blog
-  async createBlogCategory(): Promise<any> { throw new Error("Not implemented"); }
-  async getAllBlogCategories(): Promise<any[]> { throw new Error("Not implemented"); }
-  async getBlogCategory(): Promise<any | undefined> { throw new Error("Not implemented"); }
-  async getBlogCategoryBySlug(): Promise<any | undefined> { throw new Error("Not implemented"); }
-  async updateBlogCategory(): Promise<any> { throw new Error("Not implemented"); }
-  async deleteBlogCategory(): Promise<void> { throw new Error("Not implemented"); }
+  async createBlogCategory(): Promise<BlogCategory> { 
+    throw new Error("Not implemented"); 
+  }
   
-  async createBlogPost(): Promise<any> { throw new Error("Not implemented"); }
-  async getBlogPost(): Promise<any | undefined> { throw new Error("Not implemented"); }
-  async getBlogPostWithDetails(): Promise<any | undefined> { throw new Error("Not implemented"); }
-  async getBlogPostBySlugWithDetails(): Promise<any | undefined> { throw new Error("Not implemented"); }
-  async getAllBlogPostsWithDetails(): Promise<any[]> { throw new Error("Not implemented"); }
-  async getBlogPostsByAuthor(): Promise<any[]> { throw new Error("Not implemented"); }
-  async getBlogPostsByCategory(): Promise<any[]> { throw new Error("Not implemented"); }
-  async updateBlogPost(): Promise<any> { throw new Error("Not implemented"); }
-  async deleteBlogPost(): Promise<void> { throw new Error("Not implemented"); }
-  async incrementBlogPostViewCount(): Promise<void> { throw new Error("Not implemented"); }
+  async getAllBlogCategories(): Promise<BlogCategory[]> { 
+    throw new Error("Not implemented"); 
+  }
   
-  async createBlogComment(): Promise<any> { throw new Error("Not implemented"); }
-  async getBlogComment(): Promise<any | undefined> { throw new Error("Not implemented"); }
-  async getBlogPostComments(): Promise<any[]> { throw new Error("Not implemented"); }
-  async approveBlogComment(): Promise<any> { throw new Error("Not implemented"); }
-  async deleteBlogComment(): Promise<void> { throw new Error("Not implemented"); }
+  async getBlogCategoryBySlug(): Promise<BlogCategory | undefined> { 
+    throw new Error("Not implemented"); 
+  }
+  
+  async updateBlogCategory(): Promise<BlogCategory> { 
+    throw new Error("Not implemented"); 
+  }
+  
+  async getBlogPostWithDetails(): Promise<BlogPostWithDetails | undefined> { 
+    throw new Error("Not implemented"); 
+  }
+  
+  async getBlogPostBySlugWithDetails(): Promise<BlogPostWithDetails | undefined> { 
+    throw new Error("Not implemented"); 
+  }
 }

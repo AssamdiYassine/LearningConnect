@@ -48,7 +48,7 @@ export interface IStorage {
   updateUserRole(id: number, role: string): Promise<User>;
   updateSubscription(id: number, isSubscribed: boolean, type?: string, endDate?: Date): Promise<User>;
   updateUserStripeInfo(id: number, stripeInfo: { customerId: string, subscriptionId: string }): Promise<User>;
-  updateUser(id: number, userData: any): Promise<User>; 
+  updateUser(id: number, userData: Partial<InsertUser>): Promise<User>; 
   getUsersByRole(role: string): Promise<User[]>;
   getUserCourseAccess(userId: number): Promise<number[]>;
   updateUserCourseAccess(userId: number, courseIds: number[]): Promise<void>;
@@ -188,7 +188,6 @@ export interface IStorage {
   
   // Extended user operations
   getUsersByRole(role: string): Promise<User[]>;
-  updateUser(id: number, data: Partial<User>): Promise<User>;
   deleteUser(id: number): Promise<void>;
   
   // Extended course operations
@@ -256,6 +255,64 @@ export class MemStorage implements IStorage {
     
     // Initialize with default data
     this.initializeDefaultData();
+  }
+  // User course access operations
+  private userCourseAccess: Map<number, number[]> = new Map();
+
+  async getUserCourseAccess(userId: number): Promise<number[]> {
+    return this.userCourseAccess.get(userId) ?? [];
+  }
+
+  async updateUserCourseAccess(userId: number, courseIds: number[]): Promise<void> {
+    this.userCourseAccess.set(userId, courseIds);
+  }
+  updateCategory(id: number, data: Partial<Category>): Promise<Category> {
+    throw new Error("Method not implemented.");
+  }
+  deleteCategory(id: number): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  updateCourse(id: number, data: Partial<Course>): Promise<Course> {
+    throw new Error("Method not implemented.");
+  }
+  createApprovalRequest(request: InsertApprovalRequest): Promise<ApprovalRequest> {
+    throw new Error("Method not implemented.");
+  }
+  getApprovalRequest(id: number): Promise<ApprovalRequest | undefined> {
+    throw new Error("Method not implemented.");
+  }
+  getPendingApprovals(): Promise<ApprovalRequestWithDetails[]> {
+    throw new Error("Method not implemented.");
+  }
+  updateApprovalStatus(id: number, status: "approved" | "rejected", reviewerId: number, notes?: string): Promise<ApprovalRequest> {
+    throw new Error("Method not implemented.");
+  }
+  getApprovalRequestsByType(type: string, status?: string): Promise<ApprovalRequestWithDetails[]> {
+    throw new Error("Method not implemented.");
+  }
+  getApprovalRequestsByRequester(requesterId: number): Promise<ApprovalRequestWithDetails[]> {
+    throw new Error("Method not implemented.");
+  }
+  getAllSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    throw new Error("Method not implemented.");
+  }
+  getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined> {
+    throw new Error("Method not implemented.");
+  }
+  getSubscriptionPlanByName(name: string): Promise<SubscriptionPlan | undefined> {
+    throw new Error("Method not implemented.");
+  }
+  createSubscriptionPlan(data: InsertSubscriptionPlan): Promise<SubscriptionPlan> {
+    throw new Error("Method not implemented.");
+  }
+  updateSubscriptionPlan(id: number, data: Partial<InsertSubscriptionPlan & { isActive?: boolean; }>): Promise<SubscriptionPlan> {
+    throw new Error("Method not implemented.");
+  }
+  deleteCourse(id: number): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  updateNotificationStatus(id: number, isRead: boolean): Promise<Notification> {
+    throw new Error("Method not implemented.");
   }
 
   // Settings operations
@@ -449,15 +506,23 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userIdCounter++;
+    const now = new Date();
     const user: User = { 
       ...insertUser, 
       id,
+      createdAt: insertUser.createdAt ?? now,
+      updatedAt: insertUser.updatedAt ?? now,
+      displayName: insertUser.displayName ?? insertUser.username ?? "User",
       role: insertUser.role || "student", // Définir "student" comme rôle par défaut
       isSubscribed: insertUser.isSubscribed ?? false,
       subscriptionType: insertUser.subscriptionType ?? null,
       subscriptionEndDate: insertUser.subscriptionEndDate ?? null,
       stripeCustomerId: null,
-      stripeSubscriptionId: null
+      stripeSubscriptionId: null,
+      enterpriseId: insertUser.enterpriseId ?? null,
+      resetPasswordToken: insertUser.resetPasswordToken ?? null,
+      phoneNumber: insertUser.phoneNumber ?? null,
+      resetTokenExpires: insertUser.resetTokenExpires ?? null
     };
     this.users.set(id, user);
     
@@ -477,7 +542,7 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).filter(user => user.role === role);
   }
   
-  async updateUser(id: number, data: Partial<User>): Promise<User> {
+  async updateUser(id: number, data: Partial<InsertUser>): Promise<User> {
     const user = await this.getUser(id);
     if (!user) throw new Error("User not found");
     
@@ -514,7 +579,7 @@ export class MemStorage implements IStorage {
     return this.updateUser(id, { role: role as "student" | "trainer" | "admin" });
   }
 
-  async updateSubscription(id: number, isSubscribed: boolean, type?: string, endDate?: Date): Promise<User> {
+  async updateUserSubscription(id: number, isSubscribed: boolean, type?: string, endDate?: Date): Promise<User> {
     const updates: Partial<User> = { 
       isSubscribed, 
       subscriptionType: type as "monthly" | "annual" | null,
@@ -630,7 +695,18 @@ export class MemStorage implements IStorage {
   // Course operations
   async createCourse(course: InsertCourse): Promise<Course> {
     const id = this.courseIdCounter++;
-    const newCourse: Course = { ...course, id };
+    const now = new Date();
+    const newCourse: Course = { 
+      ...course, 
+      id, 
+      createdAt: course.createdAt ?? now,
+      updatedAt: course.updatedAt ?? now,
+      targetAudience: course.targetAudience ?? null,
+      isApproved: course.isApproved !== undefined ? course.isApproved : null,
+      price: course.price !== undefined ? course.price : null,
+      thumbnail: course.thumbnail !== undefined ? course.thumbnail ?? null : null,
+      learningOutcomes: course.learningOutcomes !== undefined ? course.learningOutcomes ?? null : null
+    };
     this.courses.set(id, newCourse);
     return newCourse;
   }
@@ -694,7 +770,22 @@ export class MemStorage implements IStorage {
   // Session operations
   async createSession(session: InsertSession): Promise<Session> {
     const id = this.sessionIdCounter++;
-    const newSession: Session = { ...session, id };
+    const now = new Date();
+    const newSession: Session = {
+      id,
+      date: session.date,
+      courseId: session.courseId,
+      zoomLink: session.zoomLink,
+      createdAt: session.createdAt ?? now,
+      updatedAt: session.updatedAt ?? now,
+      description: session.description ?? null,
+      title: session.title ?? null,
+      endDate: session.endDate ?? null,
+      recordingLink: session.recordingLink ?? null,
+      maxParticipants: session.maxParticipants ?? null,
+      materialsLink: session.materialsLink ?? null,
+      isPublished: session.isPublished ?? null
+    };
     this.sessions.set(id, newSession);
     return newSession;
   }
@@ -955,7 +1046,7 @@ export class MemStorage implements IStorage {
     
     const updatedOnboarding: UserOnboarding = {
       ...onboarding,
-      currentStep: currentStep as any, // Type casting to satisfy TS
+      currentStep,
       lastUpdatedAt: new Date()
     };
     
@@ -1005,7 +1096,14 @@ export class MemStorage implements IStorage {
   // Blog category operations
   async createBlogCategory(category: InsertBlogCategory): Promise<BlogCategory> {
     const id = this.blogCategoryIdCounter++;
-    const newCategory: BlogCategory = { ...category, id };
+    const now = new Date();
+    const newCategory: BlogCategory = { 
+      ...category, 
+      id, 
+      createdAt: now, 
+      updatedAt: now, 
+      description: category.description ?? null 
+    };
     this.blogCategories.set(id, newCategory);
     return newCategory;
   }
@@ -1045,7 +1143,12 @@ export class MemStorage implements IStorage {
       id, 
       createdAt: new Date(),
       updatedAt: new Date(),
-      viewCount: 0 
+      status: post.status ?? "draft",
+      featuredImage: post.featuredImage ?? null,
+      publishedAt: post.publishedAt ?? null,
+      viewCount: 0,
+      tags: post.tags ?? null,
+      readTime: post.readTime ?? null
     };
     this.blogPosts.set(id, newPost);
     return newPost;
@@ -1165,7 +1268,7 @@ export class MemStorage implements IStorage {
     
     const updatedPost = { 
       ...post,
-      viewCount: post.viewCount + 1
+      viewCount: (post.viewCount ?? 0) + 1
     };
     
     this.blogPosts.set(id, updatedPost);
@@ -1180,7 +1283,8 @@ export class MemStorage implements IStorage {
       id,
       createdAt: now,
       updatedAt: now,
-      isApproved: false
+      isApproved: false,
+      parentId: comment.parentId !== undefined ? comment.parentId : null
     };
     this.blogComments.set(id, newComment);
     return newComment;
@@ -1291,7 +1395,17 @@ export class MemStorage implements IStorage {
       ...payment,
       id,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      status: payment.status ?? "pending", // Ensure status is always a string
+      userId: payment.userId ?? null,
+      type: payment.type ?? "other",
+      description: payment.description ?? null,
+      trainerId: payment.trainerId ?? null,
+      trainerShare: payment.trainerShare ?? null,
+      platformFee: payment.platformFee ?? null,
+      subscriptionId: payment.subscriptionId ?? null,
+      courseId: payment.courseId !== undefined ? payment.courseId : null,
+      sessionId: payment.sessionId !== undefined ? payment.sessionId : null
     };
     
     this.payments.set(id, newPayment);
@@ -1331,12 +1445,15 @@ export class MemStorage implements IStorage {
     // Convertir les montants en nombres pour les calculs
     filteredPayments.forEach(payment => {
       if (typeof payment.amount === 'string') {
+        // @ts-expect-error: override for calculation only, do not persist
         payment.amount = parseFloat(payment.amount);
       }
       if (payment.trainerShare && typeof payment.trainerShare === 'string') {
+        // @ts-expect-error: override for calculation only, do not persist
         payment.trainerShare = parseFloat(payment.trainerShare);
       }
       if (payment.platformFee && typeof payment.platformFee === 'string') {
+        // @ts-expect-error: override for calculation only, do not persist
         payment.platformFee = parseFloat(payment.platformFee);
       }
     });
@@ -1422,7 +1539,20 @@ export class MemStorage implements IStorage {
     const payments = Array.from(this.payments.values());
     const trainers = Array.from(this.users.values()).filter(user => user.role === 'trainer');
     
-    const trainerStats = await Promise.all(trainers.map(async trainer => {
+    type TrainerStat = {
+      id: number;
+      name: string;
+      username: string;
+      revenue: number;
+      platformFees: number;
+      courseCount: number;
+      sessionCount: number;
+      paymentCount: number;
+      lastPayment: Date | null;
+      percentage: number;
+    };
+
+    const trainerStats: TrainerStat[] = await Promise.all(trainers.map(async trainer => {
       // Paiements liés à ce formateur
       const trainerPayments = payments.filter(payment => payment.trainerId === trainer.id);
       
@@ -1463,7 +1593,8 @@ export class MemStorage implements IStorage {
         sessionCount,
         paymentCount,
         lastPayment: trainerPayments.length > 0 ? 
-          trainerPayments.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0].createdAt : null
+          trainerPayments.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0].createdAt : null,
+        percentage: 0
       };
     }));
     

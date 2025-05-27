@@ -17,6 +17,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
+import { User } from "@shared/schema";
 
 type Course = {
   id: number;
@@ -26,13 +27,6 @@ type Course = {
   isApproved: boolean;
   categoryName?: string;
   trainerName?: string;
-};
-
-type User = {
-  id: number;
-  username: string;
-  displayName: string;
-  role: string;
 };
 
 type CourseAccessDialogProps = {

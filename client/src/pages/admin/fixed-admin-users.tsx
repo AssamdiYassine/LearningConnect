@@ -13,6 +13,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { User } from "@shared/schema";
 
 // Définition des schémas de validation
 const createUserSchema = z.object({
@@ -30,17 +31,6 @@ const updateUserSchema = z.object({
   displayName: z.string().optional(),
   role: z.enum(["student", "trainer", "admin", "enterprise"]).optional(),
 });
-
-interface User {
-  id: number;
-  username: string;
-  email: string;
-  displayName: string;
-  role: "student" | "trainer" | "admin" | "enterprise";
-  isSubscribed: boolean | null;
-  subscriptionType: string | null;
-  subscriptionEndDate: string | null;
-}
 
 export default function FixedAdminUsers() {
   const { toast } = useToast();

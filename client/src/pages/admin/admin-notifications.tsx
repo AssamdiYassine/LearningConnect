@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, CheckIcon, BellIcon, TrashIcon, BellRing, Send, Users, User } from 'lucide-react';
+import { Loader2, CheckIcon, BellIcon, TrashIcon, BellRing, Send, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { User } from "@shared/schema";
 
 // Types basées sur le schema défini
 interface Notification {
@@ -41,14 +42,6 @@ const sendNotificationSchema = z.object({
 });
 
 type SendNotificationFormValues = z.infer<typeof sendNotificationSchema>;
-
-interface User {
-  id: number;
-  username: string;
-  email: string;
-  displayName: string;
-  role: string;
-}
 
 function AdminNotificationsPage() {
   const { toast } = useToast();

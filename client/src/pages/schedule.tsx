@@ -235,7 +235,7 @@ function SessionCard({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 mx-20">
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl font-heading">

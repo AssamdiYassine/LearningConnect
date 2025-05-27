@@ -1,4 +1,10 @@
+import 'dotenv/config';
+console.log('Environment variables loaded:', {
+  DATABASE_URL: process.env.DATABASE_URL,
+  NODE_ENV: process.env.NODE_ENV
+});
 import express, { type Request, Response, NextFunction } from "express";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import { registerAdminRoutes } from "./admin-routes";
 import { registerAdminSubscriptionRoutes } from "./admin-subscription-routes";
@@ -22,6 +28,17 @@ import { extendDatabaseStorageForApi } from "./db-storage-api";
 import { storage } from "./storage_fixed";
 
 const app = express();
+
+// Configure CORS
+app.use(cors({
+  origin: process.env.NODE_ENV === "production" 
+    ? process.env.CLIENT_URL 
+    : ["http://localhost:3000", "http://127.0.0.1:3000"],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -97,7 +114,7 @@ app.use((req, res, next) => {
     await seedBlogDemoData();
     log("Données de démonstration du blog initialisées avec succès");
   } catch (error) {
-    log("Erreur lors de l'initialisation des données de démonstration du blog:", error);
+    log("Erreur lors de l'initialisation des données de démonstration du blog:", error instanceof Error ? error.message : String(error));
   }
   
   // Initialiser les notifications de démonstration
@@ -105,7 +122,7 @@ app.use((req, res, next) => {
     await seedNotifications();
     log("Notifications de démonstration initialisées avec succès");
   } catch (error) {
-    log("Erreur lors de l'initialisation des notifications de démonstration:", error);
+    log("Erreur lors de l'initialisation des notifications de démonstration:", error instanceof Error ? error.message : String(error));
   }
   
   // Initialiser les données de paiement
@@ -113,7 +130,7 @@ app.use((req, res, next) => {
     await seedPayments();
     log("Données de paiement initialisées avec succès");
   } catch (error) {
-    log("Erreur lors de l'initialisation des données de paiement:", error);
+    log("Erreur lors de l'initialisation des données de paiement:", error instanceof Error ? error.message : String(error));
   }
   
   // Initialiser les cours de démonstration
@@ -121,7 +138,7 @@ app.use((req, res, next) => {
     await initDemoCourses();
     log("Cours et sessions de démonstration initialisés avec succès");
   } catch (error) {
-    log("Erreur lors de l'initialisation des cours de démonstration:", error);
+    log("Erreur lors de l'initialisation des cours de démonstration:", error instanceof Error ? error.message : String(error));
   }
   
   // Initialiser les entreprises de démonstration
@@ -129,7 +146,7 @@ app.use((req, res, next) => {
     await initDemoEnterprises();
     log("Entreprises de démonstration initialisées avec succès");
   } catch (error) {
-    log("Erreur lors de l'initialisation des entreprises de démonstration:", error);
+    log("Erreur lors de l'initialisation des entreprises de démonstration:", error instanceof Error ? error.message : String(error));
   }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -149,15 +166,15 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
+  // Start server
+  const PORT = process.env.PORT || 5000;
+  const HOST = process.env.NODE_ENV === "production" ? "0.0.0.0" : "localhost";
+
   server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
+    port: PORT,
+    host: HOST,
   }, () => {
-    log(`serving on port ${port}`);
+    log(`Server running in ${process.env.NODE_ENV || "development"} mode`);
+    log(`Server is running on http://${HOST}:${PORT}`);
   });
 })();
