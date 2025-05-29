@@ -85435,8 +85435,7 @@
     },
     {
       "fix": "/* Use sql`...` template literals or parameterized queries instead */",
-      "id": "replit-rules.javascript.drizzle-orm.security.audit.ban-drizzle-sql-raw",
-      "languages": [
+       "languages": [
         "js",
         "ts"
       ],
